@@ -66,6 +66,7 @@ var renderPlayer = function(instance) {
         rotate(instance.dir);
         rect(-15,-5,20,10);
     pop();
+    text(instance.pos.dir, instance.pos.x, instance.pos.y-10);
 }
 
 var renderBullet = function(instance) {

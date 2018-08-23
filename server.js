@@ -120,16 +120,16 @@ var player=function(x,y){
 */
 var player=function(x,y){
     this.pos=new Vector(x, y);
-    this.vel=new Vector(0,0);
+    this.vel=new Vector(0, 0);
     this.x=200;
     this.y=200;
-    this.sideFriction=1.00;
-    this.forwardFriction=1.00;
+    this.sideFriction=0.90;
+    this.forwardFriction=0.90;
     this.speed=0;
     this.accel=0.05;
     this.decl=0.90;
     this.dir=0;
-    this.turnSpeed=0.7;
+    this.turnSpeed=0.5;
     this.turnDamp=70;
     this.wheelTrails=[[],[],[],[]];
     this.keys=[];
@@ -137,21 +137,24 @@ var player=function(x,y){
         this.update();
     };
     this.update=function(){
-        this.pos.addTo(this.vel);
-        this.vel.addTo(new Vector(Math.cos(this.dir)*this.speed,Math.sin(this.dir)*this.speed));
-        var sideVector = new Vector(this.sideFriction, 0);
-        sideVector.setDirection(this.dir-Math.PI/2);
-        //sideVector.multiplyScalar(this.sideFriction);
-        //this.vel.multiplyBy(sideVector);
-        var frontVector = new Vector(this.forwardFriction, 0);
-        frontVector.setDirection(this.dir);
-        this.vel.multiplyBy(frontVector);
-        console.log(this.dir);
+        this.pos.add(this.vel);
+        this.vel.add(new Vector(Math.cos(this.dir)*this.speed,Math.sin(this.dir)*this.speed));
+        this.sideFriction(0.95, 0.98);
         this.speed*=this.decl;
         if(this.keys[UP_ARROW]){this.speed+=this.accel;}
         if(this.keys[DOWN_ARROW]){this.speed-=this.accel*0.5;}
-        if(this.keys[LEFT_ARROW]){this.dir-=(this.turnSpeed*this.vel.getMagnitude())/this.turnDamp;}
-        if(this.keys[RIGHT_ARROW]){this.dir+=(this.turnSpeed*this.vel.getMagnitude())/this.turnDamp;}
+        if(this.keys[LEFT_ARROW]){this.dir-=(this.turnSpeed*this.vel.length())/this.turnDamp;}
+        if(this.keys[RIGHT_ARROW]){this.dir+=(this.turnSpeed*this.vel.length())/this.turnDamp;}
+    };
+    this.sideFriction=function(per, fric){
+        var forward = new Vector(Math.cos(this.dir), Math.sin(this.dir));
+        var right = new Vector(Math.cos(this.dir+Math.PI/2), Math.sin(this.dir+Math.PI/2));
+        var forwardVelocity = new Vector();
+        var rightVelocity = new Vector();
+        forwardVelocity = forward.multiply(Vector.dot(this.vel, forward));
+        forwardVelocity.multiply(fric);
+        rightVelocity = right.multiply(Vector.dot(this.vel, right));
+        this.vel = forwardVelocity.add(rightVelocity.multiply(per));
     };
 };
 
@@ -167,101 +170,126 @@ var bullet=function(x,y,vx,vy, owner){
     }
 }
 
-var Vector = function(x, y) {
-    this.x = x || 0;
-    this.y = y || 0;
-  };
-  
-  // return the angle of the vector in radians
-  Vector.prototype.getDirection = function() {
-      return Math.atan2(this.y, this.x);
-  };
-  
-  // set the direction of the vector in radians
-  Vector.prototype.setDirection = function(direction) {
-      var magnitude = this.getMagnitude();
-    this.x = Math.cos(direction) * magnitude;
-    this.y = Math.sin(direction) * magnitude;
-  };
-  
-  // get the magnitude of the vector
-  Vector.prototype.getMagnitude = function() {
-      // use pythagoras theorem to work out the magnitude of the vector
-      return Math.sqrt(this.x * this.x + this.y * this.y);
-  };
-  
-  // set the magnitude of the vector
-  Vector.prototype.setMagnitude = function(magnitude) {
-      var direction = this.getDirection(); 
-      this.x = Math.cos(direction) * magnitude;
-      this.y = Math.sin(direction) * magnitude;
-  };
-  
-  // add two vectors together and return a new one
-  Vector.prototype.add = function(v2) {
-      return new Vector(this.x + v2.x, this.y + v2.y);
-  };
-  
-  // add a vector to this one
-  Vector.prototype.addTo = function(v2) {
-      this.x += v2.x;
-    this.y += v2.y;
-  };
-  
-  // subtract two vectors and reutn a new one
-  Vector.prototype.subtract = function(v2) {
-      return new Vector(this.x - v2.x, this.y - v2.y);
-  };
-  
-  // subtract a vector from this one
-  Vector.prototype.subtractFrom = function(v2) {
-      this.x -= v2.x;
-    this.y -= v2.y;
-  };
-  
-  // multiply this vector by a scalar and return a new one
-  Vector.prototype.multiplyScalar = function(scalar) {
-    this.x *= scalar;
-    this.y *= scalar;
-  };
-  
-  // multiply this vector by the scalar
-  Vector.prototype.multiplyBy = function(scalar) {
-    this.x *= scalar.x;
-    this.y *= scalar.y;
-  };
-  
-  // scale this vector by scalar and return a new vector
-  Vector.prototype.divide = function(scalar) {
-    return new Vector(this.x / scalar, this.y / scalar);
-  };
-  
-  // scale this vector by scalar
-  Vector.prototype.divideBy = function(scalar) {
-    this.x /= scalar;
-    this.y /= scalar;
-  };
-  
-  // Aliases
-  Vector.prototype.getLength = Vector.prototype.getMagnitude;
-  Vector.prototype.setLength = Vector.prototype.setMagnitude;
-  
-  Vector.prototype.getAngle = Vector.prototype.getDirection;
-  Vector.prototype.setAngle = Vector.prototype.setDirection;
-  
-  // Utilities
-  Vector.prototype.copy = function() {
-    return new Vector(this.x, this.y);
-  };
-  
-  Vector.prototype.toString = function() {
-    return 'x: ' + this.x + ', y: ' + this.y;
-  };
-  
-  Vector.prototype.toArray = function() {
-    return [this.x, this.y];
-  };
-  
-  Vector.prototype.toObject = function() {
-    return {x: this.x, y: this.y};
-  };
+function Vector(x, y) {
+	this.x = x || 0;
+	this.y = y || 0;
+}
+
+/* INSTANCE METHODS */
+
+Vector.prototype = {
+	negative: function() {
+		this.x = -this.x;
+		this.y = -this.y;
+		return this;
+	},
+	add: function(v) {
+		if (v instanceof Vector) {
+			this.x += v.x;
+			this.y += v.y;
+		} else {
+			this.x += v;
+			this.y += v;
+		}
+		return this;
+	},
+	subtract: function(v) {
+		if (v instanceof Vector) {
+			this.x -= v.x;
+			this.y -= v.y;
+		} else {
+			this.x -= v;
+			this.y -= v;
+		}
+		return this;
+	},
+	multiply: function(v) {
+		if (v instanceof Vector) {
+			this.x *= v.x;
+			this.y *= v.y;
+		} else {
+			this.x *= v;
+			this.y *= v;
+		}
+		return this;
+	},
+	divide: function(v) {
+		if (v instanceof Vector) {
+			if(v.x != 0) this.x /= v.x;
+			if(v.y != 0) this.y /= v.y;
+		} else {
+			if(v != 0) {
+				this.x /= v;
+				this.y /= v;
+			}
+		}
+		return this;
+	},
+	equals: function(v) {
+		return this.x == v.x && this.y == v.y;
+	},
+	dot: function(v) {
+		return this.x * v.x + this.y * v.y;
+	},
+	cross: function(v) {
+		return this.x * v.y - this.y * v.x
+	},
+	length: function() {
+		return Math.sqrt(this.dot(this));
+	},
+	normalize: function() {
+		return this.divide(this.length());
+	},
+	min: function() {
+		return Math.min(this.x, this.y);
+	},
+	max: function() {
+		return Math.max(this.x, this.y);
+	},
+	toAngles: function() {
+		return -Math.atan2(-this.y, this.x);
+	},
+	angleTo: function(a) {
+		return Math.acos(this.dot(a) / (this.length() * a.length()));
+	},
+	toArray: function(n) {
+		return [this.x, this.y].slice(0, n || 2);
+	},
+	clone: function() {
+		return new Vector(this.x, this.y);
+	},
+	set: function(x, y) {
+		this.x = x; this.y = y;
+		return this;
+	}
+};
+
+/* STATIC METHODS */
+Vector.negative = function(v) {
+	return new Vector(-v.x, -v.y);
+};
+Vector.add = function(a, b) {
+	if (b instanceof Vector) return new Vector(a.x + b.x, a.y + b.y);
+	else return new Vector(a.x + v, a.y + v);
+};
+Vector.subtract = function(a, b) {
+	if (b instanceof Vector) return new Vector(a.x - b.x, a.y - b.y);
+	else return new Vector(a.x - v, a.y - v);
+};
+Vector.multiply = function(a, b) {
+	if (b instanceof Vector) return new Vector(a.x * b.x, a.y * b.y);
+	else return new Vector(a.x * v, a.y * v);
+};
+Vector.divide = function(a, b) {
+	if (b instanceof Vector) return new Vector(a.x / b.x, a.y / b.y);
+	else return new Vector(a.x / v, a.y / v);
+};
+Vector.equals = function(a, b) {
+	return a.x == b.x && a.y == b.y;
+};
+Vector.dot = function(a, b) {
+	return a.x * b.x + a.y * b.y;
+};
+Vector.cross = function(a, b) {
+	return a.x * b.y - a.y * b.x;
+};
