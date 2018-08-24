@@ -126,10 +126,10 @@ var player=function(x,y){
     this.sideFriction=0.90;
     this.forwardFriction=0.90;
     this.speed=0;
-    this.accel=0.05;
+    this.accel=0.03;
     this.decl=0.90;
     this.dir=0;
-    this.turnSpeed=0.5;
+    this.turnSpeed=0.6;
     this.turnDamp=70;
     this.wheelTrails=[[],[],[],[]];
     this.keys=[];
@@ -139,7 +139,7 @@ var player=function(x,y){
     this.update=function(){
         this.pos.add(this.vel);
         this.vel.add(new Vector(Math.cos(this.dir)*this.speed,Math.sin(this.dir)*this.speed));
-        this.sideFriction(0.95, 0.98);
+        this.sideFriction(0.96, 0.98);
         this.speed*=this.decl;
         if(this.keys[UP_ARROW]){this.speed+=this.accel;}
         if(this.keys[DOWN_ARROW]){this.speed-=this.accel*0.5;}
