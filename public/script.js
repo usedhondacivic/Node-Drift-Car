@@ -31,9 +31,9 @@ var renderPlayer = function(instance) {
     for(var i in instance.wheelTrails){
         for(var o=0; o<instance.wheelTrails[i].length; o++){
             if(o+1 < instance.wheelTrails[i].length){
-                noStroke();
-                fill(0, instance.wheelTrails[i][o][2]*5);
                 push();
+                noStroke();
+                fill(0, 0, 0, instance.wheelTrails[i][o][2]*5);
                 translate(instance.wheelTrails[i][o][0], instance.wheelTrails[i][o][1]);
                 rotate(instance.wheelTrails[i][o][3]);
                 rect(-2.5, -1, 5, 2);
@@ -42,14 +42,13 @@ var renderPlayer = function(instance) {
             }
         }
     }
-    noStroke();
-    fill(instance.color[0],instance.color[1],instance[2]);
     push();
         translate(instance.pos.x,instance.pos.y);
         rotate(instance.dir);
+        noStroke();
+        fill(instance.color[0],instance.color[1],instance.color[2]);
         rect(-15,-5,20,10);
     pop();
-    text(instance.pos.dir, instance.pos.x, instance.pos.y-10);
 }
 
 var renderBullet = function(instance) {

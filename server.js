@@ -26,11 +26,14 @@ var colors= [
     [255,0,255],
     [0,0,0]
 ];
+var colorNum=0;
 
 io.on("connection", function (socket) {
     console.log("a user connected");
     socket.on("new player", function(){
-        var color = colors[toSend["players"].length%colors.length];
+        var color = colors[colorNum];
+        colorNum++;
+        console.log(color);
         toSend["players"][socket.id] = new player(100, 100, color);
     });
     
@@ -108,7 +111,7 @@ var player=function(x,y,c){
     this.sideFriction=0.90;
     this.forwardFriction=0.90;
     this.speed=0;
-    this.accel=0.07;
+    this.accel=0.03;
     this.decl=0.90;
     this.dir=0;
     this.turnSpeed=0.6;
@@ -145,7 +148,7 @@ var player=function(x,y,c){
         forwardVelocity.multiply(fric);
         rightVelocity = right.multiply(Vector.dot(this.vel, right));
         this.vel = forwardVelocity.add(rightVelocity.multiply(per));
-        var tailLength = 100;
+        var tailLength = 25;
         if(rightVelocity.length()>3){
             this.wheelTrails[0].push([this.pos.x + 2*Math.sin(-this.dir) + -12*Math.cos(-this.dir), this.pos.y + 2*Math.cos(-this.dir) + 12*Math.sin(-this.dir), tailLength, this.dir]);
             this.wheelTrails[1].push([this.pos.x + -2*Math.sin(-this.dir) + -12*Math.cos(-this.dir), this.pos.y + -2*Math.cos(-this.dir) + 12*Math.sin(-this.dir), tailLength, this.dir]);
