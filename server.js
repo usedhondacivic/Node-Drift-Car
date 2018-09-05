@@ -17,18 +17,33 @@ var toSend={};
 toSend["players"] = {};
 toSend["bullets"] = [];
 
+var colors= [
+    [255,0,0],
+    [0, 255, 0],
+    [0, 0, 255],
+    [0,255,255],
+    [255,255,0],
+    [255,0,255],
+    [0,0,0]
+];
+
 io.on("connection", function (socket) {
     console.log("a user connected");
     socket.on("new player", function(){
-        toSend["players"][socket.id] = new player(100, 100);
+        var color = colors[toSend["players"].length%colors.length];
+        toSend["players"][socket.id] = new player(100, 100, color);
     });
     
     socket.on("key press", function(arg){
-        toSend["players"][socket.id].keys[arg] = true;
+        if( toSend["players"][socket.id]){
+            toSend["players"][socket.id].keys[arg] = true;
+        }
     });
 
     socket.on("key release", function(arg){
-        toSend["players"][socket.id].keys[arg] = false;
+        if( toSend["players"][socket.id]){
+            toSend["players"][socket.id].keys[arg] = false;
+        }
     });
 
     socket.on("click", function(arg){
@@ -53,9 +68,9 @@ setInterval(function(){
     io.emit("state", toSend);
 }, 1000/60);
 
-server.listen(3000, function (err) {
+server.listen(1234, function (err) {
     if (err) throw err
-    console.log('Now listening on port 3000');
+    console.log('Now listening on port 1234');
 });
 
 var LEFT_ARROW = 37;
@@ -84,49 +99,16 @@ var DOWN_ARROW = 40;
         this.y += this.velocityY;
     }
 }*/
-/*
-var player=function(x,y){
-    this.pos=new Vector(x, y);
-    this.vel=new Vector(0,0);
-    this.x=200;
-    this.y=200;
-    this.friction=0.96;
-    this.speedFriction=0.85;
-    this.speed=0;
-    this.accel=0.05;
-    this.dir=0;
-    this.turnAdjust = 0.03;
-    this.turnSpeed=0.7;
-    this.turnDamp=70;
-    this.wheelTrails=[[],[],[],[]];
-    this.keys=[];
-    this.draw=function(){
-        this.update();
-    };
-    this.update=function(){
-        this.pos.addTo(this.vel);
-        //console.log(new Vector(Math.cos(this.dir)*this.speed,Math.sin(this.dir)*this.speed));
-        this.vel.addTo(new Vector(Math.cos(this.dir)*this.speed,Math.sin(this.dir)*this.speed));
-        this.vel.multiplyBy(this.friction);
-        this.speed*=this.speedFriction;
-        if(this.keys[UP_ARROW]){this.speed+=this.accel;}else{
-            this.vel.addTo(new Vector(Math.cos(this.dir)*this.vel.getMagnitude()*this.turnAdjust,Math.sin(this.dir)*this.vel.getMagnitude()*this.turnAdjust));
-        }
-        if(this.keys[DOWN_ARROW]){this.speed-=this.accel*0.5;}
-        if(this.keys[LEFT_ARROW]){this.dir-=(this.turnSpeed*this.vel.getMagnitude())/this.turnDamp;}
-        if(this.keys[RIGHT_ARROW]){this.dir+=(this.turnSpeed*this.vel.getMagnitude())/this.turnDamp;}
-    };
-};
-*/
-var player=function(x,y){
+var player=function(x,y,c){
     this.pos=new Vector(x, y);
     this.vel=new Vector(0, 0);
     this.x=200;
     this.y=200;
+    this.color=c;
     this.sideFriction=0.90;
     this.forwardFriction=0.90;
     this.speed=0;
-    this.accel=0.03;
+    this.accel=0.07;
     this.decl=0.90;
     this.dir=0;
     this.turnSpeed=0.6;
@@ -145,6 +127,14 @@ var player=function(x,y){
         if(this.keys[DOWN_ARROW]){this.speed-=this.accel*0.5;}
         if(this.keys[LEFT_ARROW]){this.dir-=(this.turnSpeed*this.vel.length())/this.turnDamp;}
         if(this.keys[RIGHT_ARROW]){this.dir+=(this.turnSpeed*this.vel.length())/this.turnDamp;}
+        for(var i in this.wheelTrails){
+            for(var o=0; o<this.wheelTrails[i].length; o++){
+                this.wheelTrails[i][o][2]--;
+                if(this.wheelTrails[i][o][2]<0){
+                    this.wheelTrails[i].splice(o,1);
+                }
+            }
+        }
     };
     this.sideFriction=function(per, fric){
         var forward = new Vector(Math.cos(this.dir), Math.sin(this.dir));
@@ -155,6 +145,13 @@ var player=function(x,y){
         forwardVelocity.multiply(fric);
         rightVelocity = right.multiply(Vector.dot(this.vel, right));
         this.vel = forwardVelocity.add(rightVelocity.multiply(per));
+        var tailLength = 100;
+        if(rightVelocity.length()>3){
+            this.wheelTrails[0].push([this.pos.x + 2*Math.sin(-this.dir) + -12*Math.cos(-this.dir), this.pos.y + 2*Math.cos(-this.dir) + 12*Math.sin(-this.dir), tailLength, this.dir]);
+            this.wheelTrails[1].push([this.pos.x + -2*Math.sin(-this.dir) + -12*Math.cos(-this.dir), this.pos.y + -2*Math.cos(-this.dir) + 12*Math.sin(-this.dir), tailLength, this.dir]);
+            this.wheelTrails[2].push([this.pos.x + 2*Math.sin(-this.dir) + 2*Math.cos(-this.dir), this.pos.y + 2*Math.cos(-this.dir) - 2*Math.sin(-this.dir), tailLength, this.dir]);
+            this.wheelTrails[3].push([this.pos.x + -2*Math.sin(-this.dir) + 2*Math.cos(-this.dir), this.pos.y + -2*Math.cos(-this.dir) - 2*Math.sin(-this.dir), tailLength, this.dir]);
+        }
     };
 };
 
