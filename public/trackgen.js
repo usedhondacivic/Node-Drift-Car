@@ -1,4 +1,11 @@
-angleMode = "radians";
+var keys=[];
+keyPressed=function(){keys[keyCode];};
+keyReleased=function(){keys[keyCode];};
+
+var setup = function() {
+    createCanvas(document.body.clientWidth, window.innerHeight);
+}
+
 var trackNode = function(centerX, centerY, direction, width){
     this.cX = centerX;
     this.cY = centerY;
@@ -62,6 +69,22 @@ var renderTrack = function(track){
             noFill();
             arc(centerX, centerY, size, size, Math.atan2(next.cY-centerY, next.cX-centerX), Math.atan2(current.cY-centerY, current.cX-centerX));
         }
+    }
+};
+
+var brush = {
+    mode: "s",
+    cX: 100,
+    cY: 500,
+    dir: 0,
+    pole: 0,
+    width: 30,
+    draw: function(){
+        stroke(255,0,0);
+        line(this.cX+Math.cos(this.dir)*this.width, this.cY+Math.sin(this.dir)*this.width, this.cX+Math.cos(this.dir+Math.PI)*this.width, this.cY+Math.sin(this.dir+Math.PI)*this.width);
+    },
+    update: function(){
+        
     }
 };
 var mode  = "s";
