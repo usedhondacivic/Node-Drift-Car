@@ -1,6 +1,6 @@
 var keys=[];
-keyPressed=function(){keys[keyCode];};
-keyReleased=function(){keys[keyCode];};
+keyPressed=function(){keys[keyCode] = true;};
+keyReleased=function(){keys[keyCode] = false;};
 
 var setup = function() {
     createCanvas(document.body.clientWidth, window.innerHeight);
@@ -30,20 +30,24 @@ var trackNode = function(centerX, centerY, direction, width){
 };
 
 var trackOne = [
-    new trackNode(100, 200, Math.PI/2, 50),
-    new trackNode(100, 200, Math.PI/2, 50),
+    new trackNode(100, 200, Math.PI/2, 30),
 ];
 
 
-var renderTrack = function(track){
+var renderTrack = function(track, currentBrush){
     stroke(0);
     strokeWeight(2);
-    track[track.length-1].setup();
-    for(var i=0; i<track.length-1; i++){
+    currentBrush.track = track;
+    for(var i=0; i<track.length; i++){
         track[i].setup();
         var current = track[i];
-        var next = track[i+1];
+        if(i===track.length-1){
+            var next = currentBrush;
+        }else{
+            var next = track[i+1];
+        }
         line(current.topX, current.topY, current.botX, current.botY);
+        stroke(0,255,255);
         line(next.topX, next.topY, next.botX, next.botY);
         if(current.dir === next.dir){
             line(current.topX, current.topY, next.topX, next.topY);
@@ -61,7 +65,6 @@ var renderTrack = function(track){
                 centerX = next.cX;
                 centerY = current.cY - current.slope*(current.cX-next.cY);
             }
-            println(dist(centerX, centerY, current.cX, current.cY)+","+dist(centerX, centerY, next.cX, next.cY));
             stroke(0);
             fill(255, 0, 0);
             strokeWeight(2);
@@ -72,30 +75,69 @@ var renderTrack = function(track){
     }
 };
 
+var LEFT_ARROW = 37;
+var RIGHT_ARROW = 39;
+var UP_ARROW = 38;
+var DOWN_ARROW = 40;
+
 var brush = {
     mode: "s",
     cX: 100,
-    cY: 500,
-    dir: 0,
+    cY: 200,
+    topX: 0,
+    topY: 0,
+    botX: 0,
+    botY: 0,
+    slope: 0,
+    yInt: 0,
+    dir: Math.PI/2,
     pole: 0,
+    lastPole: 0,
     width: 30,
     draw: function(){
+        noFill();
         stroke(255,0,0);
-        line(this.cX+Math.cos(this.dir)*this.width, this.cY+Math.sin(this.dir)*this.width, this.cX+Math.cos(this.dir+Math.PI)*this.width, this.cY+Math.sin(this.dir+Math.PI)*this.width);
+        line(this.topX, this.topY, this.botX, this.botY);
+        ellipse(this.cX+Math.cos(this.dir)*this.pole, this.cY+Math.sin(this.dir)*this.pole, 10, 10);
+        this.setup();
+        this.update();
     },
     update: function(){
-        
+        if(keys[UP_ARROW]){
+            if(this.lastPole !== this.pole && Math.abs(this.pole) > this.width){
+                trackOne.push(new trackNode(this.cX, this.cY, this.dir, this.width));
+            }
+            if(Math.abs(this.pole) > this.width){
+                
+                this.dir = Math.atan2(this.cY+Math.sin(this.dir)*this.pole - this.cY, this.cX+Math.cos(this.dir)*this.pole - this.cX);
+            }else{
+                this.cX -= Math.cos(this.dir+Math.PI/2)*3;
+                this.cY -= Math.sin(this.dir+Math.PI/2)*3;
+            }
+            this.lastPole = this.pole;
+        }
+        if(keys[RIGHT_ARROW]){
+            this.pole += 5;
+        }
+        if(keys[LEFT_ARROW]){
+            this.pole -= 5;
+        }
+    },
+    setup: function(){
+        this.topX = this.cX+Math.cos(this.dir)*this.width;
+        this.topY = this.cY+Math.sin(this.dir)*this.width;
+        this.botX = this.cX+Math.cos(this.dir+Math.PI)*this.width;
+        this.botY = this.cY+Math.sin(this.dir+Math.PI)*this.width;
+        if(Math.cos(this.dir) !== 0){
+            this.slope = Math.sin(this.dir)/Math.cos(this.dir);
+        }
+        this.yInt = this.cY-this.cX*this.slope;
     }
 };
 var mode  = "s";
 
 var draw= function() {
     background(255, 255, 255);
-    renderTrack(trackOne);
-    if(mouseIsPressed){
-        if(mode === "s"){
-            trackOne[trackOne.length-1].cX -= Math.cos(trackOne[trackOne.length-1].dir+Math.PI/2)*3;
-            trackOne[trackOne.length-1].cY -= Math.sin(trackOne[trackOne.length-1].dir+Math.PI/2)*3;
-        }
-    }
+    renderTrack(trackOne, brush);
+    brush.draw();
 };
