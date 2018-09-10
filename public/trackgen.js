@@ -70,7 +70,7 @@ var renderTrack = function(track, currentBrush){
             strokeWeight(2);
             var size = (dist(centerX, centerY, current.cX, current.cY)+current.width)*2;
             noFill();
-            arc(centerX, centerY, size, size, Math.atan2(next.cY-centerY, next.cX-centerX), Math.atan2(current.cY-centerY, current.cX-centerX));
+            arc(centerX, centerY, size, size, Math.min(Math.atan2(next.cY-centerY, next.cX-centerX), Math.atan2(current.cY-centerY, current.cX-centerX)), Math.max(Math.atan2(next.cY-centerY, next.cX-centerX), Math.atan2(current.cY-centerY, current.cX-centerX)));
         }
     }
 };
@@ -92,8 +92,11 @@ var brush = {
     yInt: 0,
     dir: Math.PI/2,
     pole: 0,
+    poleX: 0, 
+    poleY: 0,
     lastPole: 0,
     width: 30,
+    outside: false, 
     draw: function(){
         noFill();
         stroke(255,0,0);
@@ -106,10 +109,20 @@ var brush = {
         if(keys[UP_ARROW]){
             if(this.lastPole !== this.pole && Math.abs(this.pole) > this.width){
                 trackOne.push(new trackNode(this.cX, this.cY, this.dir, this.width));
+                this.outside = true;
             }
-            if(Math.abs(this.pole) > this.width){
-                
-                this.dir = Math.atan2(this.cY+Math.sin(this.dir)*this.pole - this.cY, this.cX+Math.cos(this.dir)*this.pole - this.cX);
+            if(Math.abs(this.pole) < this.width && this.outside){
+                trackOne.push(new trackNode(this.cX, this.cY, this.dir, this.width));
+                this.outside = false;
+            }
+            if(this.pole > this.width){
+                this.cX = Math.cos(this.dir+Math.PI/20) * -this.pole + this.poleX;
+                this.cY = Math.sin(this.dir+Math.PI/20) * -this.pole + this.poleY;
+                this.dir = Math.atan2(this.poleY - this.cY, this.poleX - this.cX);
+            }else if(this.pole < -this.width){
+                this.cX = Math.cos(this.dir-Math.PI/20)* -this.pole + this.poleX;
+                this.cY = Math.sin(this.dir-Math.PI/20)* -this.pole + this.poleY;
+                this.dir = Math.atan2(this.poleY - this.cY, this.poleX - this.cX);
             }else{
                 this.cX -= Math.cos(this.dir+Math.PI/2)*3;
                 this.cY -= Math.sin(this.dir+Math.PI/2)*3;
@@ -118,9 +131,13 @@ var brush = {
         }
         if(keys[RIGHT_ARROW]){
             this.pole += 5;
+            this.poleX = this.cX+Math.cos(this.dir)*this.pole;
+            this.poleY = this.cY+Math.sin(this.dir)*this.pole;
         }
         if(keys[LEFT_ARROW]){
             this.pole -= 5;
+            this.poleX = this.cX+Math.cos(this.dir)*this.pole;
+            this.poleY = this.cY+Math.sin(this.dir)*this.pole;
         }
     },
     setup: function(){
