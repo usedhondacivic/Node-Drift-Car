@@ -56,15 +56,26 @@ var renderTrack = function(track, currentBrush){
         }else{
             var centerX;
             var centerY;
-            if(Math.cos(current.dir) !== 0 && Math.cos(next.dir) !== 0){
-                centerX = (current.yInt - next.yInt)/(next.slope - current.slope);
-                centerY = (current.yInt*next.slope - next.yInt*current.slope)/(next.slope - current.slope);
-            }else if(Math.cos(current.dir) === 0){
-                centerX = current.cX;
-                centerY = next.cY - next.slope*(next.cX-current.cY);
+            if(next === currentBrush){
+                centerX = currentBrush.poleLockX;
+                centerY = currentBrush.poleLockY;
             }else{
-                centerX = next.cX;
-                centerY = current.cY - current.slope*(current.cX-next.cY);
+                if(Math.cos(current.dir) !== 0 && Math.cos(next.dir) !== 0){
+                    centerX = (current.yInt - next.yInt)/(next.slope - current.slope);
+                    centerY = (current.yInt * next.slope - next.yInt * current.slope)/(next.slope - current.slope);
+                }else if(Math.cos(current.dir) === 0){
+                    centerX = current.cX;
+                    centerY = next.cY - next.slope*(next.cX-current.cY);
+                }else{
+                    centerX = next.cX;
+                    centerY = current.cY - current.slope*(current.cX-next.cY);
+                }
+                /*var minX = Math.min(current.cX, next.cX);
+                var maxX = Math.max(current.cX, next.cX);
+                var minY = Math.min(current.cY, next.cY);
+                var maxY = Math.max(current.cY, next.cY);
+                centerX = (maxX - minX) / 2 + minX;
+                centerY = (maxY - minY) / 2 + minY;*/
             }
             stroke(0);
             fill(255, 0, 0);
@@ -75,11 +86,13 @@ var renderTrack = function(track, currentBrush){
                 arc(centerX, centerY, size, size, Math.atan2(current.cY-centerY, current.cX-centerX), Math.atan2(next.cY-centerY, next.cX-centerX));
                 var size = (dist(centerX, centerY, current.cX, current.cY)-current.width)*2;
                 arc(centerX, centerY, size, size, Math.atan2(current.cY-centerY, current.cX-centerX), Math.atan2(next.cY-centerY, next.cX-centerX));
+                ellipse(centerX, centerY, 10, 10);
             }else{
                 var size = (dist(centerX, centerY, current.cX, current.cY)+current.width)*2;
                 arc(centerX, centerY, size, size, Math.atan2(next.cY-centerY, next.cX-centerX), Math.atan2(current.cY-centerY, current.cX-centerX));
                 var size = (dist(centerX, centerY, current.cX, current.cY)-current.width)*2;
                 arc(centerX, centerY, size, size, Math.atan2(next.cY-centerY, next.cX-centerX), Math.atan2(current.cY-centerY, current.cX-centerX));
+                ellipse(centerX, centerY, 10, 10);
             }
         }
     }
@@ -104,6 +117,8 @@ var brush = {
     pole: 0,
     poleX: 0, 
     poleY: 0,
+    poleLockX: 0,
+    poleLockY: 0,
     lastPole: 0,
     width: 30,
     outside: false, 
@@ -117,6 +132,8 @@ var brush = {
     },
     update: function(){
         if(keys[UP_ARROW]){
+            this.poleLockX = this.poleX;
+            this.poleLockY = this.poleY;
             if(this.lastPole !== this.pole && Math.abs(this.pole) > this.width){
                 trackOne.push(new trackNode(this.cX, this.cY, this.dir, this.width));
                 this.outside = true;
