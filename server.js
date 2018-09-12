@@ -33,6 +33,7 @@ var colors= [
     [255,0,255],
     [0,0,0]
 ];
+
 var colorNum=0;
 
 io.on("connection", function (socket) {
