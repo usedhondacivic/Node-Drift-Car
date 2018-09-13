@@ -56,10 +56,7 @@ var renderTrack = function(track, currentBrush){
         }else{
             var centerX;
             var centerY;
-            if(next === currentBrush){
-                centerX = currentBrush.poleLockX;
-                centerY = currentBrush.poleLockY;
-            }else{
+            if(current.yInt !== next.yInt){
                 if(Math.cos(current.dir) !== 0 && Math.cos(next.dir) !== 0){
                     centerX = (current.yInt - next.yInt)/(next.slope - current.slope);
                     centerY = (current.yInt * next.slope - next.yInt * current.slope)/(next.slope - current.slope);
@@ -70,12 +67,14 @@ var renderTrack = function(track, currentBrush){
                     centerX = next.cX;
                     centerY = current.cY - current.slope*(current.cX-next.cY);
                 }
-                /*var minX = Math.min(current.cX, next.cX);
+            }else{
+                console.log("hit");
+                var minX = Math.min(current.cX, next.cX);
                 var maxX = Math.max(current.cX, next.cX);
                 var minY = Math.min(current.cY, next.cY);
                 var maxY = Math.max(current.cY, next.cY);
                 centerX = (maxX - minX) / 2 + minX;
-                centerY = (maxY - minY) / 2 + minY;*/
+                centerY = (maxY - minY) / 2 + minY;
             }
             stroke(0);
             fill(255, 0, 0);
