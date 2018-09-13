@@ -54,6 +54,7 @@ var renderTrack = function(track, currentBrush){
             line(current.topX, current.topY, next.topX, next.topY);
             line(current.botX, current.botY, next.botX, next.botY);
         }else{
+            //https://mathwizz.com/algebra/help/help21.htm
             var centerX;
             var centerY;
             if(next === currentBrush){
