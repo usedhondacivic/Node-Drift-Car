@@ -23,6 +23,7 @@ app.get(
 var toSend={};
 toSend["players"] = {};
 toSend["bullets"] = [];
+//toSend["walls"] = [];
 
 var colors= [
     [255,0,0],
@@ -77,6 +78,20 @@ server.listen(1234, function (err) {
     console.log('Now listening on port 1234');
 });
 
+var wall=function(x1, y1, x2, y2){
+	this.x1 = x1;
+	this.y1 = y1;
+	this.x2 = x2;
+	this.y2 = y2;
+	this.vec = new Vector();
+	this.length = 0;
+	this.setup=function(){
+		this.vec = new Vector(x2 - x1, y2 - y1);
+		this.length = vec.length;
+		this.vec.normalize();
+	}
+}
+
 var LEFT_ARROW = 37;
 var RIGHT_ARROW = 39;
 var UP_ARROW = 38;
@@ -96,7 +111,25 @@ var player=function(x,y,c){
     this.dir=0;
     this.turnSpeed=0.6;
     this.turnDamp=70;
-    this.wheelTrails=[[],[],[],[]];
+	this.wheelTrails=[[],[],[],[]];
+	this.corners={
+		topRight:{
+			x:0,
+			y:0
+		},
+		topLeft:{
+			x:0,
+			y:0
+		},
+		bottomRight:{
+			x:0,
+			y:0
+		},
+		bottomLeft:{
+			x:0,
+			y:0
+		}
+	};
     this.keys=[];
     this.draw=function(){
         this.update();
@@ -109,7 +142,7 @@ var player=function(x,y,c){
         if(this.keys[UP_ARROW]){this.speed+=this.accel;}
         if(this.keys[DOWN_ARROW]){this.speed-=this.accel*0.5;}
         if(this.keys[LEFT_ARROW]){this.dir-=(this.turnSpeed*this.vel.length())/this.turnDamp;}
-        if(this.keys[RIGHT_ARROW]){this.dir+=(this.turnSpeed*this.vel.length())/this.turnDamp;}
+		if(this.keys[RIGHT_ARROW]){this.dir+=(this.turnSpeed*this.vel.length())/this.turnDamp;}
         for(var i in this.wheelTrails){
             for(var o=0; o<this.wheelTrails[i].length; o++){
                 this.wheelTrails[i][o][2]--;
@@ -128,14 +161,30 @@ var player=function(x,y,c){
         forwardVelocity.multiply(fric);
         rightVelocity = right.multiply(Vector.dot(this.vel, right));
         this.vel = forwardVelocity.add(rightVelocity.multiply(per));
-        var tailLength = 25;
+		this.setCorners(rightVelocity);
+	};
+	this.setCorners=function(rightVelocity){
+		var tailLength = 25;
+		this.corners.topRight.x = this.pos.x + 2*Math.sin(-this.dir) - 12*Math.cos(-this.dir);
+		this.corners.topRight.y =  this.pos.y + 2*Math.cos(-this.dir) + 12*Math.sin(-this.dir);
+		this.corners.topLeft.x = this.pos.x - 2*Math.sin(-this.dir) - 12*Math.cos(-this.dir);
+		this.corners.topRight.y = this.pos.y - 2*Math.cos(-this.dir) + 12*Math.sin(-this.dir);
+		this.corners.bottomRight.x = this.pos.x + 2*Math.sin(-this.dir) + 2*Math.cos(-this.dir);
+		this.corners.bottomRight.y = this.pos.y + 2*Math.cos(-this.dir) - 2*Math.sin(-this.dir);
+		this.corners.bottomLeft.x = this.pos.x - 2*Math.sin(-this.dir) + 2*Math.cos(-this.dir);
+		this.corners.bottomLeft.y = this.pos.y - 2*Math.cos(-this.dir) - 2*Math.sin(-this.dir);
         if(rightVelocity.length()>3){
-            this.wheelTrails[0].push([this.pos.x + 2*Math.sin(-this.dir) + -12*Math.cos(-this.dir), this.pos.y + 2*Math.cos(-this.dir) + 12*Math.sin(-this.dir), tailLength, this.dir]);
-            this.wheelTrails[1].push([this.pos.x + -2*Math.sin(-this.dir) + -12*Math.cos(-this.dir), this.pos.y + -2*Math.cos(-this.dir) + 12*Math.sin(-this.dir), tailLength, this.dir]);
-            this.wheelTrails[2].push([this.pos.x + 2*Math.sin(-this.dir) + 2*Math.cos(-this.dir), this.pos.y + 2*Math.cos(-this.dir) - 2*Math.sin(-this.dir), tailLength, this.dir]);
-            this.wheelTrails[3].push([this.pos.x + -2*Math.sin(-this.dir) + 2*Math.cos(-this.dir), this.pos.y + -2*Math.cos(-this.dir) - 2*Math.sin(-this.dir), tailLength, this.dir]);
+            this.wheelTrails[0].push([this.corners.topRight.x, this.corners.topRight.y, tailLength, this.dir]);
+            this.wheelTrails[1].push([this.corners.topLeft.x, this.corners.topRight.y, tailLength, this.dir]);
+            this.wheelTrails[2].push([this.corners.bottomRight.x, this.corners.bottomRight.y, tailLength, this.dir]);
+            this.wheelTrails[3].push([this.corners.bottomLeft.x, this.corners.bottomLeft.y, tailLength, this.dir]);
         }
-    };
+	}
+	this.collision=function(){
+		for(var w in toSend["walls"]){
+			
+		}
+	}
 };
 
 function Vector(x, y) {
@@ -261,3 +310,60 @@ Vector.dot = function(a, b) {
 Vector.cross = function(a, b) {
 	return a.x * b.y - a.y * b.x;
 };
+
+function doLineSegmentsIntersect(p, p2, q, q2) {
+	var r = subtractPoints(p2, p);
+	var s = subtractPoints(q2, q);
+
+	var uNumerator = crossProduct(subtractPoints(q, p), r);
+	var denominator = crossProduct(r, s);
+
+	if (uNumerator == 0 && denominator == 0) {
+		if (equalPoints(p, q) || equalPoints(p, q2) || equalPoints(p2, q) || equalPoints(p2, q2)) {
+			return true
+		}
+		return !allEqual(
+				(q.x - p.x < 0),
+				(q.x - p2.x < 0),
+				(q2.x - p.x < 0),
+				(q2.x - p2.x < 0)) ||
+			!allEqual(
+				(q.y - p.y < 0),
+				(q.y - p2.y < 0),
+				(q2.y - p.y < 0),
+				(q2.y - p2.y < 0));
+	}
+
+	if (denominator == 0) {
+		return false;
+	}
+
+	var u = uNumerator / denominator;
+	var t = crossProduct(subtractPoints(q, p), s) / denominator;
+
+	return (t >= 0) && (t <= 1) && (u >= 0) && (u <= 1);
+}
+function crossProduct(point1, point2) {
+	return point1.x * point2.y - point1.y * point2.x;
+}
+function subtractPoints(point1, point2) {
+	var result = {};
+	result.x = point1.x - point2.x;
+	result.y = point1.y - point2.y;
+
+	return result;
+}
+function equalPoints(point1, point2) {
+	return (point1.x == point2.x) && (point1.y == point2.y)
+}
+
+function allEqual(args) {
+	var firstValue = arguments[0],
+		i;
+	for (i = 1; i < arguments.length; i += 1) {
+		if (arguments[i] != firstValue) {
+			return false;
+		}
+	}
+	return true;
+}

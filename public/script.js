@@ -42,6 +42,10 @@ var renderPlayer = function(instance) {
             }
         }
     }
+    stroke(255,0,0);
+    strokeWeight(5);
+    line(instance.corners.topRight.x, instance.corners.topRight.y, instance.corners.bottomRight.x, instance.corners.bottomRight.y);
+    line(instance.corners.topRight.x, instance.corners.topRight.y, instance.corners.topLeft.x, instance.corners.topLeft.y);
     push();
         translate(instance.pos.x,instance.pos.y);
         rotate(instance.dir);
