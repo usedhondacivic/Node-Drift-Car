@@ -84,11 +84,13 @@ var wall=function(x1, y1, x2, y2){
 	this.x2 = x2;
 	this.y2 = y2;
 	this.vec = new Vector();
+	this.normal = new Vector();
 	this.length = 0;
 	this.setup=function(){
 		this.vec = new Vector(x2 - x1, y2 - y1);
 		this.length = vec.length;
 		this.vec.normalize();
+		
 	}
 }
 
@@ -128,6 +130,22 @@ var player=function(x,y,c){
 		bottomLeft:{
 			x:0,
 			y:0
+		},
+		topRightWheel:{
+			x:0,
+			y:0
+		},
+		topLeftWheel:{
+			x:0,
+			y:0
+		},
+		bottomRightWheel:{
+			x:0,
+			y:0
+		},
+		bottomLeftWheel:{
+			x:0,
+			y:0
 		}
 	};
     this.keys=[];
@@ -165,19 +183,28 @@ var player=function(x,y,c){
 	};
 	this.setCorners=function(rightVelocity){
 		var tailLength = 25;
-		this.corners.topRight.x = this.pos.x + 2*Math.sin(-this.dir) - 12*Math.cos(-this.dir);
-		this.corners.topRight.y =  this.pos.y + 2*Math.cos(-this.dir) + 12*Math.sin(-this.dir);
-		this.corners.topLeft.x = this.pos.x - 2*Math.sin(-this.dir) - 12*Math.cos(-this.dir);
-		this.corners.topRight.y = this.pos.y - 2*Math.cos(-this.dir) + 12*Math.sin(-this.dir);
-		this.corners.bottomRight.x = this.pos.x + 2*Math.sin(-this.dir) + 2*Math.cos(-this.dir);
-		this.corners.bottomRight.y = this.pos.y + 2*Math.cos(-this.dir) - 2*Math.sin(-this.dir);
-		this.corners.bottomLeft.x = this.pos.x - 2*Math.sin(-this.dir) + 2*Math.cos(-this.dir);
-		this.corners.bottomLeft.y = this.pos.y - 2*Math.cos(-this.dir) - 2*Math.sin(-this.dir);
+		this.corners.bottomLeftWheel.x = this.pos.x + 2*Math.sin(-this.dir) - 12*Math.cos(-this.dir);
+		this.corners.bottomLeftWheel.y =  this.pos.y + 2*Math.cos(-this.dir) + 12*Math.sin(-this.dir);
+		this.corners.topLeftWheel.x = this.pos.x - 2*Math.sin(-this.dir) - 12*Math.cos(-this.dir);
+		this.corners.topLeftWheel.y = this.pos.y - 2*Math.cos(-this.dir) + 12*Math.sin(-this.dir);
+		this.corners.bottomRightWheel.x = this.pos.x + 2*Math.sin(-this.dir) + 2*Math.cos(-this.dir);
+		this.corners.bottomRightWheel.y = this.pos.y + 2*Math.cos(-this.dir) - 2*Math.sin(-this.dir);
+		this.corners.topRightWheel.x = this.pos.x - 2*Math.sin(-this.dir) + 2*Math.cos(-this.dir);
+		this.corners.topRightWheel.y = this.pos.y - 2*Math.cos(-this.dir) - 2*Math.sin(-this.dir);
+		
+		this.corners.bottomLeft.x = this.pos.x + 5*Math.sin(-this.dir) - 15*Math.cos(-this.dir);
+		this.corners.bottomLeft.y =  this.pos.y + 5*Math.cos(-this.dir) + 15*Math.sin(-this.dir);
+		this.corners.topLeft.x = this.pos.x - 5*Math.sin(-this.dir) - 15*Math.cos(-this.dir);
+		this.corners.topLeft.y = this.pos.y - 5*Math.cos(-this.dir) + 15*Math.sin(-this.dir);
+		this.corners.bottomRight.x = this.pos.x + 5*Math.sin(-this.dir) + 5*Math.cos(-this.dir);
+		this.corners.bottomRight.y = this.pos.y + 5*Math.cos(-this.dir) - 5*Math.sin(-this.dir);
+		this.corners.topRight.x = this.pos.x - 5*Math.sin(-this.dir) + 5*Math.cos(-this.dir);
+		this.corners.topRight.y = this.pos.y - 5*Math.cos(-this.dir) - 5*Math.sin(-this.dir);
         if(rightVelocity.length()>3){
-            this.wheelTrails[0].push([this.corners.topRight.x, this.corners.topRight.y, tailLength, this.dir]);
-            this.wheelTrails[1].push([this.corners.topLeft.x, this.corners.topRight.y, tailLength, this.dir]);
-            this.wheelTrails[2].push([this.corners.bottomRight.x, this.corners.bottomRight.y, tailLength, this.dir]);
-            this.wheelTrails[3].push([this.corners.bottomLeft.x, this.corners.bottomLeft.y, tailLength, this.dir]);
+            this.wheelTrails[0].push([this.corners.topRightWheel.x, this.corners.topRightWheel.y, tailLength, this.dir]);
+            this.wheelTrails[1].push([this.corners.topLeftWheel.x, this.corners.topLeftWheel.y, tailLength, this.dir]);
+            this.wheelTrails[2].push([this.corners.bottomRightWheel.x, this.corners.bottomRightWheel.y, tailLength, this.dir]);
+            this.wheelTrails[3].push([this.corners.bottomLeftWheel.x, this.corners.bottomLeftWheel.y, tailLength, this.dir]);
         }
 	}
 	this.collision=function(){
@@ -193,7 +220,6 @@ function Vector(x, y) {
 }
 
 /* INSTANCE METHODS */
-
 Vector.prototype = {
 	negative: function() {
 		this.x = -this.x;
