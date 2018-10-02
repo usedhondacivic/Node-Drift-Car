@@ -21,9 +21,9 @@ socket.on("state", function(items){
         var player = items["players"][id];
         renderPlayer(player);
     }
-    for (var id in items["bullets"]) {
-        var bullet = items["bullets"][id];
-        renderBullet(bullet);
+    for (var id in items["walls"]) {
+        var bullet = items["walls"][id];
+        renderWalls(bullet);
     }
 });
 
@@ -61,8 +61,8 @@ var renderPlayer = function(instance) {
     //line(instance.corners.topRight.x, instance.corners.topRight.y, instance.corners.topLeft.x, instance.corners.topLeft.y);
 }
 
-var renderBullet = function(instance) {
-    noStroke();
-    fill(255,0,0);
-    //rect(instance.x,instance.y,3,3);
+var renderWalls = function(instance) {
+    stroke(255, 0, 0);
+    strokeWeight(5);
+    line(instance.x1, instance.y1, instance.x2, instance.y2);
 }

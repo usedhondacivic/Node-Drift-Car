@@ -22,8 +22,7 @@ app.get(
 
 var toSend={};
 toSend["players"] = {};
-toSend["bullets"] = [];
-//toSend["walls"] = [];
+toSend["walls"] = [];
 
 var colors= [
     [255,0,0],
@@ -66,8 +65,9 @@ io.on("connection", function (socket) {
 setInterval(function(){
     for(var type in toSend){
         for(var id in toSend[type]){
-            var obj = toSend[type][id];
-            obj.update();
+			var obj = toSend[type][id];
+			if(typeof obj.update === "function")
+				obj.update();
         }
     }
     io.emit("state", toSend);
@@ -86,13 +86,22 @@ var wall=function(x1, y1, x2, y2){
 	this.vec = new Vector();
 	this.normal = new Vector();
 	this.length = 0;
+	this.angle = 0;
 	this.setup=function(){
 		this.vec = new Vector(x2 - x1, y2 - y1);
-		this.length = vec.length;
-		this.vec.normalize();
-		
+		this.length = this.vec.length;
+		//this.vec.normalize();
+		this.angle = this.vec.toAngles();
+		this.normal = new Vector(Math.cos(this.angle + Math.PI/2), Math.sin(this.angle + Math.PI/2));
+		this.normal.normalize();
 	}
 }
+
+var test = new wall(500, 500, 1000, 700);
+test.setup();
+
+toSend["walls"].push(test);
+
 
 var LEFT_ARROW = 37;
 var RIGHT_ARROW = 39;
@@ -155,7 +164,8 @@ var player=function(x,y,c){
     this.update=function(){
         this.pos.add(this.vel);
         this.vel.add(new Vector(Math.cos(this.dir)*this.speed,Math.sin(this.dir)*this.speed));
-        this.sideFriction(0.96, 0.98);
+		this.sideFriction(0.96, 0.98);
+		this.collision();
         this.speed*=this.decl;
         if(this.keys[UP_ARROW]){this.speed+=this.accel;}
         if(this.keys[DOWN_ARROW]){this.speed-=this.accel*0.5;}
@@ -209,7 +219,14 @@ var player=function(x,y,c){
 	}
 	this.collision=function(){
 		for(var w in toSend["walls"]){
+			var velAngle = this.vel.toAngles();
+			var wallOrthAngle = w.normal.toAngles();
+			var reboundDirection = w.normal;
 			
+			var intoWall = reboundDirection.multiply(Vector.dot(this.vel, reboundForce));
+			var parallelToWall = w.vec.multiply(Vector.dot(this.vel, w.vec));
+
+			this.vel = parallelToWall.add(intoWall.multiply(-1));
 		}
 	}
 };
