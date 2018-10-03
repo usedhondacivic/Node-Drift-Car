@@ -88,12 +88,13 @@ var wall=function(x1, y1, x2, y2){
 	this.length = 0;
 	this.angle = 0;
 	this.setup=function(){
-		this.vec = new Vector(x2 - x1, y2 - y1);
-		this.length = this.vec.length;
-		//this.vec.normalize();
+		/*this.vec = new Vector(this.x2 - this.x1, this.y2 - this.y1);
+		console.log(this.vec.length());
+		this.length = this.vec.length();
+		this.vec = this.vec.normalize();
 		this.angle = this.vec.toAngles();
 		this.normal = new Vector(Math.cos(this.angle + Math.PI/2), Math.sin(this.angle + Math.PI/2));
-		this.normal.normalize();
+		this.normal.normalize();*/
 	}
 }
 
@@ -188,7 +189,7 @@ var player=function(x,y,c){
         forwardVelocity = forward.multiply(Vector.dot(this.vel, forward));
         forwardVelocity.multiply(fric);
         rightVelocity = right.multiply(Vector.dot(this.vel, right));
-        this.vel = forwardVelocity.add(rightVelocity.multiply(per));
+		this.vel = forwardVelocity.add(rightVelocity.multiply(per));
 		this.setCorners(rightVelocity);
 	};
 	this.setCorners=function(rightVelocity){
@@ -219,9 +220,9 @@ var player=function(x,y,c){
 	}
 	this.collision=function(){
 		for(var w in toSend["walls"]){
-			var velAngle = this.vel.toAngles();
-			var wallOrthAngle = w.normal.toAngles();
+			var test = new Vector();
 			var reboundDirection = w.normal;
+			console.log(test);
 			
 			var intoWall = reboundDirection.multiply(Vector.dot(this.vel, reboundForce));
 			var parallelToWall = w.vec.multiply(Vector.dot(this.vel, w.vec));
