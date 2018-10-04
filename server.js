@@ -1,5 +1,6 @@
 var express = require('express');
 var app = express();
+require("./vector.js")();
 var server = require('http').Server(app);
 const io = require('socket.io')(server);
 
@@ -88,21 +89,23 @@ var wall=function(x1, y1, x2, y2){
 	this.length = 0;
 	this.angle = 0;
 	this.setup=function(){
-		/*this.vec = new Vector(this.x2 - this.x1, this.y2 - this.y1);
-		console.log(this.vec.length());
+		this.vec = new Vector(this.x2 - this.x1, this.y2 - this.y1);
 		this.length = this.vec.length();
-		this.vec = this.vec.normalize();
+		this.vec.normalize();
 		this.angle = this.vec.toAngles();
 		this.normal = new Vector(Math.cos(this.angle + Math.PI/2), Math.sin(this.angle + Math.PI/2));
-		this.normal.normalize();*/
+		this.normal.normalize();
 	}
 }
 
 var test = new wall(500, 500, 1000, 700);
 test.setup();
 
-toSend["walls"].push(test);
+toSend["walls"].push(new wall(500, 500, 1000, 700), new wall(700, 200, 800, 1500));
 
+for(var w in toSend["walls"]){
+	toSend["walls"][w].setup();
+}
 
 var LEFT_ARROW = 37;
 var RIGHT_ARROW = 39;
@@ -112,8 +115,6 @@ var DOWN_ARROW = 40;
 var player=function(x,y,c){
     this.pos=new Vector(x, y);
     this.vel=new Vector(0, 0);
-    this.x=200;
-    this.y=200;
     this.color=c;
     this.sideFriction=0.90;
     this.forwardFriction=0.90;
@@ -211,203 +212,44 @@ var player=function(x,y,c){
 		this.corners.bottomRight.y = this.pos.y + 5*Math.cos(-this.dir) - 5*Math.sin(-this.dir);
 		this.corners.topRight.x = this.pos.x - 5*Math.sin(-this.dir) + 5*Math.cos(-this.dir);
 		this.corners.topRight.y = this.pos.y - 5*Math.cos(-this.dir) - 5*Math.sin(-this.dir);
-        if(rightVelocity.length()>3){
-            this.wheelTrails[0].push([this.corners.topRightWheel.x, this.corners.topRightWheel.y, tailLength, this.dir]);
-            this.wheelTrails[1].push([this.corners.topLeftWheel.x, this.corners.topLeftWheel.y, tailLength, this.dir]);
-            this.wheelTrails[2].push([this.corners.bottomRightWheel.x, this.corners.bottomRightWheel.y, tailLength, this.dir]);
-            this.wheelTrails[3].push([this.corners.bottomLeftWheel.x, this.corners.bottomLeftWheel.y, tailLength, this.dir]);
-        }
-	}
-	this.collision=function(){
-		for(var w in toSend["walls"]){
-			var test = new Vector();
-			var reboundDirection = w.normal;
-			console.log(test);
-			
-			var intoWall = reboundDirection.multiply(Vector.dot(this.vel, reboundForce));
-			var parallelToWall = w.vec.multiply(Vector.dot(this.vel, w.vec));
-
-			this.vel = parallelToWall.add(intoWall.multiply(-1));
-		}
-	}
-};
-
-function Vector(x, y) {
-	this.x = x || 0;
-	this.y = y || 0;
-}
-
-/* INSTANCE METHODS */
-Vector.prototype = {
-	negative: function() {
-		this.x = -this.x;
-		this.y = -this.y;
-		return this;
-	},
-	add: function(v) {
-		if (v instanceof Vector) {
-			this.x += v.x;
-			this.y += v.y;
-		} else {
-			this.x += v;
-			this.y += v;
-		}
-		return this;
-	},
-	subtract: function(v) {
-		if (v instanceof Vector) {
-			this.x -= v.x;
-			this.y -= v.y;
-		} else {
-			this.x -= v;
-			this.y -= v;
-		}
-		return this;
-	},
-	multiply: function(v) {
-		if (v instanceof Vector) {
-			this.x *= v.x;
-			this.y *= v.y;
-		} else {
-			this.x *= v;
-			this.y *= v;
-		}
-		return this;
-	},
-	divide: function(v) {
-		if (v instanceof Vector) {
-			if(v.x != 0) this.x /= v.x;
-			if(v.y != 0) this.y /= v.y;
-		} else {
-			if(v != 0) {
-				this.x /= v;
-				this.y /= v;
+		if(rightVelocity != null){
+			if(rightVelocity.length()>3){
+				this.wheelTrails[0].push([this.corners.topRightWheel.x, this.corners.topRightWheel.y, tailLength, this.dir]);
+				this.wheelTrails[1].push([this.corners.topLeftWheel.x, this.corners.topLeftWheel.y, tailLength, this.dir]);
+				this.wheelTrails[2].push([this.corners.bottomRightWheel.x, this.corners.bottomRightWheel.y, tailLength, this.dir]);
+				this.wheelTrails[3].push([this.corners.bottomLeftWheel.x, this.corners.bottomLeftWheel.y, tailLength, this.dir]);
 			}
 		}
-		return this;
-	},
-	equals: function(v) {
-		return this.x == v.x && this.y == v.y;
-	},
-	dot: function(v) {
-		return this.x * v.x + this.y * v.y;
-	},
-	cross: function(v) {
-		return this.x * v.y - this.y * v.x
-	},
-	length: function() {
-		return Math.sqrt(this.dot(this));
-	},
-	normalize: function() {
-		return this.divide(this.length());
-	},
-	min: function() {
-		return Math.min(this.x, this.y);
-	},
-	max: function() {
-		return Math.max(this.x, this.y);
-	},
-	toAngles: function() {
-		return -Math.atan2(-this.y, this.x);
-	},
-	angleTo: function(a) {
-		return Math.acos(this.dot(a) / (this.length() * a.length()));
-	},
-	toArray: function(n) {
-		return [this.x, this.y].slice(0, n || 2);
-	},
-	clone: function() {
-		return new Vector(this.x, this.y);
-	},
-	set: function(x, y) {
-		this.x = x; this.y = y;
-		return this;
 	}
-};
+	this.collision=function(){
+		for(var i in toSend["walls"]){
+			w = toSend["walls"][i];
+			if(	doLineSegmentsIntersect(this.corners.topRight, this.corners.topLeft, {x:w.x1, y:w.y1}, {x:w.x2, y:w.y2}) || 
+				doLineSegmentsIntersect(this.corners.topRight, this.corners.bottomRight, {x:w.x1, y:w.y1}, {x:w.x2, y:w.y2}) || 
+				doLineSegmentsIntersect(this.corners.topLeft, this.corners.bottomLeft, {x:w.x1, y:w.y1}, {x:w.x2, y:w.y2}) || 
+				doLineSegmentsIntersect(this.corners.bottomRight, this.corners.bottomLeft, {x:w.x1, y:w.y1}, {x:w.x2, y:w.y2})
+			){
+				var lastPos = Vector.subtract(this.pos, this.vel);
+				var reboundDirection = w.normal.clone();
+				var parallelToWall = w.vec.clone();
+				
+				var intoWall = reboundDirection.multiply(Vector.dot(this.vel, reboundDirection));
+				var parallelProjection = parallelToWall.multiply(Vector.dot(this.vel, w.vec));
 
-/* STATIC METHODS */
-Vector.negative = function(v) {
-	return new Vector(-v.x, -v.y);
-};
-Vector.add = function(a, b) {
-	if (b instanceof Vector) return new Vector(a.x + b.x, a.y + b.y);
-	else return new Vector(a.x + v, a.y + v);
-};
-Vector.subtract = function(a, b) {
-	if (b instanceof Vector) return new Vector(a.x - b.x, a.y - b.y);
-	else return new Vector(a.x - v, a.y - v);
-};
-Vector.multiply = function(a, b) {
-	if (b instanceof Vector) return new Vector(a.x * b.x, a.y * b.y);
-	else return new Vector(a.x * v, a.y * v);
-};
-Vector.divide = function(a, b) {
-	if (b instanceof Vector) return new Vector(a.x / b.x, a.y / b.y);
-	else return new Vector(a.x / v, a.y / v);
-};
-Vector.equals = function(a, b) {
-	return a.x == b.x && a.y == b.y;
-};
-Vector.dot = function(a, b) {
-	return a.x * b.x + a.y * b.y;
-};
-Vector.cross = function(a, b) {
-	return a.x * b.y - a.y * b.x;
-};
-
-function doLineSegmentsIntersect(p, p2, q, q2) {
-	var r = subtractPoints(p2, p);
-	var s = subtractPoints(q2, q);
-
-	var uNumerator = crossProduct(subtractPoints(q, p), r);
-	var denominator = crossProduct(r, s);
-
-	if (uNumerator == 0 && denominator == 0) {
-		if (equalPoints(p, q) || equalPoints(p, q2) || equalPoints(p2, q) || equalPoints(p2, q2)) {
-			return true
-		}
-		return !allEqual(
-				(q.x - p.x < 0),
-				(q.x - p2.x < 0),
-				(q2.x - p.x < 0),
-				(q2.x - p2.x < 0)) ||
-			!allEqual(
-				(q.y - p.y < 0),
-				(q.y - p2.y < 0),
-				(q2.y - p.y < 0),
-				(q2.y - p2.y < 0));
-	}
-
-	if (denominator == 0) {
-		return false;
-	}
-
-	var u = uNumerator / denominator;
-	var t = crossProduct(subtractPoints(q, p), s) / denominator;
-
-	return (t >= 0) && (t <= 1) && (u >= 0) && (u <= 1);
-}
-function crossProduct(point1, point2) {
-	return point1.x * point2.y - point1.y * point2.x;
-}
-function subtractPoints(point1, point2) {
-	var result = {};
-	result.x = point1.x - point2.x;
-	result.y = point1.y - point2.y;
-
-	return result;
-}
-function equalPoints(point1, point2) {
-	return (point1.x == point2.x) && (point1.y == point2.y)
-}
-
-function allEqual(args) {
-	var firstValue = arguments[0],
-		i;
-	for (i = 1; i < arguments.length; i += 1) {
-		if (arguments[i] != firstValue) {
-			return false;
+				this.vel = parallelProjection.add(intoWall.multiply(-0.5));
+				while(doLineSegmentsIntersect(this.corners.topRight, this.corners.topLeft, {x:w.x1, y:w.y1}, {x:w.x2, y:w.y2}) || 
+				doLineSegmentsIntersect(this.corners.topRight, this.corners.bottomRight, {x:w.x1, y:w.y1}, {x:w.x2, y:w.y2}) || 
+				doLineSegmentsIntersect(this.corners.topLeft, this.corners.bottomLeft, {x:w.x1, y:w.y1}, {x:w.x2, y:w.y2}) || 
+				doLineSegmentsIntersect(this.corners.bottomRight, this.corners.bottomLeft, {x:w.x1, y:w.y1}, {x:w.x2, y:w.y2})){
+					var velCopy = w.normal.clone();
+					velCopy.normalize();
+					if(Vector.cross(w.vec, Vector.subtract(new Vector(w.x1, w.y1), lastPos)) > 0){
+						velCopy.multiply(-1);
+					}
+					this.pos.add(velCopy);
+					this.setCorners(null);
+				}
+			}
 		}
 	}
-	return true;
-}
+};
