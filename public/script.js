@@ -15,31 +15,42 @@ var setup = function() {
 }
 
 socket.emit("new player");
+
+var trails = [];
 socket.on("state", function(items){
     background(255, 255, 255);
+    for(var i in trails){
+        push();
+        noStroke();
+        fill(0, 0, 0, trails[i][2]*5);
+        translate(trails[i][0], trails[i][1]);
+        rotate(trails[i][3]);
+        rect(-2.5, -1, 5, 2);
+        noStroke();
+        pop();
+        trails[i][2]--;
+        if(trails[i][2]<0){
+            trails.splice(i,1);
+        }
+    }
     for (var id in items["players"]) {
         var player = items["players"][id];
         renderPlayer(player);
     }
     for (var id in items["walls"]) {
-        var bullet = items["walls"][id];
-        renderWalls(bullet);
+        var wall = items["walls"][id];
+        renderWalls(wall);
     }
 });
 
 var renderPlayer = function(instance) {
-    for(var i in instance.wheelTrails){
-        for(var o=0; o<instance.wheelTrails[i].length; o++){
-            if(o+1 < instance.wheelTrails[i].length){
-                push();
-                noStroke();
-                fill(0, 0, 0, instance.wheelTrails[i][o][2]*5);
-                translate(instance.wheelTrails[i][o][0], instance.wheelTrails[i][o][1]);
-                rotate(instance.wheelTrails[i][o][3]);
-                rect(-2.5, -1, 5, 2);
-                noStroke();
-                pop();
-            }
+    var tailLength = 15;
+    if(instance.rightVel){
+        if(Math.sqrt(Math.pow(instance.rightVel.x,2) + Math.pow(instance.rightVel.y,2)) > 3){
+            trails.push([instance.corners.topRightWheel.x, instance.corners.topRightWheel.y, tailLength, instance.dir]);
+	        trails.push([instance.corners.topLeftWheel.x, instance.corners.topLeftWheel.y, tailLength, instance.dir]);
+	        trails.push([instance.corners.bottomRightWheel.x, instance.corners.bottomRightWheel.y, tailLength, instance.dir]);
+	        trails.push([instance.corners.bottomLeftWheel.x, instance.corners.bottomLeftWheel.y, tailLength, instance.dir]);
         }
     }
     push();

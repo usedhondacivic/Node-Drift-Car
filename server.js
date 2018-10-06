@@ -98,10 +98,7 @@ var wall=function(x1, y1, x2, y2){
 	}
 }
 
-var test = new wall(500, 500, 1000, 700);
-test.setup();
-
-toSend["walls"].push(new wall(500, 500, 1000, 700), new wall(700, 200, 800, 1500));
+toSend["walls"].push(new wall(300, 300, 300, 400), new wall(300, 300, 400, 300), new wall(400, 300, 400, 400), new wall(300, 400, 400, 400));
 
 for(var w in toSend["walls"]){
 	toSend["walls"][w].setup();
@@ -117,7 +114,8 @@ var player=function(x,y,c){
     this.vel=new Vector(0, 0);
     this.color=c;
     this.sideFriction=0.90;
-    this.forwardFriction=0.90;
+	this.forwardFriction=0.90;
+	this.rightVel=new Vector(0, 0);
     this.speed=0;
     this.accel=0.03;
     this.decl=0.90;
@@ -125,6 +123,7 @@ var player=function(x,y,c){
     this.turnSpeed=0.6;
     this.turnDamp=70;
 	this.wheelTrails=[[],[],[],[]];
+	this.dropTrack = 0;
 	this.corners={
 		topRight:{
 			x:0,
@@ -173,14 +172,14 @@ var player=function(x,y,c){
         if(this.keys[DOWN_ARROW]){this.speed-=this.accel*0.5;}
         if(this.keys[LEFT_ARROW]){this.dir-=(this.turnSpeed*this.vel.length())/this.turnDamp;}
 		if(this.keys[RIGHT_ARROW]){this.dir+=(this.turnSpeed*this.vel.length())/this.turnDamp;}
-        for(var i in this.wheelTrails){
+        /*for(var i in this.wheelTrails){
             for(var o=0; o<this.wheelTrails[i].length; o++){
                 this.wheelTrails[i][o][2]--;
                 if(this.wheelTrails[i][o][2]<0){
                     this.wheelTrails[i].splice(o,1);
                 }
             }
-        }
+        }*/
     };
     this.sideFriction=function(per, fric){
         var forward = new Vector(Math.cos(this.dir), Math.sin(this.dir));
@@ -194,7 +193,7 @@ var player=function(x,y,c){
 		this.setCorners(rightVelocity);
 	};
 	this.setCorners=function(rightVelocity){
-		var tailLength = 25;
+		this.rightVel = rightVelocity;
 		this.corners.bottomLeftWheel.x = this.pos.x + 2*Math.sin(-this.dir) - 12*Math.cos(-this.dir);
 		this.corners.bottomLeftWheel.y =  this.pos.y + 2*Math.cos(-this.dir) + 12*Math.sin(-this.dir);
 		this.corners.topLeftWheel.x = this.pos.x - 2*Math.sin(-this.dir) - 12*Math.cos(-this.dir);
@@ -212,14 +211,18 @@ var player=function(x,y,c){
 		this.corners.bottomRight.y = this.pos.y + 5*Math.cos(-this.dir) - 5*Math.sin(-this.dir);
 		this.corners.topRight.x = this.pos.x - 5*Math.sin(-this.dir) + 5*Math.cos(-this.dir);
 		this.corners.topRight.y = this.pos.y - 5*Math.cos(-this.dir) - 5*Math.sin(-this.dir);
-		if(rightVelocity != null){
+		/*if(rightVelocity != null){
 			if(rightVelocity.length()>3){
-				this.wheelTrails[0].push([this.corners.topRightWheel.x, this.corners.topRightWheel.y, tailLength, this.dir]);
-				this.wheelTrails[1].push([this.corners.topLeftWheel.x, this.corners.topLeftWheel.y, tailLength, this.dir]);
-				this.wheelTrails[2].push([this.corners.bottomRightWheel.x, this.corners.bottomRightWheel.y, tailLength, this.dir]);
-				this.wheelTrails[3].push([this.corners.bottomLeftWheel.x, this.corners.bottomLeftWheel.y, tailLength, this.dir]);
+				this.dropTrack++;
+				if(this.dropTrack === 2){
+					this.wheelTrails[0].push([this.corners.topRightWheel.x, this.corners.topRightWheel.y, tailLength, this.dir]);
+					this.wheelTrails[1].push([this.corners.topLeftWheel.x, this.corners.topLeftWheel.y, tailLength, this.dir]);
+					this.wheelTrails[2].push([this.corners.bottomRightWheel.x, this.corners.bottomRightWheel.y, tailLength, this.dir]);
+					this.wheelTrails[3].push([this.corners.bottomLeftWheel.x, this.corners.bottomLeftWheel.y, tailLength, this.dir]);
+					this.dropTrack=0;
+				}
 			}
-		}
+		}*/
 	}
 	this.collision=function(){
 		for(var i in toSend["walls"]){
