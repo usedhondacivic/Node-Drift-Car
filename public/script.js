@@ -14,7 +14,10 @@ var setup = function() {
     createCanvas(document.body.clientWidth, window.innerHeight);
 }
 
-socket.emit("new player");
+var name = prompt("Please enter a name: ", "New Player");
+if(name != null && name != ""){
+    socket.emit("new player", name);
+}
 
 var trails = [];
 socket.on("state", function(items){

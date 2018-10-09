@@ -3,3 +3,8 @@
     margin: 0;
     height: 100%;
 }
+
+#playerName {
+    display: inline-block;
+    float: left;
+}

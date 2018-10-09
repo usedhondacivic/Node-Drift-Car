@@ -39,10 +39,10 @@ var colorNum=0;
 
 io.on("connection", function (socket) {
     console.log("a user connected");
-    socket.on("new player", function(){
+    socket.on("new player", function(arg){
         var color = colors[colorNum%colors.length];
         colorNum++;
-        toSend["players"][socket.id] = new player(100, 100, color);
+		toSend["players"][socket.id] = new player(100, 100, arg, color);
     });
     
     socket.on("key press", function(arg){
@@ -98,7 +98,12 @@ var wall=function(x1, y1, x2, y2){
 	}
 }
 
-toSend["walls"].push(new wall(300, 300, 300, 400), new wall(300, 300, 400, 300), new wall(400, 300, 400, 400), new wall(300, 400, 400, 400));
+createPolygon(new Vector(400, 360), 4, 50, Math.PI/4, 0);
+createPolygon(new Vector(320, 320), 4, 30, -Math.PI/3, 0);
+createPolygon(new Vector(350, 350), 4, 200, Math.PI/6, 1);
+createPolygon(new Vector(700, 700), 6, 100, Math.PI/5, 1);
+createPolygon(new Vector(1500, 500), 3, 500, -Math.PI/7, 0);
+createPolygon(new Vector(800, 200), 20, 100, -Math.PI/3, 0);
 
 for(var w in toSend["walls"]){
 	toSend["walls"][w].setup();
@@ -109,8 +114,10 @@ var RIGHT_ARROW = 39;
 var UP_ARROW = 38;
 var DOWN_ARROW = 40;
 
-var player=function(x,y,c){
-    this.pos=new Vector(x, y);
+var player=function(x,y,id,c){
+	this.id = id;
+	this.pos=new Vector(x, y);
+	this.posBuffer=new Vector(0,0);
     this.vel=new Vector(0, 0);
     this.color=c;
     this.sideFriction=0.90;
@@ -163,6 +170,7 @@ var player=function(x,y,c){
         this.update();
     };
     this.update=function(){
+		this.posBuffer=this.pos.clone();
         this.pos.add(this.vel);
         this.vel.add(new Vector(Math.cos(this.dir)*this.speed,Math.sin(this.dir)*this.speed));
 		this.sideFriction(0.96, 0.98);
@@ -172,14 +180,6 @@ var player=function(x,y,c){
         if(this.keys[DOWN_ARROW]){this.speed-=this.accel*0.5;}
         if(this.keys[LEFT_ARROW]){this.dir-=(this.turnSpeed*this.vel.length())/this.turnDamp;}
 		if(this.keys[RIGHT_ARROW]){this.dir+=(this.turnSpeed*this.vel.length())/this.turnDamp;}
-        /*for(var i in this.wheelTrails){
-            for(var o=0; o<this.wheelTrails[i].length; o++){
-                this.wheelTrails[i][o][2]--;
-                if(this.wheelTrails[i][o][2]<0){
-                    this.wheelTrails[i].splice(o,1);
-                }
-            }
-        }*/
     };
     this.sideFriction=function(per, fric){
         var forward = new Vector(Math.cos(this.dir), Math.sin(this.dir));
@@ -211,18 +211,6 @@ var player=function(x,y,c){
 		this.corners.bottomRight.y = this.pos.y + 5*Math.cos(-this.dir) - 5*Math.sin(-this.dir);
 		this.corners.topRight.x = this.pos.x - 5*Math.sin(-this.dir) + 5*Math.cos(-this.dir);
 		this.corners.topRight.y = this.pos.y - 5*Math.cos(-this.dir) - 5*Math.sin(-this.dir);
-		/*if(rightVelocity != null){
-			if(rightVelocity.length()>3){
-				this.dropTrack++;
-				if(this.dropTrack === 2){
-					this.wheelTrails[0].push([this.corners.topRightWheel.x, this.corners.topRightWheel.y, tailLength, this.dir]);
-					this.wheelTrails[1].push([this.corners.topLeftWheel.x, this.corners.topLeftWheel.y, tailLength, this.dir]);
-					this.wheelTrails[2].push([this.corners.bottomRightWheel.x, this.corners.bottomRightWheel.y, tailLength, this.dir]);
-					this.wheelTrails[3].push([this.corners.bottomLeftWheel.x, this.corners.bottomLeftWheel.y, tailLength, this.dir]);
-					this.dropTrack=0;
-				}
-			}
-		}*/
 	}
 	this.collision=function(){
 		for(var i in toSend["walls"]){
@@ -261,6 +249,15 @@ var player=function(x,y,c){
 				var deltaV1 = Vector.subtract(v1, v2);
 				var deltaX2 = Vector.subtract(x2, x1);
 				var deltaV2 = Vector.subtract(v2, v1);
+				var bufferTest = Vector.subtract(this.posBuffer, x2);
+				if(deltaX1.length() == 0){
+					return;
+				}
+				if(Math.abs(bufferTest.angleTo(deltaX1)) > Math.PI/2){
+					x1 = this.posBuffer.clone();
+					deltaX1 = Vector.subtract(x1, x2);
+					deltaX2 = Vector.subtract(x2, x1);
+				}
 				this.vel = Vector.subtract(v1, Vector.multiply(deltaX1, Vector.dot(deltaV1, deltaX1)/Math.pow(deltaX1.length(), 2)));
 				otherCar.vel = Vector.subtract(v2, Vector.multiply(deltaX2, Vector.dot(deltaV2, deltaX2)/Math.pow(deltaX2.length(), 2)));
 				while(carCollision(this, otherCar)){
@@ -277,15 +274,23 @@ var player=function(x,y,c){
 		}
 	}
 };
+
 function carLineCollision(car, wall){
 	return (doLineSegmentsIntersect(car.corners.topRight, car.corners.topLeft, {x:wall.x1, y:wall.y1}, {x:wall.x2, y:wall.y2}) || 
 	doLineSegmentsIntersect(car.corners.topRight, car.corners.bottomRight, {x:wall.x1, y:wall.y1}, {x:wall.x2, y:wall.y2}) || 
 	doLineSegmentsIntersect(car.corners.topLeft, car.corners.bottomLeft, {x:wall.x1, y:wall.y1}, {x:wall.x2, y:wall.y2}) || 
 	doLineSegmentsIntersect(car.corners.bottomRight, car.corners.bottomLeft, {x:wall.x1, y:wall.y1}, {x:wall.x2, y:wall.y2}));
 }
+
 function carCollision(car1, car2){
 	return (carLineCollision(car1, {x1:car2.corners.topRight.x, y1:car2.corners.topRight.y, x2:car2.corners.topLeft.x, y2:car2.corners.topLeft.y}) ||
 	carLineCollision(car1, {x1:car2.corners.topRight.x, y1:car2.corners.topRight.y, x2:car2.corners.bottomRight.x, y2:car2.corners.bottomRight.y}) ||
 	carLineCollision(car1, {x1:car2.corners.bottomLeft.x, y1:car2.corners.bottomLeft.y, x2:car2.corners.topLeft.x, y2:car2.corners.topLeft.y}) ||
 	carLineCollision(car1, {x1:car2.corners.bottomRight.x, y1:car2.corners.bottomRight.y, x2:car2.corners.bottomLeft.x, y2:car2.corners.bottomLeft.y}));
+}
+
+function createPolygon(center, sides, size, angle, leaveOff){
+	for(var i=1; i<=sides-leaveOff; i++){
+		toSend["walls"].push(new wall(center.x + Math.cos(i * ((2 * Math.PI) / sides) + angle) * size, center.y + Math.sin(i * ((2 * Math.PI) / sides) + angle) * size, center.x + Math.cos((i - 1) * ((2 * Math.PI) / sides) + angle) * size, center.y + Math.sin((i - 1) * ((2 * Math.PI) / sides) + angle) * size));
+	}
 }
