@@ -249,8 +249,30 @@ var player=function(x,y,c){
 		}
 		for(var i in toSend["players"]){
 			var otherCar = toSend["players"][i];
+			if(otherCar == this){
+				return;
+			}
 			if(carCollision(this, otherCar)){
-				
+				var v1 = this.vel.clone();
+				var x1 = this.pos.clone();
+				var v2 = otherCar.vel.clone();
+				var x2 = otherCar.pos.clone();
+				var deltaX1 = Vector.subtract(x1, x2);
+				var deltaV1 = Vector.subtract(v1, v2);
+				var deltaX2 = Vector.subtract(x2, x1);
+				var deltaV2 = Vector.subtract(v2, v1);
+				this.vel = Vector.subtract(v1, Vector.multiply(deltaX1, Vector.dot(deltaV1, deltaX1)/Math.pow(deltaX1.length(), 2)));
+				otherCar.vel = Vector.subtract(v2, Vector.multiply(deltaX2, Vector.dot(deltaV2, deltaX2)/Math.pow(deltaX2.length(), 2)));
+				while(carCollision(this, otherCar)){
+					var velCopy = this.vel.clone();
+					var otherVelCopy = otherCar.vel.clone();
+					velCopy.divide(5);
+					otherVelCopy.divide(5);
+					this.pos.add(velCopy);
+					otherCar.pos.add(otherVelCopy);
+					this.setCorners(null);
+					otherCar.setCorners(null);
+				}
 			}
 		}
 	}
@@ -262,8 +284,8 @@ function carLineCollision(car, wall){
 	doLineSegmentsIntersect(car.corners.bottomRight, car.corners.bottomLeft, {x:wall.x1, y:wall.y1}, {x:wall.x2, y:wall.y2}));
 }
 function carCollision(car1, car2){
-	return (carLineCollision(car1, {x1:car2.corners.topRight.x, y1:car2.corners.topRight.y, x2:car2.topLeft.x, y2:car2.topLeft.y}) ||
-	carLineCollision(car1, {x1:car2.corners.topRight.x, y1:car2.corners.topRight.y, x2:car2.bottomRight.x, y2:car2.bottomRight.y}) ||
-	carLineCollision(car1, {x1:car2.corners.bottomLeft.x, y1:car2.corners.bottomLeft.y, x2:car2.topLeft.x, y2:car2.topLeft.y}) ||
-	carLineCollision(car1, {x1:car2.corners.bottomRight.x, y1:car2.corners.bottomRight.y, x2:car2.bottomLeft.x, y2:car2.bottomLeft.y}));
+	return (carLineCollision(car1, {x1:car2.corners.topRight.x, y1:car2.corners.topRight.y, x2:car2.corners.topLeft.x, y2:car2.corners.topLeft.y}) ||
+	carLineCollision(car1, {x1:car2.corners.topRight.x, y1:car2.corners.topRight.y, x2:car2.corners.bottomRight.x, y2:car2.corners.bottomRight.y}) ||
+	carLineCollision(car1, {x1:car2.corners.bottomLeft.x, y1:car2.corners.bottomLeft.y, x2:car2.corners.topLeft.x, y2:car2.corners.topLeft.y}) ||
+	carLineCollision(car1, {x1:car2.corners.bottomRight.x, y1:car2.corners.bottomRight.y, x2:car2.corners.bottomLeft.x, y2:car2.corners.bottomLeft.y}));
 }

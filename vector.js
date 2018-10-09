@@ -65,7 +65,9 @@ module.exports = function() {
             return Math.sqrt(this.dot(this));
         },
         normalize: function() {
-            return this.divide(this.length());
+            if(this.length() !== 0){
+                return this.divide(this.length());
+            }
         },
         min: function() {
             return Math.min(this.x, this.y);
@@ -105,7 +107,7 @@ module.exports = function() {
     };
     Vector.multiply = function(a, b) {
         if (b instanceof Vector) return new Vector(a.x * b.x, a.y * b.y);
-        else return new Vector(a.x * v, a.y * v);
+        else return new Vector(a.x * b, a.y * b);
     };
     Vector.divide = function(a, b) {
         if (b instanceof Vector) return new Vector(a.x / b.x, a.y / b.y);
