@@ -1,23 +1,25 @@
 var express = require('express');
 var app = express();
-require("./vector.js")();
 var server = require('http').Server(app);
 const io = require('socket.io')(server);
 
 app.use(express.static("bower_components"));
-app.use(express.static("public"));
+app.use(express.static("client"));
+app.use(express.static("scripts"));
+
+require("./scripts/vector.js")();
 
 app.get(
     "/",
     function(req, res){
-        res.sendFile(__dirname + "/index.html");
+        res.sendFile(__dirname + "/client/race/race.html");
     }
 );
 
 app.get(
     "/gen",
     function(req, res){
-        res.sendFile(__dirname + "/gen.html")
+        res.sendFile(__dirname + "/client/track_generator/trackgen.html")
     }
 );
 
@@ -165,6 +167,10 @@ var player=function(x,y,id,c){
 			y:0
 		}
 	};
+	this.frontOffset=5;
+	this.backOffset=15;
+	this.sideOffset=5;
+	this.wheelInset=3;
     this.keys=[];
     this.draw=function(){
         this.update();
@@ -194,23 +200,23 @@ var player=function(x,y,id,c){
 	};
 	this.setCorners=function(rightVelocity){
 		this.rightVel = rightVelocity;
-		this.corners.bottomLeftWheel.x = this.pos.x + 2*Math.sin(-this.dir) - 12*Math.cos(-this.dir);
-		this.corners.bottomLeftWheel.y =  this.pos.y + 2*Math.cos(-this.dir) + 12*Math.sin(-this.dir);
-		this.corners.topLeftWheel.x = this.pos.x - 2*Math.sin(-this.dir) - 12*Math.cos(-this.dir);
-		this.corners.topLeftWheel.y = this.pos.y - 2*Math.cos(-this.dir) + 12*Math.sin(-this.dir);
-		this.corners.bottomRightWheel.x = this.pos.x + 2*Math.sin(-this.dir) + 2*Math.cos(-this.dir);
-		this.corners.bottomRightWheel.y = this.pos.y + 2*Math.cos(-this.dir) - 2*Math.sin(-this.dir);
-		this.corners.topRightWheel.x = this.pos.x - 2*Math.sin(-this.dir) + 2*Math.cos(-this.dir);
-		this.corners.topRightWheel.y = this.pos.y - 2*Math.cos(-this.dir) - 2*Math.sin(-this.dir);
+		this.corners.bottomLeftWheel.x = this.pos.x + (this.sideOffset-this.wheelInset)*Math.sin(-this.dir) - (this.backOffset-this.wheelInset)*Math.cos(-this.dir);
+		this.corners.bottomLeftWheel.y =  this.pos.y + (this.sideOffset-this.wheelInset)*Math.cos(-this.dir) + (this.backOffset-this.wheelInset)*Math.sin(-this.dir);
+		this.corners.topLeftWheel.x = this.pos.x - (this.sideOffset-this.wheelInset)*Math.sin(-this.dir) - (this.backOffset-this.wheelInset)*Math.cos(-this.dir);
+		this.corners.topLeftWheel.y = this.pos.y - (this.sideOffset-this.wheelInset)*Math.cos(-this.dir) + (this.backOffset-this.wheelInset)*Math.sin(-this.dir);
+		this.corners.bottomRightWheel.x = this.pos.x + (this.sideOffset-this.wheelInset)*Math.sin(-this.dir) + (this.frontOffset-this.wheelInset)*Math.cos(-this.dir);
+		this.corners.bottomRightWheel.y = this.pos.y + (this.sideOffset-this.wheelInset)*Math.cos(-this.dir) - (this.frontOffset-this.wheelInset)*Math.sin(-this.dir);
+		this.corners.topRightWheel.x = this.pos.x - (this.sideOffset-this.wheelInset)*Math.sin(-this.dir) + (this.frontOffset-this.wheelInset)*Math.cos(-this.dir);
+		this.corners.topRightWheel.y = this.pos.y - (this.sideOffset-this.wheelInset)*Math.cos(-this.dir) - (this.frontOffset-this.wheelInset)*Math.sin(-this.dir);
 		
-		this.corners.bottomLeft.x = this.pos.x + 5*Math.sin(-this.dir) - 15*Math.cos(-this.dir);
-		this.corners.bottomLeft.y =  this.pos.y + 5*Math.cos(-this.dir) + 15*Math.sin(-this.dir);
-		this.corners.topLeft.x = this.pos.x - 5*Math.sin(-this.dir) - 15*Math.cos(-this.dir);
-		this.corners.topLeft.y = this.pos.y - 5*Math.cos(-this.dir) + 15*Math.sin(-this.dir);
-		this.corners.bottomRight.x = this.pos.x + 5*Math.sin(-this.dir) + 5*Math.cos(-this.dir);
-		this.corners.bottomRight.y = this.pos.y + 5*Math.cos(-this.dir) - 5*Math.sin(-this.dir);
-		this.corners.topRight.x = this.pos.x - 5*Math.sin(-this.dir) + 5*Math.cos(-this.dir);
-		this.corners.topRight.y = this.pos.y - 5*Math.cos(-this.dir) - 5*Math.sin(-this.dir);
+		this.corners.bottomLeft.x = this.pos.x + this.sideOffset*Math.sin(-this.dir) - this.backOffset*Math.cos(-this.dir);
+		this.corners.bottomLeft.y =  this.pos.y + this.sideOffset*Math.cos(-this.dir) + this.backOffset*Math.sin(-this.dir);
+		this.corners.topLeft.x = this.pos.x - this.sideOffset*Math.sin(-this.dir) - this.backOffset*Math.cos(-this.dir);
+		this.corners.topLeft.y = this.pos.y - this.sideOffset*Math.cos(-this.dir) + this.backOffset*Math.sin(-this.dir);
+		this.corners.bottomRight.x = this.pos.x + this.sideOffset*Math.sin(-this.dir) + this.frontOffset*Math.cos(-this.dir);
+		this.corners.bottomRight.y = this.pos.y + this.sideOffset*Math.cos(-this.dir) - this.frontOffset*Math.sin(-this.dir);
+		this.corners.topRight.x = this.pos.x - this.sideOffset*Math.sin(-this.dir) + this.frontOffset*Math.cos(-this.dir);
+		this.corners.topRight.y = this.pos.y - this.sideOffset*Math.cos(-this.dir) - this.frontOffset*Math.sin(-this.dir);
 	}
 	this.collision=function(){
 		for(var i in toSend["walls"]){
