@@ -167,9 +167,9 @@ var player=function(x,y,id,c){
 			y:0
 		}
 	};
-	this.frontOffset=5;
-	this.backOffset=15;
-	this.sideOffset=5;
+	this.frontOffset=9;
+	this.backOffset=19;
+	this.sideOffset=10;
 	this.wheelInset=3;
     this.keys=[];
     this.draw=function(){

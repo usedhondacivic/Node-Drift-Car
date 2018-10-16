@@ -10,8 +10,12 @@ function mousePressed() {
     socket.emit("click", {x:mouseX, y:mouseY})
 }
 
+var carImage;
+
 var setup = function() {
     createCanvas(document.body.clientWidth, window.innerHeight);
+    imageMode(CENTER);
+    carImage = loadImage("/images/cars/Sports.png");
 }
 
 var name = prompt("Please enter a name: ", "New Player");
@@ -62,6 +66,7 @@ var renderPlayer = function(instance) {
         noStroke();
         fill(instance.color[0],instance.color[1],instance.color[2]);
         rect(-15,-5,20,10);
+        image(carImage, -(instance.backOffset - (instance.backOffset + instance.frontOffset)/2), 0);
     pop();
 }
 

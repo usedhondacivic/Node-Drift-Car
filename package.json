@@ -1,5 +1,5 @@
 {
-  "name": "Spinout",
+  "name": "spinout",
   "version": "1.0.0",
   "description": "Multiplayer car game",
   "main": "server.js",
