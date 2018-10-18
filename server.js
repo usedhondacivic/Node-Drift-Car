@@ -37,8 +37,8 @@ rl.on('line', (input) => {
 			if(getPlayerIndexFromName(words[1]).length === 1){
 				delete toSend["players"][getPlayerIndexFromName(words[1])];
 				console.log("Banned user with name " + words[1]);
-			}else if(getPlayerIndexFromId(words[1]).length === 1){
-				delete toSend["players"][getPlayerIndexFromId(words[1])];
+			}else if(toSend["players"][words[1]]){
+				delete toSend["players"][words[1]];
 				console.log("Banned user with id " + words[1]);
 			}else if(getPlayerIndexFromName(words[1]).length > 1){
 				console.log("Multiple players of that name. Please try again using one of the following IDs");
@@ -54,7 +54,28 @@ rl.on('line', (input) => {
 				var p = toSend["players"][i];
 				console.log(p.name+":");
 				console.log("   ID: "+p.id);
-				console.log("   SocketID: "+i);
+			}
+		break;
+		case "trip":
+			if(getPlayerIndexFromName(words[1]).length === 1){
+				io.sockets.connected[getPlayerIndexFromName(words[1])].emit("toggle trip");
+				console.log("Tripped user with name " + words[1]);
+			}else if(getPlayerIndexFromId(words[1]).length === 1){
+				delete toSend["players"][getPlayerIndexFromId(words[1])];
+				console.log("Banned user with id " + words[1]);
+			}else if(getPlayerIndexFromName(words[1]).length > 1){
+				console.log("Multiple players of that name. Please try again using one of the following IDs");
+				for(var i in getPlayerIndexFromName(words[1])){
+					console.log(toSend["players"][getPlayerIndexFromName(words[1])[i]].id);
+				}
+			}else{
+				console.log("No players found from that name/id.");
+			}
+			if(io.sockets.connected[words[1]]){
+				io.sockets.connected[words[1]].emit("toggleTrip", true);
+				console.log("Toggled");
+			}else{
+				console.log("Couldn't find that socket.");
 			}
 		break;
 		case "give super":
@@ -85,8 +106,7 @@ io.on("connection", function (socket) {
     socket.on("new player", function(arg){
         var color = colors[colorNum%colors.length];
         colorNum++;
-		toSend["players"][socket.id] = new player(100, 100, arg, color);
-		socket.emit("set id", toSend["players"][socket.id].id);
+		toSend["players"][socket.id] = new player(100, 100, arg, socket.id, color);
     });
     
     socket.on("key press", function(arg){
@@ -104,7 +124,7 @@ io.on("connection", function (socket) {
     socket.on("disconnect", function(){
         console.log("a user disconnected");
         delete toSend["players"][socket.id];
-    });
+	});
 });
 
 setInterval(function(){
@@ -159,9 +179,9 @@ var RIGHT_ARROW = 39;
 var UP_ARROW = 38;
 var DOWN_ARROW = 40;
 
-var player=function(x, y, name, c){
+var player=function(x, y, name, id, c){
 	this.name = name;
-	this.id = generateID();
+	this.id = id;
 	this.pos=new Vector(x, y);
 	this.posBuffer=new Vector(0,0);
     this.vel=new Vector(0, 0);
@@ -173,8 +193,8 @@ var player=function(x, y, name, c){
     this.accel=0.05;
     this.decl=0.87;
     this.dir=0;
-    this.turnSpeed=0.6;
-    this.turnDamp=68;
+    this.turnSpeed=0.5;
+    this.turnDamp=80;
 	this.wheelTrails=[[],[],[],[]];
 	this.dropTrack = 0;
 	this.corners={

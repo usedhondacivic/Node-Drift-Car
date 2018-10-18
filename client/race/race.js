@@ -6,14 +6,10 @@ var keys=[];
 keyPressed=function(){socket.emit("key press", keyCode);};
 keyReleased=function(){socket.emit("key release", keyCode);};
 
-function mousePressed() {
-    socket.emit("click", {x:mouseX, y:mouseY})
-}
-
 var carImage;
-var followId;
 
 var setup = function() {
+    background(255, 255, 255);
     var cnv = createCanvas(document.body.clientWidth, window.innerHeight);
     cnv.position(0,0);
     //canvas.style.left = "0px";
@@ -27,13 +23,25 @@ if(name != null && name != ""){
     socket.emit("new player", name);
 }
 
-socket.on("set id", function(id){
-    followId = id;
-});
+var followCamera = {
+    x:0,
+    y:0,
+    pos:{
+        x:0,
+        y:0
+    },
+    update:function(per){
+        this.x = lerp(this.x, this.pos.x, per);
+        this.y = lerp(this.y, this.pos.y, per);
+    }
+};
 
 var trails = [];
 socket.on("state", function(items){
-    background(255, 255, 255);
+    background(255, 255, 255, 50);
+    push();
+    followCamera.update(0.08);
+    translate(-followCamera.x + width / 2, -followCamera.y + height / 2);
     for(var i in trails){
         push();
         noStroke();
@@ -49,6 +57,9 @@ socket.on("state", function(items){
         }
     }
     for (var id in items["players"]) {
+        if(id === socket.id){
+            followCamera.pos = items["players"][id].pos;
+        }
         var player = items["players"][id];
         renderPlayer(player);
     }
@@ -56,6 +67,7 @@ socket.on("state", function(items){
         var wall = items["walls"][id];
         renderWalls(wall);
     }
+    pop();
 });
 
 var renderPlayer = function(instance) {
