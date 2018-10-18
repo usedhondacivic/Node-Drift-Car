@@ -11,9 +11,13 @@ function mousePressed() {
 }
 
 var carImage;
+var followId;
 
 var setup = function() {
-    createCanvas(document.body.clientWidth, window.innerHeight);
+    var cnv = createCanvas(document.body.clientWidth, window.innerHeight);
+    cnv.position(0,0);
+    //canvas.style.left = "0px";
+    //canvas.style.top="0px";
     imageMode(CENTER);
     carImage = loadImage("/images/cars/Sports.png");
 }
@@ -22,6 +26,10 @@ var name = prompt("Please enter a name: ", "New Player");
 if(name != null && name != ""){
     socket.emit("new player", name);
 }
+
+socket.on("set id", function(id){
+    followId = id;
+});
 
 var trails = [];
 socket.on("state", function(items){

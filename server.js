@@ -3,6 +3,13 @@ var app = express();
 var server = require('http').Server(app);
 const io = require('socket.io')(server);
 
+const readline = require('readline');
+
+const rl = readline.createInterface({
+  input: process.stdin,
+  output: process.stdout
+});
+
 app.use(express.static("bower_components"));
 app.use(express.static("client"));
 app.use(express.static("scripts"));
@@ -22,6 +29,40 @@ app.get(
         res.sendFile(__dirname + "/client/track_generator/trackgen.html")
     }
 );
+
+rl.on('line', (input) => {
+	var words = input.split(":");
+	switch(words[0]){
+		case "ban":
+			if(getPlayerIndexFromName(words[1]).length === 1){
+				delete toSend["players"][getPlayerIndexFromName(words[1])];
+				console.log("Banned user with name " + words[1]);
+			}else if(getPlayerIndexFromId(words[1]).length === 1){
+				delete toSend["players"][getPlayerIndexFromId(words[1])];
+				console.log("Banned user with id " + words[1]);
+			}else if(getPlayerIndexFromName(words[1]).length > 1){
+				console.log("Multiple players of that name. Please try again using one of the following IDs");
+				for(var i in getPlayerIndexFromName(words[1])){
+					console.log(toSend["players"][getPlayerIndexFromName(words[1])[i]].id);
+				}
+			}else{
+				console.log("No players found from that name/id.");
+			}
+		break;
+		case "list":
+			for(var i in toSend["players"]){
+				var p = toSend["players"][i];
+				console.log(p.name+":");
+				console.log("   ID: "+p.id);
+				console.log("   SocketID: "+i);
+			}
+		break;
+		case "give super":
+		break;
+		case "slow":
+		break;
+	}
+});
 
 var toSend={};
 toSend["players"] = {};
@@ -45,6 +86,7 @@ io.on("connection", function (socket) {
         var color = colors[colorNum%colors.length];
         colorNum++;
 		toSend["players"][socket.id] = new player(100, 100, arg, color);
+		socket.emit("set id", toSend["players"][socket.id].id);
     });
     
     socket.on("key press", function(arg){
@@ -81,6 +123,7 @@ server.listen(1234, function (err) {
     console.log('Now listening on port 1234');
 });
 
+
 var wall=function(x1, y1, x2, y2){
 	this.x1 = x1;
 	this.y1 = y1;
@@ -116,8 +159,9 @@ var RIGHT_ARROW = 39;
 var UP_ARROW = 38;
 var DOWN_ARROW = 40;
 
-var player=function(x,y,id,c){
-	this.id = id;
+var player=function(x, y, name, c){
+	this.name = name;
+	this.id = generateID();
 	this.pos=new Vector(x, y);
 	this.posBuffer=new Vector(0,0);
     this.vel=new Vector(0, 0);
@@ -126,11 +170,11 @@ var player=function(x,y,id,c){
 	this.forwardFriction=0.90;
 	this.rightVel=new Vector(0, 0);
     this.speed=0;
-    this.accel=0.03;
-    this.decl=0.90;
+    this.accel=0.05;
+    this.decl=0.87;
     this.dir=0;
     this.turnSpeed=0.6;
-    this.turnDamp=70;
+    this.turnDamp=68;
 	this.wheelTrails=[[],[],[],[]];
 	this.dropTrack = 0;
 	this.corners={
@@ -171,7 +215,8 @@ var player=function(x,y,id,c){
 	this.backOffset=19;
 	this.sideOffset=10;
 	this.wheelInset=3;
-    this.keys=[];
+	this.keys=[];
+	this.modifiers=[];
     this.draw=function(){
         this.update();
     };
@@ -187,15 +232,15 @@ var player=function(x,y,id,c){
         if(this.keys[LEFT_ARROW]){this.dir-=(this.turnSpeed*this.vel.length())/this.turnDamp;}
 		if(this.keys[RIGHT_ARROW]){this.dir+=(this.turnSpeed*this.vel.length())/this.turnDamp;}
     };
-    this.sideFriction=function(per, fric){
+    this.sideFriction=function(sideFriction, forwardFriction){
         var forward = new Vector(Math.cos(this.dir), Math.sin(this.dir));
         var right = new Vector(Math.cos(this.dir+Math.PI/2), Math.sin(this.dir+Math.PI/2));
         var forwardVelocity = new Vector();
         var rightVelocity = new Vector();
         forwardVelocity = forward.multiply(Vector.dot(this.vel, forward));
-        forwardVelocity.multiply(fric);
+        forwardVelocity.multiply(forwardFriction);
         rightVelocity = right.multiply(Vector.dot(this.vel, right));
-		this.vel = forwardVelocity.add(rightVelocity.multiply(per));
+		this.vel = forwardVelocity.add(rightVelocity.multiply(sideFriction));
 		this.setCorners(rightVelocity);
 	};
 	this.setCorners=function(rightVelocity){
@@ -300,3 +345,30 @@ function createPolygon(center, sides, size, angle, leaveOff){
 		toSend["walls"].push(new wall(center.x + Math.cos(i * ((2 * Math.PI) / sides) + angle) * size, center.y + Math.sin(i * ((2 * Math.PI) / sides) + angle) * size, center.x + Math.cos((i - 1) * ((2 * Math.PI) / sides) + angle) * size, center.y + Math.sin((i - 1) * ((2 * Math.PI) / sides) + angle) * size));
 	}
 }
+
+var getPlayerIndexFromName = function (name) {
+	var users= [];
+	for(var i in toSend["players"]){
+		if(toSend["players"][i].name === name){
+			users.push(i);
+		}
+	}
+	return users;
+}
+
+var getPlayerIndexFromId = function (id) {
+	var users= [];
+	for(var i in toSend["players"]){
+		if(toSend["players"][i].id === id){
+			users.push(i);
+		}
+	}
+	return users;
+}
+
+var generateID = function () {
+	// Math.random should be unique because of its seeding algorithm.
+	// Convert it to base 36 (numbers + letters), and grab the first 9 characters
+	// after the decimal.
+	return '_' + Math.random().toString(36).substr(2, 9);
+};
