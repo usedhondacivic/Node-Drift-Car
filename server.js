@@ -57,22 +57,8 @@ rl.on('line', (input) => {
 			}
 		break;
 		case "trip":
-			if(getPlayerIndexFromName(words[1]).length === 1){
-				io.sockets.connected[getPlayerIndexFromName(words[1])].emit("toggle trip");
-				console.log("Tripped user with name " + words[1]);
-			}else if(getPlayerIndexFromId(words[1]).length === 1){
-				delete toSend["players"][getPlayerIndexFromId(words[1])];
-				console.log("Banned user with id " + words[1]);
-			}else if(getPlayerIndexFromName(words[1]).length > 1){
-				console.log("Multiple players of that name. Please try again using one of the following IDs");
-				for(var i in getPlayerIndexFromName(words[1])){
-					console.log(toSend["players"][getPlayerIndexFromName(words[1])[i]].id);
-				}
-			}else{
-				console.log("No players found from that name/id.");
-			}
 			if(io.sockets.connected[words[1]]){
-				io.sockets.connected[words[1]].emit("toggleTrip", true);
+				io.sockets.connected[words[1]].emit("toggleTrip");
 				console.log("Toggled");
 			}else{
 				console.log("Couldn't find that socket.");

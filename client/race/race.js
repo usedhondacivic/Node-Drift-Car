@@ -6,14 +6,17 @@ var keys=[];
 keyPressed=function(){socket.emit("key press", keyCode);};
 keyReleased=function(){socket.emit("key release", keyCode);};
 
+socket.on("toggleTrip", function(set){
+    trip = !trip;
+});
+
 var carImage;
+var trip = false;
 
 var setup = function() {
     background(255, 255, 255);
     var cnv = createCanvas(document.body.clientWidth, window.innerHeight);
     cnv.position(0,0);
-    //canvas.style.left = "0px";
-    //canvas.style.top="0px";
     imageMode(CENTER);
     carImage = loadImage("/images/cars/Sports.png");
 }
@@ -38,7 +41,11 @@ var followCamera = {
 
 var trails = [];
 socket.on("state", function(items){
-    background(255, 255, 255, 50);
+    if(trip){
+        background(255, 255, 255, 50);
+    }else{
+        background(255, 255, 255);
+    }
     push();
     followCamera.update(0.08);
     translate(-followCamera.x + width / 2, -followCamera.y + height / 2);
@@ -85,7 +92,7 @@ var renderPlayer = function(instance) {
         rotate(instance.dir);
         noStroke();
         fill(instance.color[0],instance.color[1],instance.color[2]);
-        rect(-15,-5,20,10);
+        //rect(-15,-5,20,10);
         image(carImage, -(instance.backOffset - (instance.backOffset + instance.frontOffset)/2), 0);
     pop();
 }
