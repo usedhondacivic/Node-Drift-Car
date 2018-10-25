@@ -11,6 +11,7 @@ socket.on("toggleTrip", function(set){
 });
 
 var carImage;
+var carMask;
 var trip = false;
 
 var setup = function() {
@@ -18,12 +19,13 @@ var setup = function() {
     var cnv = createCanvas(document.body.clientWidth, window.innerHeight);
     cnv.position(0,0);
     imageMode(CENTER);
-    carImage = loadImage("/images/cars/Sports.png");
+    carImage = loadImage("/images/cars/Sports/Sports.png");
+    carMask = loadImage("/images/cars/Sports/Sports_Mask.png");
 }
 
 var name = prompt("Please enter a name: ", "New Player");
-if(name != null && name != ""){
-    socket.emit("new player", name);
+if(name != null && name != ""){     
+    socket.emit("new player", {name:name, color: Math.random()*100});
 }
 
 var followCamera = {
@@ -42,7 +44,7 @@ var followCamera = {
 var trails = [];
 socket.on("state", function(items){
     if(trip){
-        background(255, 255, 255, 50);
+        background(255, 255, 255, 20);
     }else{
         background(255, 255, 255);
     }
@@ -91,9 +93,12 @@ var renderPlayer = function(instance) {
         translate(instance.pos.x,instance.pos.y);
         rotate(instance.dir);
         noStroke();
-        fill(instance.color[0],instance.color[1],instance.color[2]);
-        //rect(-15,-5,20,10);
         image(carImage, -(instance.backOffset - (instance.backOffset + instance.frontOffset)/2), 0);
+        colorMode(HSB, 100);
+        tint(instance.color, 75, 100, 100);
+        image(carMask, -(instance.backOffset - (instance.backOffset + instance.frontOffset)/2), 0);
+        noTint();
+        colorMode(RGB, 255);
     pop();
 }
 

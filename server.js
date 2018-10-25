@@ -75,24 +75,10 @@ var toSend={};
 toSend["players"] = {};
 toSend["walls"] = [];
 
-var colors= [
-    [255,0,0],
-    [0, 255, 0],
-    [0, 0, 255],
-    [0,255,255],
-    [255,140,0],
-    [255,0,255],
-    [0,0,0]
-];
-
-var colorNum=0;
-
 io.on("connection", function (socket) {
     console.log("a user connected");
     socket.on("new player", function(arg){
-        var color = colors[colorNum%colors.length];
-        colorNum++;
-		toSend["players"][socket.id] = new player(100, 100, arg, socket.id, color);
+		toSend["players"][socket.id] = new player(100, 100, arg.name, socket.id, arg.color);
     });
     
     socket.on("key press", function(arg){
