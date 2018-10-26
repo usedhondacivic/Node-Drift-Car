@@ -165,8 +165,9 @@ var player=function(x, y, name, id, c){
     this.accel=0.05;
     this.decl=0.87;
     this.dir=0;
-    this.turnSpeed=0.5;
-    this.turnDamp=80;
+	this.turnSpeed=0.5;
+	//80
+    this.turnDamp=105;
 	this.wheelTrails=[[],[],[],[]];
 	this.dropTrack = 0;
 	this.corners={
@@ -209,9 +210,6 @@ var player=function(x, y, name, id, c){
 	this.wheelInset=3;
 	this.keys=[];
 	this.modifiers=[];
-    this.draw=function(){
-        this.update();
-    };
     this.update=function(){
 		this.posBuffer=this.pos.clone();
         this.pos.add(this.vel);

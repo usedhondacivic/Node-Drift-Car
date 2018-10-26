@@ -12,6 +12,7 @@ socket.on("toggleTrip", function(set){
 
 var carImage;
 var carMask;
+var trackMask;
 var trip = false;
 
 var setup = function() {
@@ -21,6 +22,7 @@ var setup = function() {
     imageMode(CENTER);
     carImage = loadImage("/images/cars/Sports/Sports.png");
     carMask = loadImage("/images/cars/Sports/Sports_Mask.png");
+    trackMask = loadImage("/images/circuits/circuit1_mask.png");
 }
 
 var name = prompt("Please enter a name: ", "New Player");
@@ -51,6 +53,7 @@ socket.on("state", function(items){
     push();
     followCamera.update(0.08);
     translate(-followCamera.x + width / 2, -followCamera.y + height / 2);
+    image(trackMask, 0, 0, trackMask.width*5, trackMask.height*5);
     for(var i in trails){
         push();
         noStroke();
@@ -95,7 +98,7 @@ var renderPlayer = function(instance) {
         noStroke();
         image(carImage, -(instance.backOffset - (instance.backOffset + instance.frontOffset)/2), 0);
         colorMode(HSB, 100);
-        tint(instance.color, 75, 100, 100);
+        tint(instance.color, 50, 100, 100);
         image(carMask, -(instance.backOffset - (instance.backOffset + instance.frontOffset)/2), 0);
         noTint();
         colorMode(RGB, 255);
