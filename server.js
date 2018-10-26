@@ -2,6 +2,7 @@ var express = require('express');
 var app = express();
 var server = require('http').Server(app);
 const io = require('socket.io')(server);
+var fs = require('fs');
 
 const readline = require('readline');
 
@@ -59,12 +60,22 @@ rl.on('line', (input) => {
 		case "trip":
 			if(io.sockets.connected[words[1]]){
 				io.sockets.connected[words[1]].emit("toggleTrip");
-				console.log("Toggled");
+				console.log("Toggled trip");
 			}else{
 				console.log("Couldn't find that socket.");
 			}
 		break;
-		case "give super":
+		case "set acceleration":
+			if(typeof parseFloat(words[2]) === "number"){
+				if(toSend["players"][words[1]]){
+					toSend["players"][words[1]].accel = parseFloat(words[2]);
+					console.log("Set acceleration.");	
+				}else{
+					console.log("Couldn't find a player on that socket.");
+				}
+			}else{
+				console.log("Input: "+words[2]+" is not a number.");
+			}
 		break;
 		case "slow":
 		break;
@@ -151,6 +162,13 @@ var RIGHT_ARROW = 39;
 var UP_ARROW = 38;
 var DOWN_ARROW = 40;
 
+var trackMaskData;
+
+Jimp.read("/images/circuits/4x/Track@4x.png", function (err, image) {
+	trackMaskData = image;
+    //image.getPixelColor(x, y); // returns the colour of that pixel e.g. 0xFFFFFFFF
+});
+
 var player=function(x, y, name, id, c){
 	this.name = name;
 	this.id = id;
@@ -161,10 +179,12 @@ var player=function(x, y, name, id, c){
     this.sideFriction=0.90;
 	this.forwardFriction=0.90;
 	this.rightVel=new Vector(0, 0);
-    this.speed=0;
+	this.speed=0;
+	//0.05
     this.accel=0.05;
     this.decl=0.87;
-    this.dir=0;
+	this.dir=0;
+	//0.5
 	this.turnSpeed=0.5;
 	//80
     this.turnDamp=105;
@@ -313,6 +333,9 @@ var player=function(x, y, name, id, c){
 				}
 			}
 		}
+	}
+	this.setFriction=function(){
+		
 	}
 };
 

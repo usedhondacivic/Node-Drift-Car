@@ -22,11 +22,11 @@ var setup = function() {
     imageMode(CENTER);
     carImage = loadImage("/images/cars/Sports/Sports.png");
     carMask = loadImage("/images/cars/Sports/Sports_Mask.png");
-    trackMask = loadImage("/images/circuits/circuit1_mask.png");
+    trackMask = loadImage("/images/circuits/4x/Track@4x.png");
 }
 
 var name = prompt("Please enter a name: ", "New Player");
-if(name != null && name != ""){     
+if(name != null && name != "" && name.length < 50){     
     socket.emit("new player", {name:name, color: Math.random()*100});
 }
 
@@ -53,7 +53,7 @@ socket.on("state", function(items){
     push();
     followCamera.update(0.08);
     translate(-followCamera.x + width / 2, -followCamera.y + height / 2);
-    image(trackMask, 0, 0, trackMask.width*5, trackMask.height*5);
+    image(trackMask, 0, 0, trackMask.width, trackMask.height);
     for(var i in trails){
         push();
         noStroke();
