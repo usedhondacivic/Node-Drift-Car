@@ -19,7 +19,6 @@ var setup = function() {
     background(255, 255, 255);
     var cnv = createCanvas(document.body.clientWidth, window.innerHeight);
     cnv.position(0,0);
-    imageMode(CENTER);
     carImage = loadImage("/images/cars/Sports/Sports.png");
     carMask = loadImage("/images/cars/Sports/Sports_Mask.png");
     trackMask = loadImage("/images/circuits/4x/Track@4x.png");
@@ -95,6 +94,7 @@ var renderPlayer = function(instance) {
     push();
         translate(instance.pos.x,instance.pos.y);
         rotate(instance.dir);
+        imageMode(CENTER);
         noStroke();
         image(carImage, -(instance.backOffset - (instance.backOffset + instance.frontOffset)/2), 0);
         colorMode(HSB, 100);
