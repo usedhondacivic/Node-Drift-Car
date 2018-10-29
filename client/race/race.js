@@ -16,7 +16,7 @@ var trackMask;
 var trip = false;
 
 var setup = function() {
-    background(255, 255, 255);
+    background(217, 255, 160);
     var cnv = createCanvas(document.body.clientWidth, window.innerHeight);
     cnv.position(0,0);
     carImage = loadImage("/images/cars/Sports/Sports.png");
@@ -24,9 +24,13 @@ var setup = function() {
     trackMask = loadImage("/images/circuits/4x/Track@4x.png");
 }
 
+function windowResized() { resizeCanvas(document.body.clientWidth, window.innerHeight); }
+
 var name = prompt("Please enter a name: ", "New Player");
 if(name != null && name != "" && name.length < 50){     
     socket.emit("new player", {name:name, color: Math.random()*100});
+}else{
+    alert("That name isn't valid. Refresh to try again. Names cannot be empty and must be under 50 characters");
 }
 
 var followCamera = {
@@ -45,9 +49,9 @@ var followCamera = {
 var trails = [];
 socket.on("state", function(items){
     if(trip){
-        background(255, 255, 255, 20);
+        background(217, 255, 160, 20);
     }else{
-        background(255, 255, 255);
+        background(217, 255, 160);
     }
     push();
     followCamera.update(0.08);
@@ -93,6 +97,11 @@ var renderPlayer = function(instance) {
     }
     push();
         translate(instance.pos.x,instance.pos.y);
+        fill(0,0,0, 200);
+        textAlign(CENTER);
+        textSize(9);
+        textFont("Sans Serif");
+        text(instance.name, 0, -20);
         rotate(instance.dir);
         imageMode(CENTER);
         noStroke();

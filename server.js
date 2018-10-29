@@ -63,8 +63,12 @@ rl.on('line', (input) => {
 		case "trip":
 			if(io.sockets.connected[words[1]]){
 				io.sockets.connected[words[1]].emit("toggleTrip");
-				console.log("Toggled trip");
-			}else{
+				console.log("Trip was toggled.");
+			}else if(words[1] === "all"){
+				io.emit("toggleTrip");
+				console.log("Trip was toggled for all players.");
+			}
+			else{
 				console.log("Couldn't find that socket.");
 			}
 		break;
@@ -72,7 +76,7 @@ rl.on('line', (input) => {
 			if(typeof parseFloat(words[2]) === "number"){
 				if(toSend["players"][words[1]]){
 					toSend["players"][words[1]].accel = parseFloat(words[2]);
-					console.log("Set acceleration.");	
+					console.log("Acceleration was set.");	
 				}else{
 					console.log("Couldn't find a player on that socket.");
 				}
@@ -80,7 +84,22 @@ rl.on('line', (input) => {
 				console.log("Input: "+words[2]+" is not a number.");
 			}
 		break;
-		case "slow":
+		case "set color":
+			if(words[1] === "all"){
+				for(var i in toSend["players"]){
+					toSend["players"][i].color = Math.random() * 100;
+					console.log("Color was randomized for all players.")
+				}
+			}else if(typeof parseFloat(words[2]) === "number"){
+				if(toSend["players"][words[1]]){
+					toSend["players"][words[1]].color = parseFloat(words[2]);
+					console.log("Color was set.");	
+				}else{
+					console.log("Couldn't find a player on that socket.");
+				}
+			}else{
+				console.log("Input: "+words[2]+" is not a number.");
+			}
 		break;
 	}
 });
@@ -92,7 +111,7 @@ toSend["walls"] = [];
 io.on("connection", function (socket) {
     console.log("a user connected");
     socket.on("new player", function(arg){
-		toSend["players"][socket.id] = new player(100, 100, arg.name, socket.id, arg.color);
+		toSend["players"][socket.id] = new player(2300, 2000, arg.name, socket.id, arg.color);
     });
     
     socket.on("key press", function(arg){
@@ -319,11 +338,7 @@ var player=function(x, y, name, id, c){
 		var pastSelf = false;
 		for(var i in toSend["players"]){
 			var otherCar = toSend["players"][i];
-			if(otherCar == this){
-				pastSelf = true;
-				return;
-			}
-			if(!pastSelf){
+			if(otherCar === this){
 				return;
 			}
 			if(carCollision(this, otherCar)){
@@ -346,15 +361,20 @@ var player=function(x, y, name, id, c){
 				}
 				this.vel = Vector.subtract(v1, Vector.multiply(deltaX1, Vector.dot(deltaV1, deltaX1)/Math.pow(deltaX1.length(), 2)));
 				otherCar.vel = Vector.subtract(v2, Vector.multiply(deltaX2, Vector.dot(deltaV2, deltaX2)/Math.pow(deltaX2.length(), 2)));
+				var distance = 0;
 				while(carCollision(this, otherCar)){
 					var velCopy = this.vel.clone();
 					var otherVelCopy = otherCar.vel.clone();
 					velCopy.divide(5);
 					otherVelCopy.divide(5);
+					distance += velCopy.length();
 					this.pos.add(velCopy);
 					otherCar.pos.add(otherVelCopy);
 					this.setCorners(null);
 					otherCar.setCorners(null);
+					if(distance > 100){
+						break;
+					}
 				}
 			}
 		}
