@@ -27,10 +27,10 @@ var setup = function() {
 function windowResized() { resizeCanvas(document.body.clientWidth, window.innerHeight); }
 
 var name = prompt("Please enter a name: ", "New Player");
-if(name != null && name != "" && name.length < 50){     
+if(name != null && name != "" && name.length < 100){     
     socket.emit("new player", {name:name, color: Math.random()*100});
 }else{
-    alert("That name isn't valid. Refresh to try again. Names cannot be empty and must be under 50 characters");
+    alert("That name isn't valid. Refresh to try again. Names cannot be empty and must be under 100 characters");
 }
 
 var followCamera = {
