@@ -106,7 +106,7 @@ var renderPlayer = function(instance) {
 }
 
 var renderWalls = function(instance) {
-    stroke(255, 0, 0);
+    stroke(0,0,0);
     strokeWeight(3);
     line(instance.x1, instance.y1, instance.x2, instance.y2);
 }

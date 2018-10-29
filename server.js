@@ -168,7 +168,7 @@ var points = toPoints(wallPath);
 for(var i = 1; i<points.length; i++){
 	var start = points[i-1];
 	var end = points[i];
-	toSend["walls"].push(new wall(start.x*scale + offsetX, start.y*scale + offsetY, end.x*scale + offsetX, end.y*scale + offsetY));
+	toSend["walls"].push(new wall(start.x*scale, start.y*scale, end.x*scale, end.y*scale));
 }
 
 for(var w in toSend["walls"]){
