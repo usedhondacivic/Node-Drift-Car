@@ -110,10 +110,19 @@ var toSend={};
 toSend["players"] = {};
 toSend["walls"] = [];
 
+var spawns = [];
+var spawnNumber = 0;
+
 io.on("connection", function (socket) {
     console.log("a user connected");
     socket.on("new player", function(arg){
-		toSend["players"][socket.id] = new player(2300, 2000, arg.name, socket.id, arg.color);
+		var spawn = spawns[spawnNumber%spawns.length];
+		spawnNumber++;
+		if(!spawn){
+			spawn = {x: 2300, y:2000};
+		}
+		//2300, 2000
+		toSend["players"][socket.id] = new player(spawn.x, spawn.y, arg.name, socket.id, arg.color);
     });
     
     socket.on("key press", function(arg){
@@ -188,29 +197,33 @@ var wallPath = {
 var parser = new xml2js.Parser();
 fs.readFile(__dirname + '/client/images/circuits/test_circuit/SVG/circuit1_svg_MainBoard.svg', function(err, data) {
     parser.parseString(data, function (err, result) {
-        console.log(util.inspect(result.svg.g, false, null));
-		console.log(util.inspect(result.svg.g[1].polygon[0].$.points.replace(/(\r\n\t|\n|\r\t|\t)/gm,""), false, null));
-        console.log(util.inspect(result.svg.g[1].$.id, false, null));
-		console.log('Done');
+        //console.log(util.inspect(result.svg.g, false, null));
+		//console.log(util.inspect(result.svg.g[1].polygon[0].$.points.replace(/(\r\n\t|\n|\r\t|\t)/gm,""), false, null));
+        //console.log(util.inspect(result.svg.g[1].$.id, false, null));
+		//console.log('Done');
 		for(var i in result.svg.g){
-			if(result.svg.g[i].$.id === "Walls"){
-				wallPath.points = result.svg.g[i].polygon[0].$.points.replace(/(\r\n\t|\n|\r\t|\t)/gm,"").trim();
-				var points = toPoints(wallPath);
-				for(var i = 1; i<points.length; i++){
-					var start = points[i-1];
-					var end = points[i];
-					toSend["walls"].push(new wall(start.x*scale, start.y*scale, end.x*scale, end.y*scale));
+			if(!result.svg.g[i]){}
+			else if(result.svg.g[i].$.id === "Walls"){
+				if(result.svg.g[i].polygon){
+					for(var o in result.svg.g[i].polygon){
+						console.log(util.inspect(result.svg.g[i].polygon[o], false, null));
+						wallPath.points = result.svg.g[i].polygon[o].$.points.replace(/(\r\n\t|\n|\r\t|\t)/gm,"").trim();
+						var points = toPoints(wallPath);
+						for(var i = 1; i<points.length; i++){
+							var start = points[i-1];
+							var end = points[i];
+							toSend["walls"].push(new wall(start.x*scale, start.y*scale, end.x*scale, end.y*scale));
+						}
+					}
+				}
+			}else if(result.svg.g[i].$.id === "Spawns"){
+				if(result.svg.g[i].circle){
+					for(var o in result.svg.g[i].circle){
+						var circle = result.svg.g[i].circle[o].$;
+						spawns.push({x: parseFloat(circle.cx*scale), y: parseFloat(circle.cy*scale)});
+					}
 				}
 			}
-			/*if(result.svg.g[i].$.id === "Walls"){
-				wallPath.points = result.svg.g[i].polygon[0].$.points.replace(/(\r\n\t|\n|\r\t|\t)/gm,"").trim();
-				var points = toPoints(wallPath);
-				for(var i = 1; i<points.length; i++){
-					var start = points[i-1];
-					var end = points[i];
-					toSend["walls"].push(new wall(start.x*scale, start.y*scale, end.x*scale, end.y*scale));
-				}
-			}*/
 		}
 		for(var w in toSend["walls"]){
 			toSend["walls"][w].setup();
