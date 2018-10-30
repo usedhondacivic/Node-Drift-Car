@@ -21,7 +21,7 @@ var setup = function() {
     cnv.position(0,0);
     carImage = loadImage("/images/cars/Sports/Sports.png");
     carMask = loadImage("/images/cars/Sports/Sports_Mask.png");
-    trackMask = loadImage("/images/circuits/4x/Track@4x.png");
+    trackMask = loadImage("/images/circuits/test_circuit/4x/Track@4x.png");
 }
 
 function windowResized() { resizeCanvas(document.body.clientWidth, window.innerHeight); }
