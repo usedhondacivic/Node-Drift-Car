@@ -93,6 +93,9 @@ socket.on("state", function(items){
 });
 
 var renderPlayer = function(instance) {
+    noStroke();
+    fill(255,0,0);
+    ellipse(instance.waypointLocation.x, instance.waypointLocation.y, 20, 20);
     var tailLength = 15;
     if(instance.rightVel){
         if(Math.sqrt(Math.pow(instance.rightVel.x,2) + Math.pow(instance.rightVel.y,2)) > 5){

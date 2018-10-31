@@ -216,6 +216,16 @@ fs.readFile(__dirname + '/client/images/circuits/test_circuit/SVG/vectors_MainBo
 						spawns.push({x: parseFloat(circle.cx), y: parseFloat(circle.cy)});
 					}
 				}
+			}else if(result.svg.g[i].$.id === "Waypoints"){
+				console.log(result.svg.g[i]);
+				if(result.svg.g[i].polyline){
+					for(var o in result.svg.g[i].polyline){
+						var points = toPoints({type: 'polyline', points: result.svg.g[i].polyline[o].$.points.replace(/(\r\n\t|\n|\r\t|\t)/gm,"").trim()});
+						for(var j = 0; j<points.length; j++){
+							waypoints.push(points[j]);
+						}
+					}
+				}
 			}
 		}
 		for(var w in toSend["walls"]){
@@ -245,7 +255,10 @@ var player=function(x, y, name, id, c){
 	this.pos=new Vector(x, y);
 	this.posBuffer=new Vector(0,0);
     this.vel=new Vector(0, 0);
-    this.color=c;
+	this.color=c;
+	this.currentWaypoint=0;
+	this.waypointLocation={};
+	this.lap=0;
     this.sideFriction=0.96;
 	this.forwardFriction=0.98;
 	this.frictionMultiplier=1;
@@ -309,6 +322,7 @@ var player=function(x, y, name, id, c){
         this.vel.add(new Vector(Math.cos(this.dir)*this.speed,Math.sin(this.dir)*this.speed));
 		this.sideFriction(0.96 * this.frictionMultiplier, 0.98 * this.frictionMultiplier);
 		this.collision();
+		this.updateWaypoint();
         this.speed*=this.decel*this.decelMultiplier;
         if(this.keys[UP_ARROW]){this.speed+=this.accel*this.accelMultiplier;}
         if(this.keys[DOWN_ARROW]){this.speed-=this.accel*this.accelMultiplier*0.5;}
@@ -376,13 +390,13 @@ var player=function(x, y, name, id, c){
 			var otherCar = toSend["players"][i];
 			if(otherCar === this){
 				past = true;
-				console.log("Past: "+past);
+				//console.log("Past: "+past);
 				return;
 			}
 			if(!past){
-				console.log("Past test: "+past)
-				return;
+				//return;
 			}
+			//console.log("Past test: "+past)
 			if(carCollision(this, otherCar)){
 				var v1 = this.vel.clone();
 				var x1 = this.pos.clone();
@@ -438,7 +452,47 @@ var player=function(x, y, name, id, c){
 			this.decelMultiplier = 1;
 		}
 	}
+	this.updateWaypoint=function(){
+		var close = findClosestWaypoint(this.pos);
+		this.waypointLocation = waypoints[this.currentWaypoint];
+		if(this.currentWaypoint === waypoints.length-1){
+			if(close < 5){
+				this.lap++;
+				this.currentWaypoint = close;
+			}
+		}else{
+			if(close - this.currentWaypoint < 5){
+				this.currentWaypoint = close;
+			}
+		}
+	}
 };
+
+var updatePlayerPlacing = function(){
+	for(var i in toSend["Players"]){
+		var playersCopy = toSend["Players"];
+		playersCopy.sort(function(a,b){
+			(a.lap*waypoints.length + a.currentWaypoint) - (b.lap*waypoints.length + b.currentWaypoint);
+		});
+		for(var o in playersCopy){
+
+		}
+	}
+}
+
+function findClosestWaypoint(pos){
+	var lowestDistance = Infinity;
+	var index = -1;
+	for(var i in waypoints){
+		var w = waypoints[i];
+		var v = new Vector(pos.x - w.x, pos.y - w.y);
+		if(v.length() < lowestDistance){
+			lowestDistance = v.length();
+			index = i;
+		}
+	}
+	return index;
+}
 
 function carLineCollision(car, wall){
 	return (doLineSegmentsIntersect(car.corners.topRight, car.corners.topLeft, {x:wall.x1, y:wall.y1}, {x:wall.x2, y:wall.y2}) || 
@@ -469,20 +523,3 @@ var getPlayerIndexFromName = function (name) {
 	}
 	return users;
 }
-
-var getPlayerIndexFromId = function (id) {
-	var users= [];
-	for(var i in toSend["players"]){
-		if(toSend["players"][i].id === id){
-			users.push(i);
-		}
-	}
-	return users;
-}
-
-var generateID = function () {
-	// Math.random should be unique because of its seeding algorithm.
-	// Convert it to base 36 (numbers + letters), and grab the first 9 characters
-	// after the decimal.
-	return '_' + Math.random().toString(36).substr(2, 9);
-};
