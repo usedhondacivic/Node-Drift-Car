@@ -12,7 +12,8 @@ socket.on("toggleTrip", function(set){
 
 var carImage;
 var carMask;
-var trackMask;
+var trackImage;
+var sandImage;
 var trip = false;
 
 var setup = function() {
@@ -21,7 +22,12 @@ var setup = function() {
     cnv.position(0,0);
     carImage = loadImage("/images/cars/Sports/Sports.png");
     carMask = loadImage("/images/cars/Sports/Sports_Mask.png");
-    trackMask = loadImage("/images/circuits/test_circuit/4x/Track@4x.png");
+    //carImage = loadImage("/images/cars/Truck/Truck.png");
+    //carMask = loadImage("/images/cars/Truck/Truck_Mask.png");
+    //carImage = loadImage("/images/cars/Ambulance/Ambulance.png");
+    //carMask = loadImage("/images/cars/Ambulance/Ambulance_Mask.png");
+    trackImage = loadImage("/images/circuits/test_circuit/image/mask_MainBoard.png");
+    sandImage = loadImage("/images/circuits/test_circuit/image/sand_MainBoard.png");
 }
 
 function windowResized() { resizeCanvas(document.body.clientWidth, window.innerHeight); }
@@ -56,7 +62,8 @@ socket.on("state", function(items){
     push();
     followCamera.update(0.08);
     translate(-followCamera.x + width / 2, -followCamera.y + height / 2);
-    image(trackMask, 0, 0, trackMask.width, trackMask.height);
+    image(sandImage, 0, 0, sandImage.width, sandImage.height);
+    image(trackImage, 0, 0, trackImage.width, trackImage.height);
     for(var i in trails){
         push();
         noStroke();
@@ -88,7 +95,7 @@ socket.on("state", function(items){
 var renderPlayer = function(instance) {
     var tailLength = 15;
     if(instance.rightVel){
-        if(Math.sqrt(Math.pow(instance.rightVel.x,2) + Math.pow(instance.rightVel.y,2)) > 3){
+        if(Math.sqrt(Math.pow(instance.rightVel.x,2) + Math.pow(instance.rightVel.y,2)) > 5){
             trails.push([instance.corners.topRightWheel.x, instance.corners.topRightWheel.y, tailLength, instance.dir]);
 	        trails.push([instance.corners.topLeftWheel.x, instance.corners.topLeftWheel.y, tailLength, instance.dir]);
 	        trails.push([instance.corners.bottomRightWheel.x, instance.corners.bottomRightWheel.y, tailLength, instance.dir]);
@@ -115,7 +122,7 @@ var renderPlayer = function(instance) {
 }
 
 var renderWalls = function(instance) {
-    stroke(0,0,0);
+    stroke(255,255,255);
     strokeWeight(3);
     line(instance.x1, instance.y1, instance.x2, instance.y2);
 }
