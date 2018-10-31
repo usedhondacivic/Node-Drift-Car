@@ -16,7 +16,6 @@ const rl = readline.createInterface({
   output: process.stdout
 });
 
-app.use(express.static("bower_components"));
 app.use(express.static("client"));
 app.use(express.static("scripts"));
 
@@ -309,6 +308,7 @@ var player=function(x, y, name, id, c){
         if(this.keys[DOWN_ARROW]){this.speed-=this.accel*this.accelMultiplier*0.5;}
         if(this.keys[LEFT_ARROW]){this.dir-=(this.turnSpeed*this.vel.length())/this.turnDamp;}
 		if(this.keys[RIGHT_ARROW]){this.dir+=(this.turnSpeed*this.vel.length())/this.turnDamp;}
+		//this.color++;
     };
     this.sideFriction=function(sideFriction, forwardFriction){
 		this.setFriction();

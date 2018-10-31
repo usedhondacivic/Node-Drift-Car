@@ -114,7 +114,8 @@ var renderPlayer = function(instance) {
         noStroke();
         image(carImage, -(instance.backOffset - (instance.backOffset + instance.frontOffset)/2), 0);
         colorMode(HSB, 100);
-        tint(instance.color, 50, 100, 100);
+        tint(instance.color%100, 40, 100, 100);
+        //tint(instance.color, 0, 100, 100);
         image(carMask, -(instance.backOffset - (instance.backOffset + instance.frontOffset)/2), 0);
         noTint();
         colorMode(RGB, 255);
