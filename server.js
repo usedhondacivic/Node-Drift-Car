@@ -74,7 +74,13 @@ rl.on('line', (input) => {
 			}
 		break;
 		case "set acceleration":
-			if(typeof parseFloat(words[2]) === "number"){
+			if(words[1] === "all"){
+				for(var i in toSend["players"]){
+					toSend["players"][i].accel = parseFloat(words[2]);
+				}
+				console.log("Acceleration was set for all players.");
+			}
+			else if(typeof parseFloat(words[2]) === "number"){
 				if(toSend["players"][words[1]]){
 					toSend["players"][words[1]].accel = parseFloat(words[2]);
 					console.log("Acceleration was set.");	
@@ -365,9 +371,16 @@ var player=function(x, y, name, id, c){
 				}
 			}
 		}
+		var past = false;
 		for(var i in toSend["players"]){
 			var otherCar = toSend["players"][i];
 			if(otherCar === this){
+				past = true;
+				console.log("Past: "+past);
+				return;
+			}
+			if(!past){
+				console.log("Past test: "+past)
 				return;
 			}
 			if(carCollision(this, otherCar)){
