@@ -108,6 +108,20 @@ rl.on('line', (input) => {
 				console.log("Input: "+words[2]+" is not a number.");
 			}
 		break;
+		case "reset":
+			spawnNumber = 0;
+			for(var i in toSend["players"]){
+				var spawn = spawns[spawnNumber%spawns.length];
+				spawnNumber++;
+				if(!spawn){
+					spawn = {x: 2300, y:2000};
+				}
+				toSend["players"][i].pos = new Vector(spawn.x, spawn.y);
+				toSend["players"][i].vel = new Vector(0, 0);
+				toSend["players"][i].dir = 0;
+			}
+			console.log("Players reset.");
+		break;
 	}
 });
 
@@ -259,7 +273,7 @@ var player=function(x, y, name, id, c){
 	this.posBuffer=new Vector(0,0);
     this.vel=new Vector(0, 0);
 	this.color=c;
-	this.currentWaypoint=150;
+	this.currentWaypoint=0;
 	this.positionIndex=0;
 	this.waypointLocation={};
 	this.lap=0;
@@ -458,11 +472,9 @@ var player=function(x, y, name, id, c){
 		}
 	}
 	this.updateWaypoint=function(){
-		//console.log(this.place);
 		var close = findClosestWaypoint(this.pos);
 		this.waypointLocation = waypoints[this.currentWaypoint];
-		this.positionIndex = this.lap * waypoints.length + this.currentWaypoint;
-		//console.log("Current: "+this.currentWaypoint+" Close: "+close+" Last: "+  (waypoints.length-1) + " Check 1: "+(this.currentWaypoint === (waypoints.length-1)));
+		this.positionIndex = this.lap * waypoints.length + parseInt(this.currentWaypoint);
 		if(this.currentWaypoint == (waypoints.length-1) && close < 5){
 			this.lap++;
 			this.currentWaypoint = close;
@@ -486,7 +498,7 @@ var updatePlayerPlacing = function(){
 			name: p.name,
 			lap: p.lap
 		});
-	}*/
+	}
 	for(var i in toSend["players"]){
 		var p1 = toSend["players"][i];
 		p1.place = Object.keys(toSend["players"]).length;
@@ -494,10 +506,31 @@ var updatePlayerPlacing = function(){
 			if(i == o){
 				return;
 			}
-			console.log(p1.place);
 			var p2 = toSend["players"][o];
 			if(p1.positionIndex > p2.positionIndex){
 				p1.place--;
+			}
+		}
+	}*/
+	leaderboard = [];
+	for(var i in toSend["players"]){
+		var p = toSend["players"][i];
+		leaderboard.push({
+			id:i,
+			name: p.name,
+			lap: p.lap,
+			index: p.positionIndex,
+		});
+	}
+	leaderboard.sort(function(a,b){
+		return b.index - a.index;
+	});
+	for(var i in toSend["players"]){
+		var p = toSend["players"][i];
+		for(var o in leaderboard){
+			var l = leaderboard[o];
+			if(i == l.id){
+				p.place = parseInt(o)+1;
 			}
 		}
 	}

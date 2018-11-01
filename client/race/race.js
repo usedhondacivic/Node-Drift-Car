@@ -81,6 +81,7 @@ socket.on("state", function(items){
     for (var id in items["players"]) {
         if(id === socket.id){
             followCamera.pos = items["players"][id].pos;
+            print("Place: "+items["players"][id].place+" Lap: "+items["players"][id].lap+" Index: "+items["players"][id].positionIndex);
         }
         var player = items["players"][id];
         renderPlayer(player);
@@ -123,6 +124,9 @@ var renderPlayer = function(instance) {
         noTint();
         colorMode(RGB, 255);
     pop();
+    textSize(30);
+    fill(0,0,0);
+    text("Pos: "+instance.place+"\nLap: "+instance.lap, width - 100 + followCamera.x - width / 2, height - 100 + followCamera.y - height / 2);
 }
 
 var renderWalls = function(instance) {
