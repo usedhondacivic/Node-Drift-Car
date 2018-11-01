@@ -115,6 +115,8 @@ var toSend={};
 toSend["players"] = {};
 toSend["walls"] = [];
 
+var leaderboard = [];
+
 var spawns = [];
 var spawnNumber = 0;
 
@@ -149,6 +151,7 @@ io.on("connection", function (socket) {
 });
 
 setInterval(function(){
+	updatePlayerPlacing();
     for(var type in toSend){
         for(var id in toSend[type]){
 			var obj = toSend[type][id];
@@ -256,9 +259,11 @@ var player=function(x, y, name, id, c){
 	this.posBuffer=new Vector(0,0);
     this.vel=new Vector(0, 0);
 	this.color=c;
-	this.currentWaypoint=0;
+	this.currentWaypoint=150;
+	this.positionIndex=0;
 	this.waypointLocation={};
 	this.lap=0;
+	this.place=0;
     this.sideFriction=0.96;
 	this.forwardFriction=0.98;
 	this.frictionMultiplier=1;
@@ -453,15 +458,16 @@ var player=function(x, y, name, id, c){
 		}
 	}
 	this.updateWaypoint=function(){
+		//console.log(this.place);
 		var close = findClosestWaypoint(this.pos);
 		this.waypointLocation = waypoints[this.currentWaypoint];
-		if(this.currentWaypoint === waypoints.length-1){
-			if(close < 5){
-				this.lap++;
-				this.currentWaypoint = close;
-			}
+		this.positionIndex = this.lap * waypoints.length + this.currentWaypoint;
+		//console.log("Current: "+this.currentWaypoint+" Close: "+close+" Last: "+  (waypoints.length-1) + " Check 1: "+(this.currentWaypoint === (waypoints.length-1)));
+		if(this.currentWaypoint == (waypoints.length-1) && close < 5){
+			this.lap++;
+			this.currentWaypoint = close;
 		}else{
-			if(close - this.currentWaypoint < 5){
+			if(Math.abs(close - this.currentWaypoint) < 5){
 				this.currentWaypoint = close;
 			}
 		}
@@ -469,13 +475,30 @@ var player=function(x, y, name, id, c){
 };
 
 var updatePlayerPlacing = function(){
-	for(var i in toSend["Players"]){
-		var playersCopy = toSend["Players"];
-		playersCopy.sort(function(a,b){
-			(a.lap*waypoints.length + a.currentWaypoint) - (b.lap*waypoints.length + b.currentWaypoint);
+	/*var playersCopy = toSend["Players"];
+	playersCopy.sort(function(a,b){
+		(a.lap*waypoints.length + a.currentWaypoint) - (b.lap*waypoints.length + b.currentWaypoint);
+	});
+	for(var o in playersCopy){
+		var p = playersCopy[o];
+		leaderboard = [];
+		leaderboard.push({
+			name: p.name,
+			lap: p.lap
 		});
-		for(var o in playersCopy){
-
+	}*/
+	for(var i in toSend["players"]){
+		var p1 = toSend["players"][i];
+		p1.place = Object.keys(toSend["players"]).length;
+		for(var o in toSend["players"]){
+			if(i == o){
+				return;
+			}
+			console.log(p1.place);
+			var p2 = toSend["players"][o];
+			if(p1.positionIndex > p2.positionIndex){
+				p1.place--;
+			}
 		}
 	}
 }
