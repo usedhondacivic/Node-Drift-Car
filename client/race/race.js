@@ -81,7 +81,6 @@ socket.on("state", function(items){
     for (var id in items["players"]) {
         if(id === socket.id){
             followCamera.pos = items["players"][id].pos;
-            print("Place: "+items["players"][id].place+" Lap: "+items["players"][id].lap+" Index: "+items["players"][id].positionIndex);
         }
         var player = items["players"][id];
         renderPlayer(player);
@@ -91,13 +90,18 @@ socket.on("state", function(items){
         renderWalls(wall);
     }
     pop();
+    for (var id in items["players"]) {
+        if(id === socket.id){
+            renderHUD(items["players"][id]);
+        }
+    }
 });
 
 var renderPlayer = function(instance) {
-    noStroke();
-    fill(255,0,0);
-    ellipse(instance.waypointLocation.x, instance.waypointLocation.y, 20, 20);
     var tailLength = 15;
+    fill(255,0,0);
+    noStroke();
+    ellipse(instance.waypointLocation.x, instance.waypointLocation.y, 10, 10);
     if(instance.rightVel){
         if(Math.sqrt(Math.pow(instance.rightVel.x,2) + Math.pow(instance.rightVel.y,2)) > 5){
             trails.push([instance.corners.topRightWheel.x, instance.corners.topRightWheel.y, tailLength, instance.dir]);
@@ -124,13 +128,18 @@ var renderPlayer = function(instance) {
         noTint();
         colorMode(RGB, 255);
     pop();
-    textSize(30);
-    fill(0,0,0);
-    text("Pos: "+instance.place+"\nLap: "+instance.lap, width - 100 + followCamera.x - width / 2, height - 100 + followCamera.y - height / 2);
 }
 
 var renderWalls = function(instance) {
     stroke(255,255,255);
     strokeWeight(3);
     line(instance.x1, instance.y1, instance.x2, instance.y2);
+}
+
+var renderHUD = function(instance) {
+    push();
+    textSize(30);
+    fill(0,0,0);
+    text("Pos: "+instance.place+"\nLap: "+(instance.lap>=0?instance.lap:0)+"\nTime: "+instance.time.toFixed(2), width - 300, height - 100);
+    pop();
 }
