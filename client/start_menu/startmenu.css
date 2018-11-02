@@ -1,0 +1,8 @@
+@font-face {
+    font-family: "HarlowSolid";
+    src: url("/fonts/Harlow Solid Regular/Harlow Solid Regular.ttf") format("truetype");
+}
+
+#title{
+    width:30%;
+}
