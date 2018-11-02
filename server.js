@@ -8,6 +8,7 @@ var xml2js = require('xml2js');
 var server = require('http').Server(app);
 const io = require('socket.io')(server);
 var fs = require('fs');
+var seconds = 0;
 
 const readline = require('readline');
 
@@ -124,19 +125,40 @@ rl.on('line', (input) => {
 					spawn = {x: 2300, y:2000};
 				}
 				toSend["players"][i].pos = new Vector(spawn.x, spawn.y);
-				toSend["players"][i].vel = new Vector(0, 0);
-				toSend["players"][i].dir = 0;
+				toSend["players"][i].reset();
 			}
 			console.log("Players reset.");
+		break;
+		case "start race":
+			spawnNumber = 0;
+			for(var i in toSend["players"]){
+				var spawn = spawns[spawnNumber%spawns.length];
+				spawnNumber++;
+				if(!spawn){
+					spawn = {x: 2300, y:2000};
+				}
+				toSend["players"][i].pos = new Vector(spawn.x, spawn.y);
+				toSend["players"][i].reset();
+				toSend["players"][i].startRace();
+			}
+			console.log("Race started.");
 		break;
 	}
 });
 
+
 var toSend={};
 toSend["players"] = {};
 toSend["walls"] = [];
-
-var leaderboard = [];
+toSend["gameData"] = {
+	main:{
+		timer:0,
+		leaderboard:[],
+		update:function(){
+			this.timer = seconds;
+		}
+	}
+};
 
 var spawns = [];
 var spawnNumber = 0;
@@ -151,6 +173,7 @@ io.on("connection", function (socket) {
 		}
 		//2300, 2000
 		toSend["players"][socket.id] = new player(spawn.x, spawn.y, arg.name, socket.id, arg.color);
+		toSend["players"][socket.id].startRace(); 
     });
     
     socket.on("key press", function(arg){
@@ -180,7 +203,8 @@ setInterval(function(){
 				obj.update();
         }
     }
-    io.emit("state", toSend);
+	io.emit("state", toSend);
+	seconds+=1/60;
 }, 1000/60);
 
 server.listen(1234, function (err) {
@@ -280,10 +304,14 @@ var player=function(x, y, name, id, c){
 	this.posBuffer=new Vector(0,0);
     this.vel=new Vector(0, 0);
 	this.color=c;
+	this.frozen = false;
+	this.time=0;
+	this.timerBuffer=0;
+	this.startedRace=false;
 	this.currentWaypoint=0;
 	this.positionIndex=0;
 	this.waypointLocation={};
-	this.lap=0;
+	this.lap=-1;
 	this.place=0;
     this.sideFriction=0.96;
 	this.forwardFriction=0.98;
@@ -342,18 +370,32 @@ var player=function(x, y, name, id, c){
 	this.wheelInset=3;
 	this.keys=[];
 	this.modifiers=[];
+	this.startRace=function(){
+		this.currentWaypoint = findClosestWaypoint(this.pos);
+		this.waypointLocation = waypoints[this.currentWaypoint];
+		this.positionIndex = this.lap * waypoints.length + parseInt(this.currentWaypoint);
+		this.frozen=false;
+	};
+	this.reset=function(){
+		this.lap = -1;
+		this.vel = new Vector(0,0);
+		this.dir = 0;
+	};
     this.update=function(){
-		this.posBuffer=this.pos.clone();
-        this.pos.add(this.vel);
-        this.vel.add(new Vector(Math.cos(this.dir)*this.speed,Math.sin(this.dir)*this.speed));
-		this.sideFriction(0.96 * this.frictionMultiplier, 0.98 * this.frictionMultiplier);
-		this.collision();
-		this.updateWaypoint();
-        this.speed*=this.decel*this.decelMultiplier;
-        if(this.keys[UP_ARROW]){this.speed+=this.accel*this.accelMultiplier;}
-        if(this.keys[DOWN_ARROW]){this.speed-=this.accel*this.accelMultiplier*0.5;}
-        if(this.keys[LEFT_ARROW]){this.dir-=(this.turnSpeed*this.vel.length())/this.turnDamp;}
-		if(this.keys[RIGHT_ARROW]){this.dir+=(this.turnSpeed*this.vel.length())/this.turnDamp;}
+		this.time = seconds - this.timerBuffer;
+		if(!this.frozen){
+			this.posBuffer=this.pos.clone();
+			this.pos.add(this.vel);
+			this.vel.add(new Vector(Math.cos(this.dir)*this.speed,Math.sin(this.dir)*this.speed));
+			this.sideFriction(0.96 * this.frictionMultiplier, 0.98 * this.frictionMultiplier);
+			this.collision();
+			this.updateWaypoint();
+			this.speed*=this.decel*this.decelMultiplier;
+			if(this.keys[UP_ARROW]){this.speed+=this.accel*this.accelMultiplier;}
+			if(this.keys[DOWN_ARROW]){this.speed-=this.accel*this.accelMultiplier*0.5;}
+			if(this.keys[LEFT_ARROW]){this.dir-=(this.turnSpeed*this.vel.length())/this.turnDamp;}
+			if(this.keys[RIGHT_ARROW]){this.dir+=(this.turnSpeed*this.vel.length())/this.turnDamp;}
+		}
 		//this.color++;
     };
     this.sideFriction=function(sideFriction, forwardFriction){
@@ -483,6 +525,10 @@ var player=function(x, y, name, id, c){
 		this.waypointLocation = waypoints[this.currentWaypoint];
 		this.positionIndex = this.lap * waypoints.length + parseInt(this.currentWaypoint);
 		if(this.currentWaypoint == (waypoints.length-1) && close < 5){
+			if(this.lap<0){
+				this.timerBuffer = seconds;
+				this.startedRace = true;
+			}
 			this.lap++;
 			this.currentWaypoint = close;
 		}else{
@@ -519,23 +565,23 @@ var updatePlayerPlacing = function(){
 			}
 		}
 	}*/
-	leaderboard = [];
+	toSend["gameData"].leaderboard = [];
 	for(var i in toSend["players"]){
 		var p = toSend["players"][i];
-		leaderboard.push({
+		toSend["gameData"].leaderboard.push({
 			id:i,
 			name: p.name,
 			lap: p.lap,
 			index: p.positionIndex,
 		});
 	}
-	leaderboard.sort(function(a,b){
+	toSend["gameData"].leaderboard.sort(function(a,b){
 		return b.index - a.index;
 	});
 	for(var i in toSend["players"]){
 		var p = toSend["players"][i];
-		for(var o in leaderboard){
-			var l = leaderboard[o];
+		for(var o in toSend["gameData"].leaderboard){
+			var l = toSend["gameData"].leaderboard[o];
 			if(i == l.id){
 				p.place = parseInt(o)+1;
 			}
