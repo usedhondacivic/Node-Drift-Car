@@ -23,14 +23,14 @@ app.use(express.static("scripts"));
 require("./scripts/vector.js")();
 
 app.get(
-    "/title",
+    "/",
     function(req, res){
         res.sendFile(__dirname + "/client/start_menu/startmenu.html");
     }
 );
 
 app.get(
-    "/",
+    "/race",
     function(req, res){
         res.sendFile(__dirname + "/client/race/race.html");
     }

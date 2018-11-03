@@ -3,6 +3,61 @@
     src: url("/fonts/Harlow Solid Regular/Harlow Solid Regular.ttf") format("truetype");
 }
 
+html{
+    background-color: rgb(217, 255, 160);
+}
+
 #title{
-    width:30%;
+    width:40%;
+    display: block;
+    margin: auto;
+    margin-top:10%;
+}
+
+.inputBox{
+    display: block;
+    text-align: center;
+    margin: auto;
+}
+
+input[type=text]{
+    display: inline-block;
+    margin: auto;
+    border: none;
+    border-bottom: 2px solid black;
+    background-color: rgba(255, 255, 255, 0);
+    width: 15%;
+    padding: 5px;
+    font-size: 1.25em;
+}
+
+input[type=button]{
+    background-color: #4CAF50; /* Green */
+    border: none;
+    color: red;
+    padding: 16px 32px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 16px;
+    margin: 4px 20px;
+    -webkit-transition-duration: 0.4s; /* Safari */
+    transition-duration: 0.4s;
+    cursor: pointer;
+}
+
+input[type=button]{
+    background-color: rgba(255, 255, 255, 0); 
+    color: black; 
+    border: 2px solid #f44336;
+}
+
+input[type=button]:hover {
+    background-color: #f44336;
+    color: white;
+}
+
+input[type=button]:active {
+    background-color: #ff968f;
+    color: white;
 }

@@ -1,3 +1,13 @@
+if(sessionStorage.getItem("setup") == "false"){
+    window.location.replace("../");
+}
+
+window.onbeforeunload = function(){
+    sessionStorage.setItem('nickname', "");
+    sessionStorage.setItem('setup', "false");
+    print("hit");
+}
+
 //IO
 var socket = io();
 
@@ -32,7 +42,7 @@ var setup = function() {
 
 function windowResized() { resizeCanvas(document.body.clientWidth, window.innerHeight); }
 
-var name = prompt("Please enter a name: ", "New Player");
+var name = sessionStorage.getItem("nickname");
 if(name != null && name != "" && name.length < 100){     
     socket.emit("new player", {name:name, color: Math.random()*100});
 }else{
@@ -99,9 +109,9 @@ socket.on("state", function(items){
 
 var renderPlayer = function(instance) {
     var tailLength = 15;
-    fill(255,0,0);
+    /*fill(255,0,0);
     noStroke();
-    ellipse(instance.waypointLocation.x, instance.waypointLocation.y, 10, 10);
+    ellipse(instance.waypointLocation.x, instance.waypointLocation.y, 10, 10);*/
     if(instance.rightVel){
         if(Math.sqrt(Math.pow(instance.rightVel.x,2) + Math.pow(instance.rightVel.y,2)) > 5){
             trails.push([instance.corners.topRightWheel.x, instance.corners.topRightWheel.y, tailLength, instance.dir]);

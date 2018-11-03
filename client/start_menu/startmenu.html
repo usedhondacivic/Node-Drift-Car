@@ -1,10 +1,19 @@
 <html>
     <head>
         <title>Spinout</title>
+        <script src="/start_menu/startmenu.js"></script>
         <link rel="stylesheet" type="text/css" href="/start_menu/startmenu.css" />
     </head>
     <body>
         <!--object src="\images\UI\title.svg" id="title"></object>-->
-        <object data="\images\UI\title.svg" type="image/svg+xml"></object>
+        <object data="\images\UI\SVG\Spinout.svg" type="image/svg+xml" id="title"></object>
+        <div class="inputBox">
+            <p style="display: inline-block; font-size: 1.25em; margin-right: 20px;">Nickname:</p>
+            <input type="text" id="nickname" placeholder="Name" maxLength="50">
+            <input type="button" id="submit" onclick="submit()" value="Start">
+        </div>
+        <div class="inputBox" style="margin: 20px;">
+            <p id="warning" style="border: 2px solid #f44336; display: none; margin: auto; width: 20%; text-align: center; padding: 10px;">Please enter a nickname.</p>
+        </div>
     </body>
 </html>
