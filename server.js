@@ -540,31 +540,6 @@ var player=function(x, y, name, id, c){
 };
 
 var updatePlayerPlacing = function(){
-	/*var playersCopy = toSend["Players"];
-	playersCopy.sort(function(a,b){
-		(a.lap*waypoints.length + a.currentWaypoint) - (b.lap*waypoints.length + b.currentWaypoint);
-	});
-	for(var o in playersCopy){
-		var p = playersCopy[o];
-		leaderboard = [];
-		leaderboard.push({
-			name: p.name,
-			lap: p.lap
-		});
-	}
-	for(var i in toSend["players"]){
-		var p1 = toSend["players"][i];
-		p1.place = Object.keys(toSend["players"]).length;
-		for(var o in toSend["players"]){
-			if(i == o){
-				return;
-			}
-			var p2 = toSend["players"][o];
-			if(p1.positionIndex > p2.positionIndex){
-				p1.place--;
-			}
-		}
-	}*/
 	toSend["gameData"].leaderboard = [];
 	for(var i in toSend["players"]){
 		var p = toSend["players"][i];

@@ -1,3 +1,4 @@
+var currentPage="titlePage";
 var textBox;
 
 window.onload = function(){
@@ -9,7 +10,13 @@ window.onload = function(){
         if (event.keyCode === 13) {
             document.getElementById("submit").click();
         }
-    }); 
+    });
+    
+    var cars = document.getElementsByClassName("carMaskImage");
+    for(var i in cars){
+        var tinto = new Tinto(cars[i]);
+        cars[i].src = tinto.imageDataWithTintColor("#f44242");
+    }
 }
 
 function submit() {
@@ -17,7 +24,14 @@ function submit() {
         sessionStorage.setItem('nickname', textBox.value);
         sessionStorage.setItem('setup', "true");
         window.location.replace("./race");
+        //switchPage("carSelectPage");
     }else{
-        document.getElementById("warning").style.display = "inline-block";
+        document.getElementById("warning").style.display = "block";
     }
+}
+
+function switchPage(newPage) {
+    document.getElementById(currentPage).style.display = "none";
+    currentPage = newPage;
+    document.getElementById(currentPage).style.display = "inline-block";
 }
