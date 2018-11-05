@@ -102,7 +102,7 @@ socket.on("state", function(items){
     pop();
     for (var id in items["players"]) {
         if(id === socket.id){
-            renderHUD(items["players"][id]);
+            renderHUD(items["players"][id], Object.keys(items["players"]).length);
         }
     }
 });
@@ -146,10 +146,16 @@ var renderWalls = function(instance) {
     line(instance.x1, instance.y1, instance.x2, instance.y2);
 }
 
-var renderHUD = function(instance) {
+var renderHUD = function(instance, carNum) {
     push();
     textSize(30);
     fill(0,0,0);
-    text("Pos: "+instance.place+"\nLap: "+(instance.lap>=0?instance.lap:0)+"\nTime: "+instance.time.toFixed(2), width - 300, height - 100);
+    var minutes = Math.floor(instance.time.toFixed(2) / 60);
+    var seconds = (instance.time%60).toFixed(2).toString().replace(".",":");
+    textAlign(LEFT, TOP);
+    text("Lap: "+(instance.lap>=0?instance.lap:0)+"\nTime: "+(minutes.toString().length>1?"":"0")+minutes+":"+(seconds.toString().length>4?"":"0")+seconds, 40, 70);
+    //text(, 300, height - 100);
+    textAlign(RIGHT, TOP);
+    //text(, width - 40, 70);
     pop();
 }
