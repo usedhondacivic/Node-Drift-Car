@@ -1,6 +1,6 @@
-if(sessionStorage.getItem("setup") == "false"){
+/*if(sessionStorage.getItem("setup") == "false"){
     window.location.replace("../");
-}
+}*/
 
 window.onbeforeunload = function(){
     sessionStorage.setItem('nickname', "");
@@ -43,11 +43,11 @@ var setup = function() {
 function windowResized() { resizeCanvas(document.body.clientWidth, window.innerHeight); }
 
 var name = sessionStorage.getItem("nickname");
-if(name != null && name != "" && name.length < 100){     
+//if(name != null && name != "" && name.length < 100){     
     socket.emit("new player", {name:name, color: Math.random()*100});
-}else{
-    alert("That name isn't valid. Refresh to try again. Names cannot be empty and must be under 100 characters");
-}
+//}else{
+    //alert("That name isn't valid. Refresh to try again. Names cannot be empty and must be under 100 characters");
+//}
 
 var followCamera = {
     x:0,
@@ -148,14 +148,46 @@ var renderWalls = function(instance) {
 
 var renderHUD = function(instance, carNum) {
     push();
-    textSize(30);
     fill(0,0,0);
-    var minutes = Math.floor(instance.time.toFixed(2) / 60);
-    var seconds = (instance.time%60).toFixed(2).toString().replace(".",":");
+    var raceMinutes = Math.floor(instance.time.toFixed(2) / 60);
+    var raceSeconds = (instance.time%60).toFixed(2).toString().replace(".",":");
+    var lapMinutes = Math.floor(instance.lapTime.toFixed(2) / 60);
+    var lapSeconds = (instance.lapTime%60).toFixed(2).toString().replace(".",":");
+    //Position
+    textSize(15);
+    textAlign(LEFT, BOTTOM);
+    text("Position:", 40, 50);
+    textSize(40);
     textAlign(LEFT, TOP);
-    text("Lap: "+(instance.lap>=0?instance.lap:0)+"\nTime: "+(minutes.toString().length>1?"":"0")+minutes+":"+(seconds.toString().length>4?"":"0")+seconds, 40, 70);
-    //text(, 300, height - 100);
+    text((instance.place.toString().length>1?"":"0")+instance.place+"/", 40, 50);
+    textSize(25);
+    text((carNum.toString().length>1?"":"0")+carNum, 100, 63);
+    //Lap
+    textSize(15);
+    textAlign(RIGHT, BOTTOM);
+    text("Lap:", width - 95, 50);
+    textSize(40);
     textAlign(RIGHT, TOP);
-    //text(, width - 40, 70);
+    text(((instance.lap.toString().length>1 && instance.lap != -1)?"":"0")+(instance.lap>=0?instance.lap.toString():"0")+"/", width - 70, 50);
+    textSize(25);
+    text("03", width - 40, 63);
+    //Time
+    textSize(15);
+    textAlign(RIGHT, BOTTOM);
+    text("Time:", width - 105, 130);
+    textSize(25);
+    textAlign(RIGHT, TOP);
+    text((raceMinutes.toString().length>1?"":"0")+raceMinutes+":"+(raceSeconds.toString().length>4?"":"0")+raceSeconds, width - 40, 130);
+    //Lap Time
+    textSize(15);
+    textAlign(RIGHT, BOTTOM);
+    text("Lap:", width - 105, 160);
+    textSize(25);
+    textAlign(RIGHT, TOP);
+    text((lapMinutes.toString().length>1?"":"0")+lapMinutes+":"+(lapSeconds.toString().length>4?"":"0")+lapSeconds, width - 40, 160);
+
+    textAlign(RIGHT, TOP);
+    text("Lap: "+(instance.lap>=0?instance.lap:0), 300, height - 100);
+    //text("Time: "+(minutes.toString().length>1?"":"0")+minutes+":"+(seconds.toString().length>4?"":"0")+seconds, width - 40, 170);
     pop();
 }

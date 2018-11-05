@@ -140,6 +140,7 @@ rl.on('line', (input) => {
 				toSend["players"][i].pos = new Vector(spawn.x, spawn.y);
 				toSend["players"][i].reset();
 				toSend["players"][i].startRace();
+				raceStart = seconds;
 			}
 			console.log("Race started.");
 		break;
@@ -162,6 +163,7 @@ toSend["gameData"] = {
 
 var spawns = [];
 var spawnNumber = 0;
+var raceStart = 0;
 
 io.on("connection", function (socket) {
     console.log("a user connected");
@@ -306,7 +308,9 @@ var player=function(x, y, name, id, c){
 	this.color=c;
 	this.frozen = false;
 	this.time=0;
+	this.lapTime=0;
 	this.timerBuffer=0;
+	this.lapStart=0;
 	this.startedRace=false;
 	this.currentWaypoint=0;
 	this.positionIndex=0;
@@ -382,7 +386,8 @@ var player=function(x, y, name, id, c){
 		this.dir = 0;
 	};
     this.update=function(){
-		this.time = seconds - this.timerBuffer;
+		this.time = seconds - raceStart;
+		this.lapTime = this.time - this.lapStart;
 		if(!this.frozen){
 			this.posBuffer=this.pos.clone();
 			this.pos.add(this.vel);
@@ -526,9 +531,9 @@ var player=function(x, y, name, id, c){
 		this.positionIndex = this.lap * waypoints.length + parseInt(this.currentWaypoint);
 		if(this.currentWaypoint == (waypoints.length-1) && close < 5){
 			if(this.lap<0){
-				this.timerBuffer = seconds;
 				this.startedRace = true;
 			}
+			this.lapStart = seconds;
 			this.lap++;
 			this.currentWaypoint = close;
 		}else{
