@@ -161,15 +161,13 @@ toSend["gameData"] = {
 	main:{
 		timer:0,
 		leaderboard:[],
-		update:function(){
-			this.timer = seconds;
-		}
 	}
 };
 
 var spawns = [];
 var spawnNumber = 0;
 var raceStart = 0;
+var recordData= fs.readFileSync(__dirname +"/data/records.json");
 
 io.on("connection", function (socket) {
     console.log("a user connected");
@@ -220,6 +218,15 @@ server.listen(1234, function (err) {
     console.log('Now listening on port 1234');
 });
 
+var room=function(){
+	this.toSend={};
+	this.setup=function(){
+
+	};
+	this.update=function(){
+
+	};
+}
 
 var wall=function(x1, y1, x2, y2){
 	this.x1 = x1;
@@ -469,16 +476,10 @@ var player=function(x, y, name, id, c){
 				}
 			}
 		}
-		var past = false;
 		for(var i in toSend["players"]){
 			var otherCar = toSend["players"][i];
 			if(otherCar === this){
-				past = true;
-				//console.log("Past: "+past);
 				return;
-			}
-			if(!past){
-				//return;
 			}
 			//console.log("Past test: "+past)
 			if(carCollision(this, otherCar)){
@@ -490,14 +491,8 @@ var player=function(x, y, name, id, c){
 				var deltaV1 = Vector.subtract(v1, v2);
 				var deltaX2 = Vector.subtract(x2, x1);
 				var deltaV2 = Vector.subtract(v2, v1);
-				var bufferTest = Vector.subtract(this.posBuffer, x2);
 				if(deltaX1.length() == 0){
 					return;
-				}
-				if(Math.abs(bufferTest.angleTo(deltaX1)) > Math.PI/2){
-					x1 = this.posBuffer.clone();
-					deltaX1 = Vector.subtract(x1, x2);
-					deltaX2 = Vector.subtract(x2, x1);
 				}
 				this.vel = Vector.subtract(v1, Vector.multiply(deltaX1, Vector.dot(deltaV1, deltaX1)/Math.pow(deltaX1.length(), 2)));
 				otherCar.vel = Vector.subtract(v2, Vector.multiply(deltaX2, Vector.dot(deltaV2, deltaX2)/Math.pow(deltaX2.length(), 2)));
@@ -545,6 +540,13 @@ var player=function(x, y, name, id, c){
 				this.startedRace = true;
 			}else{
 				this.splits.push(this.lapTime);
+				for(var i in recordData.lapTime){
+					if(this.lapTime<recordData.lapTime[i]){
+						recordData.lapTime[i] = this.lapTime;
+						fs.writeFileSync(__dirname +"/data/records.json", JSON.stringify(recordData));
+						console.log("hit");
+					}
+				}
 			}
 			this.lapStart = seconds - raceStart;
 			this.lap++;

@@ -102,7 +102,7 @@ socket.on("state", function(items){
     for (var id in items["players"]) {
         textSize(20);
         textAlign(LEFT, TOP);
-        text(items["players"][id].place+"."+items["players"][id].name, 40, 100+(items["players"][id].place-1)*22);
+        text(items["players"][id].place+". "+items["players"][id].name, 40, 100+(items["players"][id].place-1)*22);
         if(id === socket.id){
             renderHUD(items["players"][id], Object.keys(items["players"]).length);
         }
