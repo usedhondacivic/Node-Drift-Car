@@ -167,7 +167,8 @@ toSend["gameData"] = {
 var spawns = [];
 var spawnNumber = 0;
 var raceStart = 0;
-var recordData= fs.readFileSync(__dirname +"/data/records.json");
+var recordData = fs.readFileSync(__dirname +"/data/records.json");
+var recordData =   JSON.parse(recordData);
 
 io.on("connection", function (socket) {
     console.log("a user connected");
@@ -280,7 +281,6 @@ fs.readFile(__dirname + '/client/images/circuits/test_circuit/SVG/vectors_MainBo
 					}
 				}
 			}else if(result.svg.g[i].$.id === "Waypoints"){
-				console.log(result.svg.g[i]);
 				if(result.svg.g[i].polyline){
 					for(var o in result.svg.g[i].polyline){
 						var points = toPoints({type: 'polyline', points: result.svg.g[i].polyline[o].$.points.replace(/(\r\n\t|\n|\r\t|\t)/gm,"").trim()});
@@ -516,7 +516,6 @@ var player=function(x, y, name, id, c){
 	}
 	this.setFriction=function(){
 		if(Jimp.intToRGBA(trackMaskData.getPixelColor(Math.round(this.pos.x), Math.round(this.pos.y))).a !== 0){
-			//console.log(Jimp.intToRGBA(trackMaskData.getPixelColor(Math.round(this.pos.x), Math.round(this.pos.y))));
 			this.frictionMultiplier = 1;
 			this.accelMultiplier = 1;
 			this.decelMultiplier = 1;
@@ -542,9 +541,10 @@ var player=function(x, y, name, id, c){
 				this.splits.push(this.lapTime);
 				for(var i in recordData.lapTime){
 					if(this.lapTime<recordData.lapTime[i]){
-						recordData.lapTime[i] = this.lapTime;
-						fs.writeFileSync(__dirname +"/data/records.json", JSON.stringify(recordData));
-						console.log("hit");
+						recordData.lapTime.splice(i, 0, this.lapTime);
+						recordData.lapTime.splice(-1);
+						fs.writeFileSync(__dirname +"/data/records.json", JSON.stringify(recordData, null, 2));
+						break;
 					}
 				}
 			}

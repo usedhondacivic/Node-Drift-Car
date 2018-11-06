@@ -26,11 +26,9 @@ var trackImage;
 var sandImage;
 var trip = false;
 var countdown = -1;
+var loaded = false;
 
-var setup = function() {
-    background(217, 255, 160);
-    var cnv = createCanvas(document.body.clientWidth, window.innerHeight);
-    cnv.position(0,0);
+function preload() {
     carImage = loadImage("/images/cars/Sports/Sports.png");
     carMask = loadImage("/images/cars/Sports/Sports_Mask.png");
     //carImage = loadImage("/images/cars/Truck/Truck.png");
@@ -39,6 +37,13 @@ var setup = function() {
     //carMask = loadImage("/images/cars/Ambulance/Ambulance_Mask.png");
     trackImage = loadImage("/images/circuits/test_circuit/image/mask_MainBoard.png");
     sandImage = loadImage("/images/circuits/test_circuit/image/sand_MainBoard.png");
+}
+
+var setup = function() {
+    var cnv = createCanvas(document.body.clientWidth, window.innerHeight);
+    cnv.position(0,0);
+    document.getElementById("loading").style.display = "none";
+    loaded = true;
 }
 
 function windowResized() { resizeCanvas(document.body.clientWidth, window.innerHeight); }
@@ -63,6 +68,9 @@ var followCamera = {
 
 var trails = [];
 socket.on("state", function(items){
+    if(!loaded){
+        return;
+    }
     if(trip){
         background(217, 255, 160, 20);
     }else{
@@ -151,7 +159,6 @@ var renderPlayer = function(instance) {
         image(carImage, -(instance.backOffset - (instance.backOffset + instance.frontOffset)/2), 0);
         colorMode(HSB, 100);
         tint(instance.color%100, 40, 100, 100);
-        //tint(instance.color, 0, 100, 100);
         image(carMask, -(instance.backOffset - (instance.backOffset + instance.frontOffset)/2), 0);
         noTint();
         colorMode(RGB, 255);
