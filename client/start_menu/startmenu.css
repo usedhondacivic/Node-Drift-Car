@@ -66,6 +66,10 @@ input[type=text]{
     width: 15%;
     padding: 5px;
     font-size: 1.25em;
+    outline: none;
+}
+innput[type=text]:focus {
+    outline: none;
 }
 
 input[type=button]{
@@ -97,4 +101,8 @@ input[type=button]:hover {
 input[type=button]:active {
     background-color: #ff968f;
     color: white;
+}
+
+[contenteditable="true"]:focus {
+    outline: none;
 }

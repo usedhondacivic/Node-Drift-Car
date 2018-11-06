@@ -1,6 +1,6 @@
-/*if(sessionStorage.getItem("setup") == "false"){
+if(sessionStorage.getItem("setup") == "false"){
     window.location.replace("../");
-}*/
+}
 
 window.onbeforeunload = function(){
     sessionStorage.setItem('nickname', "");
@@ -25,6 +25,7 @@ var carMask;
 var trackImage;
 var sandImage;
 var trip = false;
+var countdown = -1;
 
 var setup = function() {
     background(217, 255, 160);
@@ -43,11 +44,9 @@ var setup = function() {
 function windowResized() { resizeCanvas(document.body.clientWidth, window.innerHeight); }
 
 var name = sessionStorage.getItem("nickname");
-//if(name != null && name != "" && name.length < 100){     
+if(name != null && name != "" && name.length < 100){     
     socket.emit("new player", {name:name, color: Math.random()*100});
-//}else{
-    //alert("That name isn't valid. Refresh to try again. Names cannot be empty and must be under 100 characters");
-//}
+}
 
 var followCamera = {
     x:0,
@@ -101,10 +100,29 @@ socket.on("state", function(items){
     }
     pop();
     for (var id in items["players"]) {
+        textSize(20);
+        textAlign(LEFT, TOP);
+        text(items["players"][id].place+"."+items["players"][id].name, 40, 100+(items["players"][id].place-1)*22);
         if(id === socket.id){
             renderHUD(items["players"][id], Object.keys(items["players"]).length);
         }
     }
+});
+
+socket.on("countdown", function(){
+    countdown = 3;
+    setTimeout(function(){
+        countdown = 2;
+    }, 1000);
+    setTimeout(function(){
+        countdown = 1;
+    }, 2000);
+    setTimeout(function(){
+        countdown = 0;
+    }, 3000);
+    setTimeout(function(){
+        countdown = -1;
+    }, 4000);
 });
 
 var renderPlayer = function(instance) {
@@ -123,7 +141,7 @@ var renderPlayer = function(instance) {
     push();
         translate(instance.pos.x,instance.pos.y);
         fill(0,0,0, 200);
-        textAlign(CENTER);
+        textAlign(CENTER, BOTTOM);
         textSize(9);
         textFont("Sans Serif");
         text(instance.name, 0, -20);
@@ -181,13 +199,29 @@ var renderHUD = function(instance, carNum) {
     //Lap Time
     textSize(15);
     textAlign(RIGHT, BOTTOM);
-    text("Lap:", width - 105, 160);
+    text("Lap:", width - 105, 180);
     textSize(25);
     textAlign(RIGHT, TOP);
-    text((lapMinutes.toString().length>1?"":"0")+lapMinutes+":"+(lapSeconds.toString().length>4?"":"0")+lapSeconds, width - 40, 160);
-
-    textAlign(RIGHT, TOP);
-    text("Lap: "+(instance.lap>=0?instance.lap:0), 300, height - 100);
-    //text("Time: "+(minutes.toString().length>1?"":"0")+minutes+":"+(seconds.toString().length>4?"":"0")+seconds, width - 40, 170);
+    if(instance.lap != -1){
+        text((lapMinutes.toString().length>1?"":"0")+lapMinutes+":"+(lapSeconds.toString().length>4?"":"0")+lapSeconds, width - 40, 180);
+    }else{
+        text("00:00:00", width - 40, 180);
+    }
+    //Lap Splits
+    for(var i in instance.splits){
+        lapMinutes = Math.floor(instance.splits[i].toFixed(2) / 60);
+        lapSeconds = (instance.splits[i]%60).toFixed(2).toString().replace(".",":");
+        textSize(20);
+        textAlign(RIGHT, TOP);
+        text((lapMinutes.toString().length>1?"":"0")+lapMinutes+":"+(lapSeconds.toString().length>4?"":"0")+lapSeconds, width - 40, 210+(instance.splits.length-i-1)*22);
+    }
+    //Countdown
+    textSize(150);
+    textAlign(CENTER, CENTER);
+    if(countdown>0){
+        text(countdown, width/2, height/2);
+    }else if(countdown == 0){
+        text("GO!", width/2, height/2);
+    }
     pop();
 }

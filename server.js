@@ -137,11 +137,17 @@ rl.on('line', (input) => {
 				if(!spawn){
 					spawn = {x: 2300, y:2000};
 				}
+				raceStart = seconds;
 				toSend["players"][i].pos = new Vector(spawn.x, spawn.y);
 				toSend["players"][i].reset();
-				toSend["players"][i].startRace();
-				raceStart = seconds;
 			}
+			io.emit("countdown");
+			setTimeout(function(){
+				for(var i in toSend["players"]){
+					toSend["players"][i].startRace();
+				}
+				raceStart = seconds;
+			}, 3000);
 			console.log("Race started.");
 		break;
 	}
@@ -311,6 +317,7 @@ var player=function(x, y, name, id, c){
 	this.lapTime=0;
 	this.timerBuffer=0;
 	this.lapStart=0;
+	this.splits=[];
 	this.startedRace=false;
 	this.currentWaypoint=0;
 	this.positionIndex=0;
@@ -332,8 +339,6 @@ var player=function(x, y, name, id, c){
 	this.turnSpeed=0.5;
 	//80
     this.turnDamp=105;
-	this.wheelTrails=[[],[],[],[]];
-	this.dropTrack = 0;
 	this.corners={
 		topRight:{
 			x:0,
@@ -373,7 +378,6 @@ var player=function(x, y, name, id, c){
 	this.sideOffset=10;
 	this.wheelInset=3;
 	this.keys=[];
-	this.modifiers=[];
 	this.startRace=function(){
 		this.currentWaypoint = findClosestWaypoint(this.pos);
 		this.waypointLocation = waypoints[this.currentWaypoint];
@@ -384,10 +388,17 @@ var player=function(x, y, name, id, c){
 		this.lap = -1;
 		this.vel = new Vector(0,0);
 		this.dir = 0;
+		this.frozen = true;
+		this.lapStart = 0;
+		this.splits=[];
 	};
     this.update=function(){
 		this.time = seconds - raceStart;
 		this.lapTime = this.time - this.lapStart;
+		if(this.frozen){
+			this.time = 0;
+			this.lapTime = 0;
+		}
 		if(!this.frozen){
 			this.posBuffer=this.pos.clone();
 			this.pos.add(this.vel);
@@ -532,8 +543,10 @@ var player=function(x, y, name, id, c){
 		if(this.currentWaypoint == (waypoints.length-1) && close < 5){
 			if(this.lap<0){
 				this.startedRace = true;
+			}else{
+				this.splits.push(this.lapTime);
 			}
-			this.lapStart = seconds;
+			this.lapStart = seconds - raceStart;
 			this.lap++;
 			this.currentWaypoint = close;
 		}else{
