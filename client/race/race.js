@@ -74,13 +74,14 @@ socket.on("state", function(items){
     if(trip){
         background(217, 255, 160, 20);
     }else{
-        background(217, 255, 160);
+        //background(217, 255, 160);
+        background(255, 255, 255);
     }
     push();
     followCamera.update(0.08);
-    translate(-followCamera.x + width / 2, -followCamera.y + height / 2);
-    image(sandImage, 0, 0, sandImage.width, sandImage.height);
-    image(trackImage, 0, 0, trackImage.width, trackImage.height);
+    //translate(-followCamera.x + width / 2, -followCamera.y + height / 2);
+    //image(sandImage, 0, 0, sandImage.width, sandImage.height);
+    //image(trackImage, 0, 0, trackImage.width, trackImage.height);
     for(var i in trails){
         push();
         noStroke();
@@ -152,7 +153,7 @@ var renderPlayer = function(instance) {
         textAlign(CENTER, BOTTOM);
         textSize(9);
         textFont("Sans Serif");
-        text(instance.name, 0, -20);
+        //text(instance.name, 0, -20);
         rotate(instance.dir);
         imageMode(CENTER);
         noStroke();

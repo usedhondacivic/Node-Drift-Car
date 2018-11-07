@@ -179,7 +179,7 @@ io.on("connection", function (socket) {
 			spawn = {x: 2300, y:2000};
 		}
 		//2300, 2000
-		toSend["players"][socket.id] = new player(spawn.x, spawn.y, arg.name, socket.id, arg.color);
+		toSend["players"][socket.id] = new player(/*spawn.x, spawn.y*/0, 0, arg.name, socket.id, arg.color);
 		toSend["players"][socket.id].startRace(); 
     });
     
@@ -269,7 +269,7 @@ fs.readFile(__dirname + '/client/images/circuits/test_circuit/SVG/vectors_MainBo
 						for(var j = 1; j<points.length; j++){
 							var start = points[j-1];
 							var end = points[j];
-							toSend["walls"].push(new wall(start.x, start.y, end.x, end.y));
+							//toSend["walls"].push(new wall(start.x, start.y, end.x, end.y));
 						}
 					}
 				}
@@ -520,14 +520,14 @@ var player=function(x, y, name, id, c){
 			this.accelMultiplier = 1;
 			this.decelMultiplier = 1;
 		}else if(Jimp.intToRGBA(sandMaskData.getPixelColor(Math.round(this.pos.x), Math.round(this.pos.y))).a !== 0){
-			this.frictionMultipler = 1;
-			this.accelMultiplier = 0.7;
-			this.decelMultiplier = 0.9;
+			//this.frictionMultipler = 1;
+			//this.accelMultiplier = 0.7;
+			//this.decelMultiplier = 0.9;
 		}
 		else{
-			this.frictionMultiplier = 0.95;
-			this.accelMultiplier = 1;
-			this.decelMultiplier = 1;
+			//this.frictionMultiplier = 0.95;
+			//this.accelMultiplier = 1;
+			//this.decelMultiplier = 1;
 		}
 	}
 	this.updateWaypoint=function(){
@@ -540,8 +540,8 @@ var player=function(x, y, name, id, c){
 			}else{
 				this.splits.push(this.lapTime);
 				for(var i in recordData.lapTime){
-					if(this.lapTime<recordData.lapTime[i]){
-						recordData.lapTime.splice(i, 0, this.lapTime);
+					if(this.lapTime<recordData.lapTime[i][0]){
+						recordData.lapTime.splice(i, 0, [this.lapTime, this.name]);
 						recordData.lapTime.splice(-1);
 						fs.writeFileSync(__dirname +"/data/records.json", JSON.stringify(recordData, null, 2));
 						break;
