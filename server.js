@@ -385,6 +385,21 @@ var player=function(x, y, name, id, c){
 	this.sideOffset=10;
 	this.wheelInset=3;
 	this.keys=[];
+	this.collidedThisFrame=[];
+	this.getWrapper=function(){
+		return {
+			pos:this.pos,
+			//place
+			//name
+			//corners
+			//offsets+insets
+			//splits
+			//lap
+			//lap time
+			//time
+
+		};
+	}
 	this.startRace=function(){
 		this.currentWaypoint = findClosestWaypoint(this.pos);
 		this.waypointLocation = waypoints[this.currentWaypoint];
@@ -476,9 +491,14 @@ var player=function(x, y, name, id, c){
 				}
 			}
 		}
+		var past = false;
 		for(var i in toSend["players"]){
 			var otherCar = toSend["players"][i];
 			if(otherCar === this){
+				past = true;
+				return;
+			}
+			if(!past){
 				return;
 			}
 			//console.log("Past test: "+past)
