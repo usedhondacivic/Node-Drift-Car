@@ -274,7 +274,7 @@ fs.readFile(__dirname + '/client/images/circuits/test_circuit/SVG/vectors_MainBo
 						for(var j = 1; j<points.length; j++){
 							var start = points[j-1];
 							var end = points[j];
-							//toSend["walls"].push(new wall(start.x, start.y, end.x, end.y));
+							toSend["walls"].push(new wall(start.x, start.y, end.x, end.y));
 						}
 					}
 				}
@@ -559,14 +559,14 @@ var player=function(x, y, name, id, c){
 			this.accelMultiplier = 1;
 			this.decelMultiplier = 1;
 		}else if(Jimp.intToRGBA(sandMaskData.getPixelColor(Math.round(this.pos.x), Math.round(this.pos.y))).a !== 0){
-			//this.frictionMultipler = 1;
-			//this.accelMultiplier = 0.7;
-			//this.decelMultiplier = 0.9;
+			this.frictionMultipler = 1;
+			this.accelMultiplier = 0.7;
+			this.decelMultiplier = 0.9;
 		}
 		else{
-			//this.frictionMultiplier = 0.95;
-			//this.accelMultiplier = 1;
-			//this.decelMultiplier = 1;
+			this.frictionMultiplier = 0.95;
+			this.accelMultiplier = 1;
+			this.decelMultiplier = 1;
 		}
 	}
 	this.updateWaypoint=function(){
