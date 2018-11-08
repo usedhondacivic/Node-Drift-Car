@@ -37,6 +37,13 @@ app.get(
 );
 
 app.get(
+    "/race/:roomName",
+    function(req, res){
+        res.sendFile(__dirname + "/client/race/race.html");
+    }
+);
+
+app.get(
     "/gen",
     function(req, res){
         res.sendFile(__dirname + "/client/track_generator/trackgen.html")
@@ -169,6 +176,7 @@ var room=function(name){
 	this.name = name;
 	this.owner = "";
 	this.maxPlayers = 12;
+	this.namespace = null;
 	//Room data
 	this.trackName="default";
 	this.trackRecordsPath="";
@@ -190,6 +198,25 @@ var room=function(name){
 	this.seconds = 0;
 
 	this.setup=function(){
+		this.namespace = io.of("/"+this.name);
+		this.namespace.on("connection", function(socket){
+			socket.on("new player", function(arg){
+				this.addPlayer(socket);
+			});
+			
+			socket.on("key press", function(arg){
+				this.keyPressed(socket, arg);
+			});
+		
+			socket.on("key release", function(arg){
+				this.keyReleased(socket, arg);
+			});
+		
+			socket.on("disconnect", function(){
+				this.removePlayer(socket);
+			});
+		});
+
 		this.recordData = JSON.parse(fs.readFileSync(__dirname +"/data/records.json"));
 		toSend["players"] = {};
 		toSend["walls"] = [];
@@ -255,19 +282,17 @@ var room=function(name){
 					obj.update();
 			}
 		}
-		io.to(this.name).emit("state", this.toSend);
+		this.namespace.emit("state", this.toSend);
 		this.seconds+=1/60;
 	};
 	this.addPlayer=function(socket){
 		Console.log("Player joined room "+this.name);
-		socket.join(this.name);
 		if(Object.keys(this.players).length < this.maxPlayers){
 			var spawn = this.spawns[spawnNumber%spawns.length];
 			this.spawnNumber++;
 			if(!spawn){
 				spawn = {x: 2300, y:2000};
 			}
-			//2300, 2000
 			this.players[socket.id] = new player(spawn.x, spawn.y, arg.name, socket.id, arg.color);
 			this.players[socket.id].startRace(); 
 		}
@@ -336,47 +361,12 @@ var room=function(name){
 	}
 }
 
-var spawns = [];
-var spawnNumber = 0;
-var raceStart = 0;
-var recordData = fs.readFileSync(__dirname +"/data/records.json");
-var recordData =   JSON.parse(recordData);
+var menu = io.of("/menu");
 
-io.on("connection", function (socket) {
-    console.log("a user connected");
-    socket.on("new player", function(arg){
-		var spawn = spawns[spawnNumber%spawns.length];
-		spawnNumber++;
-		if(!spawn){
-			spawn = {x: 2300, y:2000};
-		}
-		//2300, 2000
-		players[socket.id] = new player(spawn.x, spawn.y, arg.name, socket.id, arg.color);
-		players[socket.id].startRace(); 
-	});
-	
+menu.on("connection", function(socket) {
 	socket.on("new room", function(arg){
 		rooms[arg.name] = new room(arg.name);
-	});
-    
-    socket.on("key press", function(arg){
-        if(players[socket.id]){
-            players[socket.id].keys[arg] = true;
-        }
-    });
-
-    socket.on("key release", function(arg){
-        if(players[socket.id]){
-            players[socket.id].keys[arg] = false;
-        }
-    });
-
-    socket.on("disconnect", function(){
-        console.log("a user disconnected");
-		delete players[socket.id];
-		if(toSend["players"][socket.id]){
-			delete toSend["players"][socket.id];
-		}
+		rooms[arg.name].setup();
 	});
 });
 
@@ -484,6 +474,7 @@ Jimp.read("./client/images/circuits/test_circuit/image/sand_MainBoard.png", func
 
 var player=function(x, y, name, id, c){
 	this.name = name;
+	this.room = "";
 	this.id = id;
 	this.pos=new Vector(x, y);
 	this.posBuffer=new Vector(0,0);
