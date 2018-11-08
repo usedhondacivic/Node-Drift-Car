@@ -5,7 +5,6 @@ if(sessionStorage.getItem("setup") == "false"){
 window.onbeforeunload = function(){
     sessionStorage.setItem('nickname', "");
     sessionStorage.setItem('setup', "false");
-    print("hit");
 }
 
 //IO

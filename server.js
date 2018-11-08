@@ -48,23 +48,23 @@ rl.on('line', (input) => {
 	switch(words[0]){
 		case "ban":
 			if(getPlayerIndexFromName(words[1]).length === 1){
-				delete toSend["players"][getPlayerIndexFromName(words[1])];
+				delete players[getPlayerIndexFromName(words[1])];
 				console.log("Banned user with name " + words[1]);
-			}else if(toSend["players"][words[1]]){
-				delete toSend["players"][words[1]];
+			}else if(players[words[1]]){
+				delete players[words[1]];
 				console.log("Banned user with id " + words[1]);
 			}else if(getPlayerIndexFromName(words[1]).length > 1){
 				console.log("Multiple players of that name. Please try again using one of the following IDs");
 				for(var i in getPlayerIndexFromName(words[1])){
-					console.log(toSend["players"][getPlayerIndexFromName(words[1])[i]].id);
+					console.log(players[getPlayerIndexFromName(words[1])[i]].id);
 				}
 			}else{
 				console.log("No players found from that name/id.");
 			}
 		break;
 		case "list":
-			for(var i in toSend["players"]){
-				var p = toSend["players"][i];
+			for(var i in players){
+				var p = players[i];
 				console.log(p.name+":");
 				console.log("   ID: "+p.id);
 			}
@@ -83,14 +83,14 @@ rl.on('line', (input) => {
 		break;
 		case "set acceleration":
 			if(words[1] === "all"){
-				for(var i in toSend["players"]){
-					toSend["players"][i].accel = parseFloat(words[2]);
+				for(var i in players){
+					players[i].accel = parseFloat(words[2]);
 				}
 				console.log("Acceleration was set for all players.");
 			}
 			else if(typeof parseFloat(words[2]) === "number"){
-				if(toSend["players"][words[1]]){
-					toSend["players"][words[1]].accel = parseFloat(words[2]);
+				if(players[words[1]]){
+					players[words[1]].accel = parseFloat(words[2]);
 					console.log("Acceleration was set.");	
 				}else{
 					console.log("Couldn't find a player on that socket.");
@@ -101,13 +101,13 @@ rl.on('line', (input) => {
 		break;
 		case "set color":
 			if(words[1] === "all"){
-				for(var i in toSend["players"]){
-					toSend["players"][i].color = Math.random() * 100;
+				for(var i in players){
+					players[i].color = Math.random() * 100;
 					console.log("Color was randomized for all players.")
 				}
 			}else if(typeof parseFloat(words[2]) === "number"){
-				if(toSend["players"][words[1]]){
-					toSend["players"][words[1]].color = parseFloat(words[2]);
+				if(players[words[1]]){
+					players[words[1]].color = parseFloat(words[2]);
 					console.log("Color was set.");	
 				}else{
 					console.log("Couldn't find a player on that socket.");
@@ -118,33 +118,33 @@ rl.on('line', (input) => {
 		break;
 		case "reset":
 			spawnNumber = 0;
-			for(var i in toSend["players"]){
+			for(var i in players){
 				var spawn = spawns[spawnNumber%spawns.length];
 				spawnNumber++;
 				if(!spawn){
 					spawn = {x: 2300, y:2000};
 				}
-				toSend["players"][i].pos = new Vector(spawn.x, spawn.y);
-				toSend["players"][i].reset();
+				players[i].pos = new Vector(spawn.x, spawn.y);
+				players[i].reset();
 			}
 			console.log("Players reset.");
 		break;
 		case "start race":
 			spawnNumber = 0;
-			for(var i in toSend["players"]){
+			for(var i in players){
 				var spawn = spawns[spawnNumber%spawns.length];
 				spawnNumber++;
 				if(!spawn){
 					spawn = {x: 2300, y:2000};
 				}
 				raceStart = seconds;
-				toSend["players"][i].pos = new Vector(spawn.x, spawn.y);
-				toSend["players"][i].reset();
+				players[i].pos = new Vector(spawn.x, spawn.y);
+				players[i].reset();
 			}
 			io.emit("countdown");
 			setTimeout(function(){
-				for(var i in toSend["players"]){
-					toSend["players"][i].startRace();
+				for(var i in players){
+					players[i].startRace();
 				}
 				raceStart = seconds;
 			}, 3000);
@@ -155,6 +155,7 @@ rl.on('line', (input) => {
 
 
 var toSend={};
+var players={};
 toSend["players"] = {};
 toSend["walls"] = [];
 toSend["gameData"] = {
@@ -179,30 +180,34 @@ io.on("connection", function (socket) {
 			spawn = {x: 2300, y:2000};
 		}
 		//2300, 2000
-		toSend["players"][socket.id] = new player(/*spawn.x, spawn.y*/0, 0, arg.name, socket.id, arg.color);
-		toSend["players"][socket.id].startRace(); 
+		players[socket.id] = new player(spawn.x, spawn.y, arg.name, socket.id, arg.color);
+		players[socket.id].startRace(); 
     });
     
     socket.on("key press", function(arg){
-        if( toSend["players"][socket.id]){
-            toSend["players"][socket.id].keys[arg] = true;
+        if(players[socket.id]){
+            players[socket.id].keys[arg] = true;
         }
     });
 
     socket.on("key release", function(arg){
-        if( toSend["players"][socket.id]){
-            toSend["players"][socket.id].keys[arg] = false;
+        if(players[socket.id]){
+            players[socket.id].keys[arg] = false;
         }
     });
 
     socket.on("disconnect", function(){
         console.log("a user disconnected");
-        delete toSend["players"][socket.id];
+		delete players[socket.id];
+		if(toSend["players"][socket.id]){
+			delete toSend["players"][socket.id];
+		}
 	});
 });
 
 setInterval(function(){
 	updatePlayerPlacing();
+	updatePlayerWrappers();
     for(var type in toSend){
         for(var id in toSend[type]){
 			var obj = toSend[type][id];
@@ -385,6 +390,35 @@ var player=function(x, y, name, id, c){
 	this.sideOffset=10;
 	this.wheelInset=3;
 	this.keys=[];
+	this.collidedThisFrame=[];
+	this.getWrapper=function(){
+		return {
+			pos:this.pos,
+			dir:this.dir,
+			color:this.color,
+			//place
+			place:this.place,
+			//name
+			name:this.name,
+			//corners
+			corners:this.corners,
+			//offsets+insets
+			frontOffset:this.frontOffset,
+			backOffset:this.backOffset,
+			sideOffset:this.sideOffset,
+			wheelInset:this.wheelInset,
+			//splits
+			splits:this.splits,
+			//lap
+			lap:this.lap,
+			//lap time
+			lapTime:this.lapTime,
+			//time
+			time:this.time,
+			//side vel
+			rightVel:this.rightVel,
+		};
+	}
 	this.startRace=function(){
 		this.currentWaypoint = findClosestWaypoint(this.pos);
 		this.waypointLocation = waypoints[this.currentWaypoint];
@@ -476,9 +510,14 @@ var player=function(x, y, name, id, c){
 				}
 			}
 		}
-		for(var i in toSend["players"]){
-			var otherCar = toSend["players"][i];
+		var past = false;
+		for(var i in players){
+			var otherCar = players[i];
 			if(otherCar === this){
+				past = true;
+				return;
+			}
+			if(!past){
 				return;
 			}
 			//console.log("Past test: "+past)
@@ -561,8 +600,8 @@ var player=function(x, y, name, id, c){
 
 var updatePlayerPlacing = function(){
 	toSend["gameData"].leaderboard = [];
-	for(var i in toSend["players"]){
-		var p = toSend["players"][i];
+	for(var i in players){
+		var p = players[i];
 		toSend["gameData"].leaderboard.push({
 			id:i,
 			name: p.name,
@@ -573,14 +612,21 @@ var updatePlayerPlacing = function(){
 	toSend["gameData"].leaderboard.sort(function(a,b){
 		return b.index - a.index;
 	});
-	for(var i in toSend["players"]){
-		var p = toSend["players"][i];
+	for(var i in players){
+		var p = players[i];
 		for(var o in toSend["gameData"].leaderboard){
 			var l = toSend["gameData"].leaderboard[o];
 			if(i == l.id){
 				p.place = parseInt(o)+1;
 			}
 		}
+	}
+}
+
+var updatePlayerWrappers = function() {
+	for(var i in players){
+		players[i].update();
+		toSend["players"][i] = players[i].getWrapper();
 	}
 }
 
@@ -620,8 +666,8 @@ function createPolygon(center, sides, size, angle, leaveOff){
 
 var getPlayerIndexFromName = function (name) {
 	var users= [];
-	for(var i in toSend["players"]){
-		if(toSend["players"][i].name === name){
+	for(var i in players){
+		if(players[i].name === name){
 			users.push(i);
 		}
 	}
