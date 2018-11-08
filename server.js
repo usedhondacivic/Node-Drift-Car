@@ -153,7 +153,7 @@ rl.on('line', (input) => {
 	}
 });
 
-
+var rooms={};
 var toSend={};
 var players={};
 toSend["players"] = {};
@@ -164,6 +164,177 @@ toSend["gameData"] = {
 		leaderboard:[],
 	}
 };
+
+var room=function(name){
+	this.name = name;
+	this.owner = "";
+	this.maxPlayers = 12;
+	//Room data
+	this.trackName="default";
+	this.trackRecordsPath="";
+	this.trackImagesPath="./client/images/circuits/test_circuit/image";
+	this.trackSVGPath="/client/images/circuits/test_circuit/SVG";
+	//To be sent
+	this.players = {};
+	this.toSend = {};
+	//Race variables
+	this.spawnNumber = 0;
+	this.waypoints = [];
+	this.spawns = [];
+	//Data
+	this.recordData = null;
+	this.trackMaskData = null;
+	this.sandMaskData = null;
+	//Time
+	this.raceStart = 0;
+	this.seconds = 0;
+
+	this.setup=function(){
+		this.recordData = JSON.parse(fs.readFileSync(__dirname +"/data/records.json"));
+		toSend["players"] = {};
+		toSend["walls"] = [];
+		toSend["gameData"] = {
+			room:{
+				leaderboard:[],
+			}
+		};
+
+		Jimp.read(this.trackImagesPath+"/mask_MainBoard.png", function (err, image) {
+			this.trackMaskData = image;
+		});
+		Jimp.read(this.trackImagesPath+"/sand_MainBoard.png", function (err, image) {
+			this.sandMaskData = image;
+		});
+		
+		var parser = new xml2js.Parser();
+		fs.readFile(__dirname + this.trackSVGPath + '/vectors_MainBoard.svg', function(err, data) {
+			parser.parseString(data, function (err, result) {
+				for(var i in result.svg.g){
+					if(result.svg.g[i].$.id === "Walls"){
+						if(result.svg.g[i].polygon){
+							for(var o in result.svg.g[i].polygon){
+								var points = toPoints({type: 'polygon', points: result.svg.g[i].polygon[o].$.points.replace(/(\r\n\t|\n|\r\t|\t)/gm,"").trim()});
+								for(var j = 1; j<points.length; j++){
+									var start = points[j-1];
+									var end = points[j];
+									this.toSend["walls"].push(new wall(start.x, start.y, end.x, end.y));
+								}
+							}
+						}
+					}else if(result.svg.g[i].$.id === "Spawns"){
+						if(result.svg.g[i].circle){
+							for(var o in result.svg.g[i].circle){
+								var circle = result.svg.g[i].circle[o].$;
+								this.spawns.push({x: parseFloat(circle.cx), y: parseFloat(circle.cy)});
+							}
+						}
+					}else if(result.svg.g[i].$.id === "Waypoints"){
+						if(result.svg.g[i].polyline){
+							for(var o in result.svg.g[i].polyline){
+								var points = toPoints({type: 'polyline', points: result.svg.g[i].polyline[o].$.points.replace(/(\r\n\t|\n|\r\t|\t)/gm,"").trim()});
+								for(var j = 0; j<points.length; j++){
+									this.waypoints.push(points[j]);
+								}
+							}
+						}
+					}
+				}
+				for(var w in this.toSend["walls"]){
+					this.toSend["walls"][w].setup();
+				}
+			});
+		});
+	};
+	this.update=function(){
+		this.updatePlayerPlacing();
+		this.updatePlayerWrappers();
+		for(var type in this.toSend){
+			for(var id in this.toSend[type]){
+				var obj = this.toSend[type][id];
+				if(typeof obj.update === "function")
+					obj.update();
+			}
+		}
+		io.to(this.name).emit("state", this.toSend);
+		this.seconds+=1/60;
+	};
+	this.addPlayer=function(socket){
+		Console.log("Player joined room "+this.name);
+		socket.join(this.name);
+		if(Object.keys(this.players).length < this.maxPlayers){
+			var spawn = this.spawns[spawnNumber%spawns.length];
+			this.spawnNumber++;
+			if(!spawn){
+				spawn = {x: 2300, y:2000};
+			}
+			//2300, 2000
+			this.players[socket.id] = new player(spawn.x, spawn.y, arg.name, socket.id, arg.color);
+			this.players[socket.id].startRace(); 
+		}
+	}
+	this.removePlayer=function(socket){
+		Console.log("Player left room "+this.name);
+		delete this.players[socket.id];
+		if(this.toSend["players"][socket.id]){
+			delete this.toSend["players"][socket.id];
+		}
+	}
+	this.keyPressed=function(socket, arg){
+		if(this.players[socket.id]){
+            this.players[socket.id].keys[arg] = true;
+        }
+	}
+	this.keyReleased=function(socket, arg){
+		if(this.players[socket.id]){
+            this.players[socket.id].keys[arg] = false;
+        }
+	}
+	this.updatePlayerPlacing = function(){
+		this.toSend["gameData"].room.leaderboard = [];
+		for(var i in this.players){
+			var p = this.players[i];
+			this.toSend["gameData"].room.leaderboard.push({
+				id:i,
+				name: p.name,
+				lap: p.lap,
+				index: p.positionIndex,
+			});
+		}
+		this.toSend["gameData"].main.leaderboard.sort(function(a,b){
+			return b.index - a.index;
+		});
+		for(var i in this.players){
+			var p = this.players[i];
+			for(var o in this.toSend["gameData"].room.leaderboard){
+				var l = this.toSend["gameData"].room.leaderboard[o];
+				if(i == l.id){
+					p.place = parseInt(o)+1;
+				}
+			}
+		}
+	}
+	
+	this.updatePlayerWrappers = function() {
+		for(var i in this.players){
+			this.players[i].update();
+			this.toSend["players"][i] = this.players[i].getWrapper();
+		}
+	}
+	
+	this.findClosestWaypoint = function(pos){
+		var lowestDistance = Infinity;
+		var index = -1;
+		for(var i in this.waypoints){
+			var w = this.waypoints[i];
+			var v = new Vector(pos.x - w.x, pos.y - w.y);
+			if(v.length() < lowestDistance){
+				lowestDistance = v.length();
+				index = i;
+			}
+		}
+		return index;
+	}
+}
 
 var spawns = [];
 var spawnNumber = 0;
@@ -182,7 +353,11 @@ io.on("connection", function (socket) {
 		//2300, 2000
 		players[socket.id] = new player(spawn.x, spawn.y, arg.name, socket.id, arg.color);
 		players[socket.id].startRace(); 
-    });
+	});
+	
+	socket.on("new room", function(arg){
+		rooms[arg.name] = new room(arg.name);
+	});
     
     socket.on("key press", function(arg){
         if(players[socket.id]){
@@ -224,16 +399,6 @@ server.listen(1234, function (err) {
     console.log('Now listening on port 1234');
 });
 
-var room=function(){
-	this.toSend={};
-	this.setup=function(){
-
-	};
-	this.update=function(){
-
-	};
-}
-
 var wall=function(x1, y1, x2, y2){
 	this.x1 = x1;
 	this.y1 = y1;
@@ -274,7 +439,7 @@ fs.readFile(__dirname + '/client/images/circuits/test_circuit/SVG/vectors_MainBo
 						for(var j = 1; j<points.length; j++){
 							var start = points[j-1];
 							var end = points[j];
-							//toSend["walls"].push(new wall(start.x, start.y, end.x, end.y));
+							toSend["walls"].push(new wall(start.x, start.y, end.x, end.y));
 						}
 					}
 				}
