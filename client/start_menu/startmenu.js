@@ -1,3 +1,6 @@
+
+var socket = io();
+
 var currentPage="titlePage";
 var textBox;
 

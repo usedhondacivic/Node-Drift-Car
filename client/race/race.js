@@ -9,11 +9,12 @@ window.onbeforeunload = function(){
 
 //IO
 var socket = io();
+var room = "testRoom";
 
 //Key events
 var keys=[];
-keyPressed=function(){socket.emit("key press", keyCode);};
-keyReleased=function(){socket.emit("key release", keyCode);};
+keyPressed=function(){socket.in(room).emit("key press", keyCode);};
+keyReleased=function(){socket.in(room).emit("key release", keyCode);};
 
 socket.on("toggleTrip", function(set){
     trip = !trip;
@@ -49,7 +50,7 @@ function windowResized() { resizeCanvas(document.body.clientWidth, window.innerH
 
 var name = sessionStorage.getItem("nickname");
 if(name != null && name != "" && name.length < 100){     
-    socket.emit("new player", {name:name, color: Math.random()*100});
+    socket.in(room).emit("new player", {name:name, color: Math.random()*100});
 }
 
 var followCamera = {

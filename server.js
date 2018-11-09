@@ -8,7 +8,6 @@ var xml2js = require('xml2js');
 var server = require('http').Server(app);
 const io = require('socket.io')(server);
 var fs = require('fs');
-var seconds = 0;
 
 const readline = require('readline');
 
@@ -39,7 +38,7 @@ app.get(
 app.get(
     "/race/:roomName",
     function(req, res){
-        res.sendFile(__dirname + "/client/race/race.html");
+		res.sendFile(__dirname + "/client/race/race.html");
     }
 );
 
@@ -160,18 +159,6 @@ rl.on('line', (input) => {
 	}
 });
 
-var rooms={};
-var toSend={};
-var players={};
-toSend["players"] = {};
-toSend["walls"] = [];
-toSend["gameData"] = {
-	main:{
-		timer:0,
-		leaderboard:[],
-	}
-};
-
 var room=function(name){
 	this.name = name;
 	this.owner = "";
@@ -198,29 +185,11 @@ var room=function(name){
 	this.seconds = 0;
 
 	this.setup=function(){
-		this.namespace = io.of("/"+this.name);
-		this.namespace.on("connection", function(socket){
-			socket.on("new player", function(arg){
-				this.addPlayer(socket);
-			});
-			
-			socket.on("key press", function(arg){
-				this.keyPressed(socket, arg);
-			});
-		
-			socket.on("key release", function(arg){
-				this.keyReleased(socket, arg);
-			});
-		
-			socket.on("disconnect", function(){
-				this.removePlayer(socket);
-			});
-		});
 
 		this.recordData = JSON.parse(fs.readFileSync(__dirname +"/data/records.json"));
-		toSend["players"] = {};
-		toSend["walls"] = [];
-		toSend["gameData"] = {
+		this.toSend["players"] = {};
+		this.toSend["walls"] = [];
+		this.toSend["gameData"] = {
 			room:{
 				leaderboard:[],
 			}
@@ -234,6 +203,9 @@ var room=function(name){
 		});
 		
 		var parser = new xml2js.Parser();
+		var walls=[];
+		var spawns=[];
+		var waypoints=[];
 		fs.readFile(__dirname + this.trackSVGPath + '/vectors_MainBoard.svg', function(err, data) {
 			parser.parseString(data, function (err, result) {
 				for(var i in result.svg.g){
@@ -244,7 +216,7 @@ var room=function(name){
 								for(var j = 1; j<points.length; j++){
 									var start = points[j-1];
 									var end = points[j];
-									this.toSend["walls"].push(new wall(start.x, start.y, end.x, end.y));
+									walls.push(new wall(start.x, start.y, end.x, end.y));
 								}
 							}
 						}
@@ -252,7 +224,7 @@ var room=function(name){
 						if(result.svg.g[i].circle){
 							for(var o in result.svg.g[i].circle){
 								var circle = result.svg.g[i].circle[o].$;
-								this.spawns.push({x: parseFloat(circle.cx), y: parseFloat(circle.cy)});
+								spawns.push({x: parseFloat(circle.cx), y: parseFloat(circle.cy)});
 							}
 						}
 					}else if(result.svg.g[i].$.id === "Waypoints"){
@@ -260,17 +232,20 @@ var room=function(name){
 							for(var o in result.svg.g[i].polyline){
 								var points = toPoints({type: 'polyline', points: result.svg.g[i].polyline[o].$.points.replace(/(\r\n\t|\n|\r\t|\t)/gm,"").trim()});
 								for(var j = 0; j<points.length; j++){
-									this.waypoints.push(points[j]);
+									waypoints.push(points[j]);
 								}
 							}
 						}
 					}
 				}
-				for(var w in this.toSend["walls"]){
-					this.toSend["walls"][w].setup();
+				for(var w in walls){
+					walls[w].setup();
 				}
 			});
 		});
+		this.toSend["walls"] = walls;
+		this.spawns = spawns;
+		this.waypoints = waypoints;
 	};
 	this.update=function(){
 		this.updatePlayerPlacing();
@@ -282,11 +257,12 @@ var room=function(name){
 					obj.update();
 			}
 		}
-		this.namespace.emit("state", this.toSend);
+		io.to(this.name).emit("state", this.toSend);
 		this.seconds+=1/60;
 	};
 	this.addPlayer=function(socket){
 		Console.log("Player joined room "+this.name);
+		socket.join(this.name);
 		if(Object.keys(this.players).length < this.maxPlayers){
 			var spawn = this.spawns[spawnNumber%spawns.length];
 			this.spawnNumber++;
@@ -325,7 +301,7 @@ var room=function(name){
 				index: p.positionIndex,
 			});
 		}
-		this.toSend["gameData"].main.leaderboard.sort(function(a,b){
+		this.toSend["gameData"].room.leaderboard.sort(function(a,b){
 			return b.index - a.index;
 		});
 		for(var i in this.players){
@@ -361,16 +337,45 @@ var room=function(name){
 	}
 }
 
-var menu = io.of("/menu");
+var rooms={
+	"testRoom":new room("testRoom")
+};
+for(var i in rooms){
+	rooms[i].setup();
+}
+var toSend={};
+var players={};
+toSend["players"] = {};
+toSend["walls"] = [];
+toSend["gameData"] = {
+	main:{
+		timer:0,
+		leaderboard:[],
+	}
+};
 
-menu.on("connection", function(socket) {
-	socket.on("new room", function(arg){
-		rooms[arg.name] = new room(arg.name);
-		rooms[arg.name].setup();
+io.on("connection", function(socket){
+	socket.on("create room", function(arg){
+		rooms.push(new room(arg.name));
+	});
+	socket.on("new player", function(arg){
+		rooms[arg.room].addPlayer(socket);
+	});
+	
+	socket.on("key press", function(arg){
+		rooms[arg.room].keyPressed(socket, arg);
+	});
+
+	socket.on("key release", function(arg){
+		rooms[arg.room].keyReleased(socket, arg);
+	});
+
+	socket.on("disconnect", function(){
+		rooms[arg.room].removePlayer(socket);
 	});
 });
 
-setInterval(function(){
+/*setInterval(function(){
 	updatePlayerPlacing();
 	updatePlayerWrappers();
     for(var type in toSend){
@@ -382,6 +387,12 @@ setInterval(function(){
     }
 	io.emit("state", toSend);
 	seconds+=1/60;
+}, 1000/60);*/
+
+setInterval(function(){
+	for(var i in rooms){
+		rooms[i].update();
+	}
 }, 1000/60);
 
 server.listen(1234, function (err) {
@@ -414,63 +425,6 @@ createPolygon(new Vector(-350, -350), 4, 200, Math.PI/6, 1);
 createPolygon(new Vector(-700, -700), 6, 100, Math.PI/5, 1);
 createPolygon(new Vector(-1500, -500), 3, 500, -Math.PI/7, 0);
 createPolygon(new Vector(-800, -200), 20, 100, -Math.PI/3, 0);*/
-
-//TODO: Get waypoints from illustrator layer, write function to get waypoint index for leaderboard.
-var waypoints=[];
-
-var parser = new xml2js.Parser();
-fs.readFile(__dirname + '/client/images/circuits/test_circuit/SVG/vectors_MainBoard.svg', function(err, data) {
-    parser.parseString(data, function (err, result) {
-		for(var i in result.svg.g){
-			if(result.svg.g[i].$.id === "Walls"){
-				if(result.svg.g[i].polygon){
-					for(var o in result.svg.g[i].polygon){
-						var points = toPoints({type: 'polygon', points: result.svg.g[i].polygon[o].$.points.replace(/(\r\n\t|\n|\r\t|\t)/gm,"").trim()});
-						for(var j = 1; j<points.length; j++){
-							var start = points[j-1];
-							var end = points[j];
-							toSend["walls"].push(new wall(start.x, start.y, end.x, end.y));
-						}
-					}
-				}
-			}else if(result.svg.g[i].$.id === "Spawns"){
-				if(result.svg.g[i].circle){
-					for(var o in result.svg.g[i].circle){
-						var circle = result.svg.g[i].circle[o].$;
-						spawns.push({x: parseFloat(circle.cx), y: parseFloat(circle.cy)});
-					}
-				}
-			}else if(result.svg.g[i].$.id === "Waypoints"){
-				if(result.svg.g[i].polyline){
-					for(var o in result.svg.g[i].polyline){
-						var points = toPoints({type: 'polyline', points: result.svg.g[i].polyline[o].$.points.replace(/(\r\n\t|\n|\r\t|\t)/gm,"").trim()});
-						for(var j = 0; j<points.length; j++){
-							waypoints.push(points[j]);
-						}
-					}
-				}
-			}
-		}
-		for(var w in toSend["walls"]){
-			toSend["walls"][w].setup();
-		}
-    });
-});
-
-var LEFT_ARROW = 37;
-var RIGHT_ARROW = 39;
-var UP_ARROW = 38;
-var DOWN_ARROW = 40;
-
-var trackMaskData;
-var sandMaskData;
-
-Jimp.read("./client/images/circuits/test_circuit/image/mask_MainBoard.png", function (err, image) {
-	trackMaskData = image;
-});
-Jimp.read("./client/images/circuits/test_circuit/image/sand_MainBoard.png", function (err, image) {
-	sandMaskData = image;
-});
 
 var player=function(x, y, name, id, c){
 	this.name = name;
@@ -715,14 +669,14 @@ var player=function(x, y, name, id, c){
 			this.accelMultiplier = 1;
 			this.decelMultiplier = 1;
 		}else if(Jimp.intToRGBA(sandMaskData.getPixelColor(Math.round(this.pos.x), Math.round(this.pos.y))).a !== 0){
-			//this.frictionMultipler = 1;
-			//this.accelMultiplier = 0.7;
-			//this.decelMultiplier = 0.9;
+			this.frictionMultipler = 1;
+			this.accelMultiplier = 0.7;
+			this.decelMultiplier = 0.9;
 		}
 		else{
-			//this.frictionMultiplier = 0.95;
-			//this.accelMultiplier = 1;
-			//this.decelMultiplier = 1;
+			this.frictionMultiplier = 0.95;
+			this.accelMultiplier = 1;
+			this.decelMultiplier = 1;
 		}
 	}
 	this.updateWaypoint=function(){
@@ -753,52 +707,6 @@ var player=function(x, y, name, id, c){
 		}
 	}
 };
-
-var updatePlayerPlacing = function(){
-	toSend["gameData"].leaderboard = [];
-	for(var i in players){
-		var p = players[i];
-		toSend["gameData"].leaderboard.push({
-			id:i,
-			name: p.name,
-			lap: p.lap,
-			index: p.positionIndex,
-		});
-	}
-	toSend["gameData"].leaderboard.sort(function(a,b){
-		return b.index - a.index;
-	});
-	for(var i in players){
-		var p = players[i];
-		for(var o in toSend["gameData"].leaderboard){
-			var l = toSend["gameData"].leaderboard[o];
-			if(i == l.id){
-				p.place = parseInt(o)+1;
-			}
-		}
-	}
-}
-
-var updatePlayerWrappers = function() {
-	for(var i in players){
-		players[i].update();
-		toSend["players"][i] = players[i].getWrapper();
-	}
-}
-
-function findClosestWaypoint(pos){
-	var lowestDistance = Infinity;
-	var index = -1;
-	for(var i in waypoints){
-		var w = waypoints[i];
-		var v = new Vector(pos.x - w.x, pos.y - w.y);
-		if(v.length() < lowestDistance){
-			lowestDistance = v.length();
-			index = i;
-		}
-	}
-	return index;
-}
 
 function carLineCollision(car, wall){
 	return (doLineSegmentsIntersect(car.corners.topRight, car.corners.topLeft, {x:wall.x1, y:wall.y1}, {x:wall.x2, y:wall.y2}) || 
