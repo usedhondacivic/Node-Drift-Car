@@ -9,13 +9,15 @@ window.onbeforeunload = function(){
 
 //IO
 var socket = io();
+var room = window.location.pathname.split("/");
+room = room[room.length-1];
 
 //Key events
 var keys=[];
 keyPressed=function(){socket.emit("key press", keyCode);};
 keyReleased=function(){socket.emit("key release", keyCode);};
 
-socket.on("toggleTrip", function(set){
+socket.on("toggleTrip", function(){
     trip = !trip;
 });
 
@@ -48,8 +50,9 @@ var setup = function() {
 function windowResized() { resizeCanvas(document.body.clientWidth, window.innerHeight); }
 
 var name = sessionStorage.getItem("nickname");
+//var name = prompt("Nickname:");
 if(name != null && name != "" && name.length < 100){     
-    socket.emit("new player", {name:name, color: Math.random()*100});
+    socket.emit("new player", {name:name, color: Math.random()*100, room:room});
 }
 
 var followCamera = {
@@ -130,6 +133,10 @@ socket.on("countdown", function(){
     setTimeout(function(){
         countdown = -1;
     }, 4000);
+});
+
+socket.on("alert", function(message){
+    alert(message);
 });
 
 var renderPlayer = function(instance) {
