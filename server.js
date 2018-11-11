@@ -49,28 +49,44 @@ app.get(
     }
 );
 
+var broadcastRoom = null;
 rl.on('line', (input) => {
 	var words = input.split(":");
+	if(words[0] === "set room"){
+		broadcastRoom = words[1];
+		if(rooms[broadcastRoom]){
+			console.log("Room set to "+words[1]+".");
+			return;
+		}else{
+			console.log("Didn't find that room.");
+		}
+	}
+	if(!rooms[broadcastRoom]){
+		console.log("Please select a room to send to:");
+		for(var r in rooms){
+			console.log("     '"+rooms[r].name+"'");
+		}
+		if(Object.keys(rooms).length == 0){
+			console.log("     No rooms found.")
+		}
+		return;
+	}
 	switch(words[0]){
 		case "ban":
-			if(getPlayerIndexFromName(words[1]).length === 1){
-				delete players[getPlayerIndexFromName(words[1])];
-				console.log("Banned user with name " + words[1]);
-			}else if(players[words[1]]){
-				delete players[words[1]];
-				console.log("Banned user with id " + words[1]);
-			}else if(getPlayerIndexFromName(words[1]).length > 1){
-				console.log("Multiple players of that name. Please try again using one of the following IDs");
-				for(var i in getPlayerIndexFromName(words[1])){
-					console.log(players[getPlayerIndexFromName(words[1])[i]].id);
+			if(rooms[broadcastRoom].players[words[1]]){
+				rooms[broadcastRoom].removePlayer({id:words[1]});
+				if(words[2]){
+					io.sockets.connected[words[1]].emit("alert", words[2]);
 				}
+				console.log("Player banned.");	
 			}else{
-				console.log("No players found from that name/id.");
+				console.log("Couldn't find a player on that socket.");
 			}
 		break;
 		case "list":
-			for(var i in players){
-				var p = players[i];
+			console.log("Players in room: "+rooms[broadcastRoom].name);
+			for(var i in rooms[broadcastRoom].players){
+				var p = rooms[broadcastRoom].players[i];
 				console.log(p.name+":");
 				console.log("   ID: "+p.id);
 			}
@@ -78,10 +94,10 @@ rl.on('line', (input) => {
 		case "trip":
 			if(io.sockets.connected[words[1]]){
 				io.sockets.connected[words[1]].emit("toggleTrip");
-				console.log("Trip was toggled.");
+				console.log("Toggled trip.");
 			}else if(words[1] === "all"){
-				io.emit("toggleTrip");
-				console.log("Trip was toggled for all players.");
+				io.to(broadcastRoom).emit("toggleTrip");
+				console.log("Toggled trip for all players.");
 			}
 			else{
 				console.log("Couldn't find that socket.");
@@ -89,15 +105,15 @@ rl.on('line', (input) => {
 		break;
 		case "set acceleration":
 			if(words[1] === "all"){
-				for(var i in players){
-					players[i].accel = parseFloat(words[2]);
+				for(var i in rooms[broadcastRoom].players){
+					rooms[broadcastRoom].players[i].accel = parseFloat(words[2]);
 				}
-				console.log("Acceleration was set for all players.");
+				console.log("Set acceleration for all players.");
 			}
 			else if(typeof parseFloat(words[2]) === "number"){
-				if(players[words[1]]){
-					players[words[1]].accel = parseFloat(words[2]);
-					console.log("Acceleration was set.");	
+				if(rooms[broadcastRoom].players[words[1]]){
+					rooms[broadcastRoom].players[words[1]].accel = parseFloat(words[2]);
+					console.log("Set acceleration.");	
 				}else{
 					console.log("Couldn't find a player on that socket.");
 				}
@@ -107,14 +123,14 @@ rl.on('line', (input) => {
 		break;
 		case "set color":
 			if(words[1] === "all"){
-				for(var i in players){
-					players[i].color = Math.random() * 100;
+				for(var i in rooms[broadcastRoom].players){
+					rooms[broadcastRoom].players[i].color = Math.random() * 100;
 					console.log("Color was randomized for all players.")
 				}
 			}else if(typeof parseFloat(words[2]) === "number"){
-				if(players[words[1]]){
-					players[words[1]].color = parseFloat(words[2]);
-					console.log("Color was set.");	
+				if(rooms[broadcastRoom].players[words[1]]){
+					rooms[broadcastRoom].players[words[1]].color = parseFloat(words[2]);
+					console.log("Set color.");	
 				}else{
 					console.log("Couldn't find a player on that socket.");
 				}
@@ -124,37 +140,40 @@ rl.on('line', (input) => {
 		break;
 		case "reset":
 			spawnNumber = 0;
-			for(var i in players){
-				var spawn = spawns[spawnNumber%spawns.length];
-				spawnNumber++;
+			for(var i in rooms[broadcastRoom].players){
+				var spawn = rooms[broadcastRoom].spawns[rooms[broadcastRoom].spawnNumber%rooms[broadcastRoom].spawns.length];
+				rooms[broadcast].spawnNumber++;
 				if(!spawn){
 					spawn = {x: 2300, y:2000};
 				}
-				players[i].pos = new Vector(spawn.x, spawn.y);
-				players[i].reset();
+				rooms[broadcastRoom].players[i].pos = new Vector(spawn.x, spawn.y);
+				rooms[broadcastRoom].players[i].reset();
 			}
 			console.log("Players reset.");
 		break;
 		case "start race":
-			spawnNumber = 0;
-			for(var i in players){
-				var spawn = spawns[spawnNumber%spawns.length];
-				spawnNumber++;
+			rooms[broadcastRoom].spawnNumber = 0;
+			for(var i in rooms[broadcastRoom].players){
+				var spawn = rooms[broadcastRoom].spawns[rooms[broadcastRoom].spawnNumber%rooms[broadcastRoom].spawns.length];
+				rooms[broadcastRoom].spawnNumber++;
 				if(!spawn){
 					spawn = {x: 2300, y:2000};
 				}
-				raceStart = seconds;
-				players[i].pos = new Vector(spawn.x, spawn.y);
-				players[i].reset();
+				rooms[broadcastRoom].raceStart = rooms[broadcastRoom].seconds;
+				rooms[broadcastRoom].players[i].pos = new Vector(spawn.x, spawn.y);
+				rooms[broadcastRoom].players[i].reset();
 			}
-			io.emit("countdown");
+			io.to(broadcastRoom).emit("countdown");
 			setTimeout(function(){
-				for(var i in players){
-					players[i].startRace();
+				for(var i in rooms[broadcastRoom].players){
+					rooms[broadcastRoom].players[i].startRace();
 				}
-				raceStart = seconds;
+				rooms[broadcastRoom].raceStart = rooms[broadcastRoom].seconds;
 			}, 3000);
 			console.log("Race started.");
+		break;
+		default:
+			console.log("Command not recognized.");
 		break;
 	}
 });
@@ -163,7 +182,6 @@ var room=function(name){
 	this.name = name;
 	this.owner = "";
 	this.maxPlayers = 12;
-	this.namespace = null;
 	//Room data
 	this.trackName="default";
 	this.trackRecordsPath="";
@@ -185,7 +203,7 @@ var room=function(name){
 	this.seconds = 0;
 
 	this.setup=function(){
-
+		console.log("Created room: "+this.name);
 		this.recordData = JSON.parse(fs.readFileSync(__dirname +"/data/records.json"));
 		this.toSend["players"] = {};
 		this.toSend["walls"] = [];
@@ -194,11 +212,10 @@ var room=function(name){
 				leaderboard:[],
 			}
 		};
-
-		Jimp.read(this.trackImagesPath+"/mask_MainBoard.png", function (err, image) {
+		Jimp.read(this.trackImagesPath+"/mask_MainBoard.png").then(image =>{
 			this.trackMaskData = image;
 		});
-		Jimp.read(this.trackImagesPath+"/sand_MainBoard.png", function (err, image) {
+		Jimp.read(this.trackImagesPath+"/sand_MainBoard.png").then(image => {
 			this.sandMaskData = image;
 		});
 		
@@ -206,42 +223,42 @@ var room=function(name){
 		var walls=[];
 		var spawns=[];
 		var waypoints=[];
-		fs.readFile(__dirname + this.trackSVGPath + '/vectors_MainBoard.svg', function(err, data) {
-			parser.parseString(data, function (err, result) {
-				for(var i in result.svg.g){
-					if(result.svg.g[i].$.id === "Walls"){
-						if(result.svg.g[i].polygon){
-							for(var o in result.svg.g[i].polygon){
-								var points = toPoints({type: 'polygon', points: result.svg.g[i].polygon[o].$.points.replace(/(\r\n\t|\n|\r\t|\t)/gm,"").trim()});
-								for(var j = 1; j<points.length; j++){
-									var start = points[j-1];
-									var end = points[j];
-									walls.push(new wall(start.x, start.y, end.x, end.y));
-								}
+		var data = fs.readFileSync(__dirname + this.trackSVGPath + '/vectors_MainBoard.svg');
+		parser.parseString(data, function (err, result) {
+			for(var i in result.svg.g){
+				if(result.svg.g[i].$.id === "Walls"){
+					if(result.svg.g[i].polygon){
+						for(var o in result.svg.g[i].polygon){
+							var points = toPoints({type: 'polygon', points: result.svg.g[i].polygon[o].$.points.replace(/(\r\n\t|\n|\r\t|\t)/gm,"").trim()});
+							for(var j = 1; j<points.length; j++){
+								var start = points[j-1];
+								var end = points[j];
+								walls.push(new wall(start.x, start.y, end.x, end.y));
 							}
 						}
-					}else if(result.svg.g[i].$.id === "Spawns"){
-						if(result.svg.g[i].circle){
-							for(var o in result.svg.g[i].circle){
-								var circle = result.svg.g[i].circle[o].$;
-								spawns.push({x: parseFloat(circle.cx), y: parseFloat(circle.cy)});
-							}
+					}
+				}else if(result.svg.g[i].$.id === "Spawns"){
+					if(result.svg.g[i].circle){
+						for(var o in result.svg.g[i].circle){
+							var circle = result.svg.g[i].circle[o].$;
+							spawns.push({x: parseFloat(circle.cx), y: parseFloat(circle.cy)});
 						}
-					}else if(result.svg.g[i].$.id === "Waypoints"){
-						if(result.svg.g[i].polyline){
-							for(var o in result.svg.g[i].polyline){
-								var points = toPoints({type: 'polyline', points: result.svg.g[i].polyline[o].$.points.replace(/(\r\n\t|\n|\r\t|\t)/gm,"").trim()});
-								for(var j = 0; j<points.length; j++){
-									waypoints.push(points[j]);
-								}
+					}
+				}else if(result.svg.g[i].$.id === "Waypoints"){
+					if(result.svg.g[i].polyline){
+						for(var o in result.svg.g[i].polyline){
+							var points = toPoints({type: 'polyline', points: result.svg.g[i].polyline[o].$.points.replace(/(\r\n\t|\n|\r\t|\t)/gm,"").trim()});
+							for(var j = 0; j<points.length; j++){
+								waypoints.push(points[j]);
 							}
 						}
 					}
 				}
-				for(var w in walls){
-					walls[w].setup();
-				}
-			});
+			}
+			for(var w in walls){
+				walls[w].setup();
+			}
+
 		});
 		this.toSend["walls"] = walls;
 		this.spawns = spawns;
@@ -260,24 +277,29 @@ var room=function(name){
 		io.to(this.name).emit("state", this.toSend);
 		this.seconds+=1/60;
 	};
-	this.addPlayer=function(socket){
-		Console.log("Player joined room "+this.name);
+	this.addPlayer=function(socket, arg){
+		console.log("Player '"+arg.name+"' joined room '"+this.name+"'");
 		socket.join(this.name);
 		if(Object.keys(this.players).length < this.maxPlayers){
-			var spawn = this.spawns[spawnNumber%spawns.length];
+			var spawn = this.spawns[this.spawnNumber%this.spawns.length];
 			this.spawnNumber++;
 			if(!spawn){
 				spawn = {x: 2300, y:2000};
 			}
-			this.players[socket.id] = new player(spawn.x, spawn.y, arg.name, socket.id, arg.color);
+			this.players[socket.id] = new player(spawn.x, spawn.y, arg.name, socket.id, arg.color, this.name);
 			this.players[socket.id].startRace(); 
 		}
 	}
 	this.removePlayer=function(socket){
-		Console.log("Player left room "+this.name);
+		if(this.players[socket.id]){
+			console.log("Player '"+this.players[socket.id].name+"' left room '"+this.name+"'");
+		}
 		delete this.players[socket.id];
 		if(this.toSend["players"][socket.id]){
 			delete this.toSend["players"][socket.id];
+		}
+		if(roomAssociation[socket.id]){
+			delete roomAssociation[socket.id];
 		}
 	}
 	this.keyPressed=function(socket, arg){
@@ -337,41 +359,35 @@ var room=function(name){
 	}
 }
 
-var rooms={
-	"testRoom":new room("testRoom")
-};
-for(var i in rooms){
-	rooms[i].setup();
-}
-var toSend={};
-var players={};
-toSend["players"] = {};
-toSend["walls"] = [];
-toSend["gameData"] = {
-	main:{
-		timer:0,
-		leaderboard:[],
-	}
-};
+var rooms={};
+var roomAssociation = {};
 
 io.on("connection", function(socket){
-	socket.on("create room", function(arg){
-		rooms.push(new room(arg.name));
-	});
 	socket.on("new player", function(arg){
-		rooms[arg.room].addPlayer(socket);
+		if(!rooms[arg.room]){
+			rooms[arg.room] = new room(arg.room);
+			rooms[arg.room].setup();
+		}
+		rooms[arg.room].addPlayer(socket, arg);
+		roomAssociation[socket.id] = arg.room;
 	});
 	
 	socket.on("key press", function(arg){
-		rooms[arg.room].keyPressed(socket, arg);
+		if(rooms[roomAssociation[socket.id]]){
+			rooms[roomAssociation[socket.id]].keyPressed(socket, arg);
+		}
 	});
 
 	socket.on("key release", function(arg){
-		rooms[arg.room].keyReleased(socket, arg);
+		if(rooms[roomAssociation[socket.id]]){
+			rooms[roomAssociation[socket.id]].keyReleased(socket, arg);
+		}
 	});
 
 	socket.on("disconnect", function(){
-		rooms[arg.room].removePlayer(socket);
+		if(rooms[roomAssociation[socket.id]]){
+			rooms[roomAssociation[socket.id]].removePlayer(socket);
+		}
 	});
 });
 
@@ -426,9 +442,14 @@ createPolygon(new Vector(-700, -700), 6, 100, Math.PI/5, 1);
 createPolygon(new Vector(-1500, -500), 3, 500, -Math.PI/7, 0);
 createPolygon(new Vector(-800, -200), 20, 100, -Math.PI/3, 0);*/
 
-var player=function(x, y, name, id, c){
+var LEFT_ARROW = 37;
+var RIGHT_ARROW = 39;
+var UP_ARROW = 38;
+var DOWN_ARROW = 40;
+
+var player=function(x, y, name, id, c, room){
 	this.name = name;
-	this.room = "";
+	this.room = room;
 	this.id = id;
 	this.pos=new Vector(x, y);
 	this.posBuffer=new Vector(0,0);
@@ -530,9 +551,9 @@ var player=function(x, y, name, id, c){
 		};
 	}
 	this.startRace=function(){
-		this.currentWaypoint = findClosestWaypoint(this.pos);
-		this.waypointLocation = waypoints[this.currentWaypoint];
-		this.positionIndex = this.lap * waypoints.length + parseInt(this.currentWaypoint);
+		this.currentWaypoint = rooms[this.room].findClosestWaypoint(this.pos);
+		this.waypointLocation = rooms[this.room].waypoints[this.currentWaypoint];
+		this.positionIndex = this.lap * rooms[this.room].waypoints.length + parseInt(this.currentWaypoint);
 		this.frozen=false;
 	};
 	this.reset=function(){
@@ -544,7 +565,7 @@ var player=function(x, y, name, id, c){
 		this.splits=[];
 	};
     this.update=function(){
-		this.time = seconds - raceStart;
+		this.time = rooms[this.room].seconds - rooms[this.room].raceStart;
 		this.lapTime = this.time - this.lapStart;
 		if(this.frozen){
 			this.time = 0;
@@ -598,8 +619,8 @@ var player=function(x, y, name, id, c){
 		this.corners.topRight.y = this.pos.y - this.sideOffset*Math.cos(-this.dir) - this.frontOffset*Math.sin(-this.dir);
 	}
 	this.collision=function(){
-		for(var i in toSend["walls"]){
-			var w = toSend["walls"][i];
+		for(var i in rooms[this.room].toSend["walls"]){
+			var w = rooms[this.room].toSend["walls"][i];
 			if(carLineCollision(this, w)){
 				var lastPos = Vector.subtract(this.pos, this.vel);
 				var reboundDirection = w.normal.clone();
@@ -621,8 +642,8 @@ var player=function(x, y, name, id, c){
 			}
 		}
 		var past = false;
-		for(var i in players){
-			var otherCar = players[i];
+		for(var i in rooms[this.room].players){
+			var otherCar = rooms[this.room].players[i];
 			if(otherCar === this){
 				past = true;
 				return;
@@ -664,40 +685,42 @@ var player=function(x, y, name, id, c){
 		}
 	}
 	this.setFriction=function(){
-		if(Jimp.intToRGBA(trackMaskData.getPixelColor(Math.round(this.pos.x), Math.round(this.pos.y))).a !== 0){
-			this.frictionMultiplier = 1;
-			this.accelMultiplier = 1;
-			this.decelMultiplier = 1;
-		}else if(Jimp.intToRGBA(sandMaskData.getPixelColor(Math.round(this.pos.x), Math.round(this.pos.y))).a !== 0){
-			this.frictionMultipler = 1;
-			this.accelMultiplier = 0.7;
-			this.decelMultiplier = 0.9;
-		}
-		else{
-			this.frictionMultiplier = 0.95;
-			this.accelMultiplier = 1;
-			this.decelMultiplier = 1;
+		if(rooms[this.room].trackMaskData && rooms[this.room].sandMaskData){
+			if(Jimp.intToRGBA(rooms[this.room].trackMaskData.getPixelColor(Math.round(this.pos.x), Math.round(this.pos.y))).a !== 0){
+				this.frictionMultiplier = 1;
+				this.accelMultiplier = 1;
+				this.decelMultiplier = 1;
+			}else if(Jimp.intToRGBA(rooms[this.room].sandMaskData.getPixelColor(Math.round(this.pos.x), Math.round(this.pos.y))).a !== 0){
+				this.frictionMultipler = 1;
+				this.accelMultiplier = 0.7;
+				this.decelMultiplier = 0.9;
+			}
+			else{
+				this.frictionMultiplier = 0.95;
+				this.accelMultiplier = 1;
+				this.decelMultiplier = 1;
+			}
 		}
 	}
 	this.updateWaypoint=function(){
-		var close = findClosestWaypoint(this.pos);
-		this.waypointLocation = waypoints[this.currentWaypoint];
-		this.positionIndex = this.lap * waypoints.length + parseInt(this.currentWaypoint);
-		if(this.currentWaypoint == (waypoints.length-1) && close < 5){
+		var close = rooms[this.room].findClosestWaypoint(this.pos);
+		this.waypointLocation = rooms[this.room].waypoints[this.currentWaypoint];
+		this.positionIndex = this.lap * rooms[this.room].waypoints.length + parseInt(this.currentWaypoint);
+		if(this.currentWaypoint == (rooms[this.room].waypoints.length-1) && close < 5){
 			if(this.lap<0){
 				this.startedRace = true;
 			}else{
 				this.splits.push(this.lapTime);
-				for(var i in recordData.lapTime){
-					if(this.lapTime<recordData.lapTime[i][0]){
-						recordData.lapTime.splice(i, 0, [this.lapTime, this.name]);
-						recordData.lapTime.splice(-1);
-						fs.writeFileSync(__dirname +"/data/records.json", JSON.stringify(recordData, null, 2));
+				for(var i in rooms[this.room].recordData.lapTime){
+					if(this.lapTime<rooms[this.room].recordData.lapTime[i][0]){
+						rooms[this.room].recordData.lapTime.splice(i, 0, [this.lapTime, this.name]);
+						rooms[this.room].recordData.lapTime.splice(-1);
+						fs.writeFileSync(__dirname +"/data/records.json", JSON.stringify(rooms[this.room].recordData, null, 2));
 						break;
 					}
 				}
 			}
-			this.lapStart = seconds - raceStart;
+			this.lapStart = rooms[this.room].seconds - rooms[this.room].raceStart;
 			this.lap++;
 			this.currentWaypoint = close;
 		}else{

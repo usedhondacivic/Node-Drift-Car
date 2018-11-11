@@ -1,6 +1,3 @@
-
-var socket = io();
-
 var currentPage="titlePage";
 var textBox;
 
@@ -23,13 +20,15 @@ window.onload = function(){
 }
 
 function submit() {
-    if(textBox.value.length > 0){
-        sessionStorage.setItem('nickname', textBox.value);
-        sessionStorage.setItem('setup', "true");
-        window.location.replace("./race");
-        //switchPage("carSelectPage");
-    }else{
-        document.getElementById("warning").style.display = "block";
+    if(textBox){
+        if(textBox.value.length > 0){
+            sessionStorage.setItem('nickname', textBox.value);
+            sessionStorage.setItem('setup', "true");
+            window.location.replace("./race");
+            //switchPage("carSelectPage");
+        }else{
+            document.getElementById("warning").style.display = "block";
+        }
     }
 }
 

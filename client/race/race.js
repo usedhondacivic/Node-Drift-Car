@@ -9,14 +9,15 @@ window.onbeforeunload = function(){
 
 //IO
 var socket = io();
-var room = "testRoom";
+var room = window.location.pathname.split("/");
+room = room[room.length-1];
 
 //Key events
 var keys=[];
-keyPressed=function(){socket.in(room).emit("key press", keyCode);};
-keyReleased=function(){socket.in(room).emit("key release", keyCode);};
+keyPressed=function(){socket.emit("key press", keyCode);};
+keyReleased=function(){socket.emit("key release", keyCode);};
 
-socket.on("toggleTrip", function(set){
+socket.on("toggleTrip", function(){
     trip = !trip;
 });
 
@@ -49,8 +50,9 @@ var setup = function() {
 function windowResized() { resizeCanvas(document.body.clientWidth, window.innerHeight); }
 
 var name = sessionStorage.getItem("nickname");
+//var name = prompt("Nickname:");
 if(name != null && name != "" && name.length < 100){     
-    socket.in(room).emit("new player", {name:name, color: Math.random()*100});
+    socket.emit("new player", {name:name, color: Math.random()*100, room:room});
 }
 
 var followCamera = {
@@ -74,14 +76,13 @@ socket.on("state", function(items){
     if(trip){
         background(217, 255, 160, 20);
     }else{
-        //background(217, 255, 160);
-        background(255, 255, 255);
+        background(217, 255, 160);
     }
     push();
     followCamera.update(0.08);
-    //translate(-followCamera.x + width / 2, -followCamera.y + height / 2);
-    //image(sandImage, 0, 0, sandImage.width, sandImage.height);
-    //image(trackImage, 0, 0, trackImage.width, trackImage.height);
+    translate(-followCamera.x + width / 2, -followCamera.y + height / 2);
+    image(sandImage, 0, 0, sandImage.width, sandImage.height);
+    image(trackImage, 0, 0, trackImage.width, trackImage.height);
     for(var i in trails){
         push();
         noStroke();
@@ -132,6 +133,10 @@ socket.on("countdown", function(){
     setTimeout(function(){
         countdown = -1;
     }, 4000);
+});
+
+socket.on("alert", function(message){
+    alert(message);
 });
 
 var renderPlayer = function(instance) {
