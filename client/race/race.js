@@ -158,7 +158,7 @@ var renderPlayer = function(instance) {
         textAlign(CENTER, BOTTOM);
         textSize(9);
         textFont("Sans Serif");
-        //text(instance.name, 0, -20);
+        text(instance.name, 0, -20);
         rotate(instance.dir);
         imageMode(CENTER);
         noStroke();
