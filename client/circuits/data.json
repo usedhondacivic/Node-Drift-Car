@@ -1,0 +1,8 @@
+{
+    "Mugello Circuit":{
+        "location":"/mugello_circuit",
+        "track":"/image/mask_MainBoard.png",
+        "sand":"/image/sand_Mainboard.png",
+        "svg":"/SVG"
+    }
+}

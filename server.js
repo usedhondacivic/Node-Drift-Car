@@ -178,15 +178,30 @@ rl.on('line', (input) => {
 	}
 });
 
-var room=function(name){
+var circuitsPath = "./client/circuits";
+var clientCircuitsPath = "/circuits";
+var circuits={
+	"Mugello Circuit":{
+        location:"/mugello_circuit",
+        track:"/image/mask_MainBoard.png",
+        sand:"/image/sand_Mainboard.png",
+		svg:"/SVG/vectors_Mainboard.svg",
+		records:"/data/records.json"
+    }
+}
+
+var room=function(name, circuit){
 	this.name = name;
+	this.circuit = circuit;
 	this.owner = "";
 	this.maxPlayers = 12;
 	//Room data
-	this.trackName="default";
-	this.trackRecordsPath="";
-	this.trackImagesPath="./client/images/circuits/test_circuit/image";
-	this.trackSVGPath="/client/images/circuits/test_circuit/SVG";
+	this.recordsPath="";
+	this.trackPath="";
+	this.clientTrackPath="";
+	this.sandPath="";
+	this.clientSandPath="";
+	this.svgPath="";
 	//To be sent
 	this.players = {};
 	this.toSend = {};
@@ -202,9 +217,20 @@ var room=function(name){
 	this.raceStart = 0;
 	this.seconds = 0;
 
+	this.loadCircuit=function(){
+		var circuit = circuits[this.circuit];
+		this.trackPath = circuitsPath + circuit.location + circuit.track;
+		this.clientTrackPath = clientCircuitsPath + circuit.location + circuit.track;
+		this.sandPath = circuitsPath + circuit.location + circuit.sand;
+		this.clientSandPath = clientCircuitsPath + circuit.location + circuit.sand;
+		this.svgPath = circuitsPath + circuit.location + circuit.svg;
+		this.recordsPath = circuitsPath + circuit.location + circuit.records;
+	}
+
 	this.setup=function(){
 		console.log("Created room: "+this.name);
-		this.recordData = JSON.parse(fs.readFileSync(__dirname +"/data/records.json"));
+		this.loadCircuit();
+		this.recordData = JSON.parse(fs.readFileSync(this.recordsPath));
 		this.toSend["players"] = {};
 		this.toSend["walls"] = [];
 		this.toSend["gameData"] = {
@@ -212,10 +238,10 @@ var room=function(name){
 				leaderboard:[],
 			}
 		};
-		Jimp.read(this.trackImagesPath+"/mask_MainBoard.png").then(image =>{
+		Jimp.read(this.trackPath).then(image =>{
 			this.trackMaskData = image;
 		});
-		Jimp.read(this.trackImagesPath+"/sand_MainBoard.png").then(image => {
+		Jimp.read(this.sandPath).then(image => {
 			this.sandMaskData = image;
 		});
 		
@@ -223,7 +249,7 @@ var room=function(name){
 		var walls=[];
 		var spawns=[];
 		var waypoints=[];
-		var data = fs.readFileSync(__dirname + this.trackSVGPath + '/vectors_MainBoard.svg');
+		var data = fs.readFileSync(this.svgPath);
 		parser.parseString(data, function (err, result) {
 			for(var i in result.svg.g){
 				if(result.svg.g[i].$.id === "Walls"){
@@ -289,6 +315,10 @@ var room=function(name){
 			this.players[socket.id] = new player(spawn.x, spawn.y, arg.name, socket.id, arg.color, this.name);
 			this.players[socket.id].startRace(); 
 		}
+		io.sockets.connected[socket.id].emit("setup complete", {
+			track: this.clientTrackPath,
+			sand: this.clientSandPath
+		});
 	}
 	this.removePlayer=function(socket){
 		if(this.players[socket.id]){
@@ -300,6 +330,10 @@ var room=function(name){
 		}
 		if(roomAssociation[socket.id]){
 			delete roomAssociation[socket.id];
+		}
+		if(Object.keys(this.players).length === 0){
+			console.log("Room '"+this.name+"' has been deleted.")
+			delete rooms[this.name];
 		}
 	}
 	this.keyPressed=function(socket, arg){
@@ -365,7 +399,11 @@ var roomAssociation = {};
 io.on("connection", function(socket){
 	socket.on("new player", function(arg){
 		if(!rooms[arg.room]){
-			rooms[arg.room] = new room(arg.room);
+			if(arg.circuit){
+				rooms[arg.room] = new room(arg.room);
+			}else{
+				rooms[arg.room] = new room(arg.room,"Mugello Circuit");
+			}
 			rooms[arg.room].setup();
 		}
 		rooms[arg.room].addPlayer(socket, arg);
@@ -527,26 +565,17 @@ var player=function(x, y, name, id, c, room){
 			pos:this.pos,
 			dir:this.dir,
 			color:this.color,
-			//place
 			place:this.place,
-			//name
 			name:this.name,
-			//corners
 			corners:this.corners,
-			//offsets+insets
 			frontOffset:this.frontOffset,
 			backOffset:this.backOffset,
 			sideOffset:this.sideOffset,
 			wheelInset:this.wheelInset,
-			//splits
 			splits:this.splits,
-			//lap
 			lap:this.lap,
-			//lap time
 			lapTime:this.lapTime,
-			//time
 			time:this.time,
-			//side vel
 			rightVel:this.rightVel,
 		};
 	}
@@ -581,8 +610,8 @@ var player=function(x, y, name, id, c, room){
 			this.speed*=this.decel*this.decelMultiplier;
 			if(this.keys[UP_ARROW]){this.speed+=this.accel*this.accelMultiplier;}
 			if(this.keys[DOWN_ARROW]){this.speed-=this.accel*this.accelMultiplier*0.5;}
-			if(this.keys[LEFT_ARROW]){this.dir-=(this.turnSpeed*this.vel.length())/this.turnDamp;}
-			if(this.keys[RIGHT_ARROW]){this.dir+=(this.turnSpeed*this.vel.length())/this.turnDamp;}
+			if(this.keys[LEFT_ARROW]){this.dir-=Math.sign(this.speed)*(this.turnSpeed*this.vel.length())/this.turnDamp;}
+			if(this.keys[RIGHT_ARROW]){this.dir+=Math.sign(this.speed)*(this.turnSpeed*this.vel.length())/this.turnDamp;}
 		}
 		//this.color++;
     };
@@ -648,9 +677,9 @@ var player=function(x, y, name, id, c, room){
 				past = true;
 				return;
 			}
-			if(!past){
-				return;
-			}
+			//if(!past){
+			//	return;
+			//}
 			//console.log("Past test: "+past)
 			if(carCollision(this, otherCar)){
 				var v1 = this.vel.clone();
@@ -715,7 +744,7 @@ var player=function(x, y, name, id, c, room){
 					if(this.lapTime<rooms[this.room].recordData.lapTime[i][0]){
 						rooms[this.room].recordData.lapTime.splice(i, 0, [this.lapTime, this.name]);
 						rooms[this.room].recordData.lapTime.splice(-1);
-						fs.writeFileSync(__dirname +"/data/records.json", JSON.stringify(rooms[this.room].recordData, null, 2));
+						fs.writeFileSync(rooms[this.room].recordsPath, JSON.stringify(rooms[this.room].recordData, null, 2));
 						break;
 					}
 				}

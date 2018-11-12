@@ -29,22 +29,9 @@ var trip = false;
 var countdown = -1;
 var loaded = false;
 
-function preload() {
-    carImage = loadImage("/images/cars/Sports/Sports.png");
-    carMask = loadImage("/images/cars/Sports/Sports_Mask.png");
-    //carImage = loadImage("/images/cars/Truck/Truck.png");
-    //carMask = loadImage("/images/cars/Truck/Truck_Mask.png");
-    //carImage = loadImage("/images/cars/Ambulance/Ambulance.png");
-    //carMask = loadImage("/images/cars/Ambulance/Ambulance_Mask.png");
-    trackImage = loadImage("/images/circuits/test_circuit/image/mask_MainBoard.png");
-    sandImage = loadImage("/images/circuits/test_circuit/image/sand_MainBoard.png");
-}
-
 var setup = function() {
     var cnv = createCanvas(document.body.clientWidth, window.innerHeight);
     cnv.position(0,0);
-    document.getElementById("loading").style.display = "none";
-    loaded = true;
 }
 
 function windowResized() { resizeCanvas(document.body.clientWidth, window.innerHeight); }
@@ -67,6 +54,19 @@ var followCamera = {
         this.y = lerp(this.y, this.pos.y, per);
     }
 };
+
+socket.on("setup complete", function(images){
+    carImage = loadImage("/images/cars/Sports/Sports.png");
+    carMask = loadImage("/images/cars/Sports/Sports_Mask.png");
+    //carImage = loadImage("/images/cars/Truck/Truck.png");
+    //carMask = loadImage("/images/cars/Truck/Truck_Mask.png");
+    //carImage = loadImage("/images/cars/Ambulance/Ambulance.png");
+    //carMask = loadImage("/images/cars/Ambulance/Ambulance_Mask.png");
+    trackImage = loadImage(images.track);
+    sandImage = loadImage(images.sand);
+    document.getElementById("loading").style.display = "none";
+    loaded = true;
+});
 
 var trails = [];
 socket.on("state", function(items){

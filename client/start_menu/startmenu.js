@@ -24,7 +24,7 @@ function submit() {
         if(textBox.value.length > 0){
             sessionStorage.setItem('nickname', textBox.value);
             sessionStorage.setItem('setup', "true");
-            window.location.replace("./race");
+            window.location.replace("./race/default");
             //switchPage("carSelectPage");
         }else{
             document.getElementById("warning").style.display = "block";
