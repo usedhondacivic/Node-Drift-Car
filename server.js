@@ -190,6 +190,13 @@ var circuits={
     }
 }
 
+var loadCircuits=function(){
+	for(var i in circuits){
+		var c = circuits[i];
+		//c.recordData =
+	}
+}
+
 var room=function(name, circuit){
 	this.name = name;
 	this.circuit = circuit;
@@ -230,7 +237,7 @@ var room=function(name, circuit){
 	this.setup=function(){
 		console.log("Created room: "+this.name);
 		this.loadCircuit();
-		fs.readFileSync(this.recordsPath, (err, data) =>{
+		fs.readFile(this.recordsPath, (err, data) =>{
 			this.recordData = JSON.parse(data);
 		});
 		this.toSend["players"] = {};
@@ -242,15 +249,13 @@ var room=function(name, circuit){
 		};
 		Jimp.read(this.trackPath, image => {
 			this.trackMaskData = image;
+			console.log(this);
 		});
 		Jimp.read(this.sandPath, image => {
 			this.sandMaskData = image;
 		});
 		
 		var parser = new xml2js.Parser();
-		var walls=[];
-		var spawns=[];
-		var waypoints=[];
 		fs.readFile(this.svgPath, (err, data) => {
 			parser.parseString(data, (err, result) => {
 				for(var i in result.svg.g){
@@ -261,7 +266,7 @@ var room=function(name, circuit){
 								for(var j = 1; j<points.length; j++){
 									var start = points[j-1];
 									var end = points[j];
-									walls.push(new wall(start.x, start.y, end.x, end.y));
+									this.toSend["walls"].push(new wall(start.x, start.y, end.x, end.y));
 								}
 							}
 						}
@@ -269,7 +274,7 @@ var room=function(name, circuit){
 						if(result.svg.g[i].circle){
 							for(var o in result.svg.g[i].circle){
 								var circle = result.svg.g[i].circle[o].$;
-								spawns.push({x: parseFloat(circle.cx), y: parseFloat(circle.cy)});
+								this.spawns.push({x: parseFloat(circle.cx), y: parseFloat(circle.cy)});
 							}
 						}
 					}else if(result.svg.g[i].$.id === "Waypoints"){
@@ -277,21 +282,18 @@ var room=function(name, circuit){
 							for(var o in result.svg.g[i].polyline){
 								var points = toPoints({type: 'polyline', points: result.svg.g[i].polyline[o].$.points.replace(/(\r\n\t|\n|\r\t|\t)/gm,"").trim()});
 								for(var j = 0; j<points.length; j++){
-									waypoints.push(points[j]);
+									this.waypoints.push(points[j]);
 								}
 							}
 						}
 					}
 				}
-				for(var w in walls){
-					walls[w].setup();
+				for(var w in this.toSend["walls"]){
+					this.toSend["walls"][w].setup();
 				}
 				this.reset();
 			});
 		});
-		this.toSend["walls"] = walls;
-		this.spawns = spawns;
-		this.waypoints = waypoints;
 	};
 	this.update=function(){
 		this.updatePlayerPlacing();
@@ -316,7 +318,7 @@ var room=function(name, circuit){
 			}
 			this.players[i].pos = new Vector(spawn.x, spawn.y);
 			this.players[i].reset();
-			this.players[i].frozen = false;
+			this.players[i].startRace();
 		}
 	}
 	this.addPlayer=function(socket, arg){
@@ -756,6 +758,9 @@ var player=function(x, y, name, id, c, room){
 				this.startedRace = true;
 			}else{
 				this.splits.push(this.lapTime);
+				if(!rooms[this.room].recordData.lapTime){
+					return;
+				}
 				for(var i in rooms[this.room].recordData.lapTime){
 					if(this.lapTime<rooms[this.room].recordData.lapTime[i][0]){
 						rooms[this.room].recordData.lapTime.splice(i, 0, [this.lapTime, this.name]);

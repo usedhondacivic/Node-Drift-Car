@@ -64,15 +64,11 @@ socket.on("setup complete", function(images){
     //carMask = loadImage("/images/cars/Ambulance/Ambulance_Mask.png");
     trackImage = loadImage(images.track);
     sandImage = loadImage(images.sand);
-    document.getElementById("loading").style.display = "none";
-    loaded = true;
 });
 
 var trails = [];
 socket.on("state", function(items){
-    if(!loaded){
-        return;
-    }
+    document.getElementById("loading").style.display = "none";
     if(trip){
         background(217, 255, 160, 20);
     }else{
