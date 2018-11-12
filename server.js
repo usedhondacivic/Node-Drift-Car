@@ -139,7 +139,7 @@ rl.on('line', (input) => {
 			}
 		break;
 		case "reset":
-			spawnNumber = 0;
+			rooms[broadcastRoom].spawnNumber = 0;
 			for(var i in rooms[broadcastRoom].players){
 				var spawn = rooms[broadcastRoom].spawns[rooms[broadcastRoom].spawnNumber%rooms[broadcastRoom].spawns.length];
 				rooms[broadcast].spawnNumber++;
@@ -230,7 +230,9 @@ var room=function(name, circuit){
 	this.setup=function(){
 		console.log("Created room: "+this.name);
 		this.loadCircuit();
-		this.recordData = JSON.parse(fs.readFileSync(this.recordsPath));
+		fs.readFileSync(this.recordsPath, (err, data) =>{
+			this.recordData = JSON.parse(data);
+		});
 		this.toSend["players"] = {};
 		this.toSend["walls"] = [];
 		this.toSend["gameData"] = {
@@ -238,10 +240,10 @@ var room=function(name, circuit){
 				leaderboard:[],
 			}
 		};
-		Jimp.read(this.trackPath).then(image =>{
+		Jimp.read(this.trackPath, image => {
 			this.trackMaskData = image;
 		});
-		Jimp.read(this.sandPath).then(image => {
+		Jimp.read(this.sandPath, image => {
 			this.sandMaskData = image;
 		});
 		
@@ -249,42 +251,43 @@ var room=function(name, circuit){
 		var walls=[];
 		var spawns=[];
 		var waypoints=[];
-		var data = fs.readFileSync(this.svgPath);
-		parser.parseString(data, function (err, result) {
-			for(var i in result.svg.g){
-				if(result.svg.g[i].$.id === "Walls"){
-					if(result.svg.g[i].polygon){
-						for(var o in result.svg.g[i].polygon){
-							var points = toPoints({type: 'polygon', points: result.svg.g[i].polygon[o].$.points.replace(/(\r\n\t|\n|\r\t|\t)/gm,"").trim()});
-							for(var j = 1; j<points.length; j++){
-								var start = points[j-1];
-								var end = points[j];
-								walls.push(new wall(start.x, start.y, end.x, end.y));
+		fs.readFile(this.svgPath, (err, data) => {
+			parser.parseString(data, (err, result) => {
+				for(var i in result.svg.g){
+					if(result.svg.g[i].$.id === "Walls"){
+						if(result.svg.g[i].polygon){
+							for(var o in result.svg.g[i].polygon){
+								var points = toPoints({type: 'polygon', points: result.svg.g[i].polygon[o].$.points.replace(/(\r\n\t|\n|\r\t|\t)/gm,"").trim()});
+								for(var j = 1; j<points.length; j++){
+									var start = points[j-1];
+									var end = points[j];
+									walls.push(new wall(start.x, start.y, end.x, end.y));
+								}
 							}
 						}
-					}
-				}else if(result.svg.g[i].$.id === "Spawns"){
-					if(result.svg.g[i].circle){
-						for(var o in result.svg.g[i].circle){
-							var circle = result.svg.g[i].circle[o].$;
-							spawns.push({x: parseFloat(circle.cx), y: parseFloat(circle.cy)});
+					}else if(result.svg.g[i].$.id === "Spawns"){
+						if(result.svg.g[i].circle){
+							for(var o in result.svg.g[i].circle){
+								var circle = result.svg.g[i].circle[o].$;
+								spawns.push({x: parseFloat(circle.cx), y: parseFloat(circle.cy)});
+							}
 						}
-					}
-				}else if(result.svg.g[i].$.id === "Waypoints"){
-					if(result.svg.g[i].polyline){
-						for(var o in result.svg.g[i].polyline){
-							var points = toPoints({type: 'polyline', points: result.svg.g[i].polyline[o].$.points.replace(/(\r\n\t|\n|\r\t|\t)/gm,"").trim()});
-							for(var j = 0; j<points.length; j++){
-								waypoints.push(points[j]);
+					}else if(result.svg.g[i].$.id === "Waypoints"){
+						if(result.svg.g[i].polyline){
+							for(var o in result.svg.g[i].polyline){
+								var points = toPoints({type: 'polyline', points: result.svg.g[i].polyline[o].$.points.replace(/(\r\n\t|\n|\r\t|\t)/gm,"").trim()});
+								for(var j = 0; j<points.length; j++){
+									waypoints.push(points[j]);
+								}
 							}
 						}
 					}
 				}
-			}
-			for(var w in walls){
-				walls[w].setup();
-			}
-
+				for(var w in walls){
+					walls[w].setup();
+				}
+				this.reset();
+			});
 		});
 		this.toSend["walls"] = walls;
 		this.spawns = spawns;
@@ -303,6 +306,19 @@ var room=function(name, circuit){
 		io.to(this.name).emit("state", this.toSend);
 		this.seconds+=1/60;
 	};
+	this.reset=function(){
+		this.spawnNumber = 0;
+		for(var i in this.players){
+			var spawn = this.spawns[this.spawnNumber%this.spawns.length];
+			this.spawnNumber++;
+			if(!spawn){
+				spawn = {x: 2300, y:2000};
+			}
+			this.players[i].pos = new Vector(spawn.x, spawn.y);
+			this.players[i].reset();
+			this.players[i].frozen = false;
+		}
+	}
 	this.addPlayer=function(socket, arg){
 		console.log("Player '"+arg.name+"' joined room '"+this.name+"'");
 		socket.join(this.name);

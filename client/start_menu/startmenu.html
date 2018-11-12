@@ -12,6 +12,19 @@
             <input type="text" id="nickname" placeholder="Name" maxLength="50">
             <input type="button" id="submit" onclick="submit()" value="Start">
             <p id="warning" style="border: 2px solid #f44336; display: none; margin: auto; width: 20%; text-align: center; padding: 10px;">Please enter a nickname.</p>
+            <div>
+                <p style="display: inline-block; font-size: 1.25em; margin-right: 20px;">Room (optional):</p>
+                <input type="text" id="room" placeholder="room name" maxLength="50">
+            </div>
+        </div>
+        <div class="page" id="serverPage" style="display:none">
+            <h2>Select a Server</h2>
+            <div style="margin:auto; width: 40%;">
+                <ol>
+                    <li>test</li>
+                </ol>
+            </div>
+            <input type="button" id="submit" onclick="submit()" value="Host">
         </div>
         <div class="page" id="carSelectPage" style="display:none;">
             <div id="carBar">

@@ -1,9 +1,11 @@
 var currentPage="titlePage";
 var textBox;
+var roomBox;
 
 window.onload = function(){
     sessionStorage.setItem('setup', "false");
     textBox = document.getElementById("nickname");
+    roomBox = document.getElementById("room");
 
     textBox.addEventListener("keyup", function(event) {
         event.preventDefault();
@@ -24,8 +26,12 @@ function submit() {
         if(textBox.value.length > 0){
             sessionStorage.setItem('nickname', textBox.value);
             sessionStorage.setItem('setup', "true");
-            window.location.replace("./race/default");
-            //switchPage("carSelectPage");
+            if(roomBox.value.length > 0){
+                window.location.replace("./race/"+roomBox.value);
+            }else{
+                window.location.replace("./race/default"+roomBox.value);
+            }
+            //switchPage("serverPage");
         }else{
             document.getElementById("warning").style.display = "block";
         }
