@@ -247,15 +247,13 @@ var room=function(name, circuit){
 				leaderboard:[],
 			}
 		};
-		Jimp.read(this.trackPath, image => {
+		Jimp.read(this.trackPath, (err, image) => {
 			this.trackMaskData = image;
-			console.log(this);
 		});
-		Jimp.read(this.sandPath, image => {
+		Jimp.read(this.sandPath, (err, image) => {
 			this.sandMaskData = image;
 		});
-		
-		var parser = new xml2js.Parser();
+		var parser = new xml2js.Parser({async: false});
 		fs.readFile(this.svgPath, (err, data) => {
 			parser.parseString(data, (err, result) => {
 				for(var i in result.svg.g){
