@@ -193,7 +193,13 @@ var circuits={
 var loadCircuits=function(){
 	for(var i in circuits){
 		var c = circuits[i];
-		//c.recordData =
+		c.recordData = JSON.parse(fs.readFile(this.recordsPath));
+		/*c.trackData = Jimp.read(this.trackPath, (err, image) => {
+			this.trackMaskData = image;
+		});
+		Jimp.read(this.sandPath, (err, image) => {
+			this.sandMaskData = image;
+		});*/
 	}
 }
 
@@ -247,10 +253,10 @@ var room=function(name, circuit){
 				leaderboard:[],
 			}
 		};
-		Jimp.read(this.trackPath, (err, image) => {
+		Jimp.read(this.trackPath).then(image => {
 			this.trackMaskData = image;
 		});
-		Jimp.read(this.sandPath, (err, image) => {
+		Jimp.read(this.sandPath).then(image => {
 			this.sandMaskData = image;
 		});
 		var parser = new xml2js.Parser({async: false});
