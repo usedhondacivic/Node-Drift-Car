@@ -483,32 +483,11 @@ io.on("connection", function(socket){
 	});
 });
 
-/*setInterval(function(){
-	updatePlayerPlacing();
-	updatePlayerWrappers();
-    for(var type in toSend){
-        for(var id in toSend[type]){
-			var obj = toSend[type][id];
-			if(typeof obj.update === "function")
-				obj.update();
-        }
-    }
-	io.emit("state", toSend);
-	seconds+=1/60;
-}, 1000/60);*/
-
 setInterval(function(){
 	for(var i in rooms){
 		rooms[i].update();
 	}
 }, 1000/60);
-
-/*createPolygon(new Vector(-400, -360), 4, 50, Math.PI/4, 0);
-createPolygon(new Vector(-320, -320), 4, 30, -Math.PI/3, 0);
-createPolygon(new Vector(-350, -350), 4, 200, Math.PI/6, 1);
-createPolygon(new Vector(-700, -700), 6, 100, Math.PI/5, 1);
-createPolygon(new Vector(-1500, -500), 3, 500, -Math.PI/7, 0);
-createPolygon(new Vector(-800, -200), 20, 100, -Math.PI/3, 0);*/
 
 var LEFT_ARROW = 37;
 var RIGHT_ARROW = 39;
