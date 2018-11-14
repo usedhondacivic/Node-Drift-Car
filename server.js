@@ -178,6 +178,25 @@ rl.on('line', (input) => {
 	}
 });
 
+var wall=function(x1, y1, x2, y2){
+	this.x1 = x1;
+	this.y1 = y1;
+	this.x2 = x2;
+	this.y2 = y2;
+	this.vec = new Vector();
+	this.normal = new Vector();
+	this.length = 0;
+	this.angle = 0;
+	this.setup=function(){
+		this.vec = new Vector(this.x2 - this.x1, this.y2 - this.y1);
+		this.length = this.vec.length();
+		this.vec.normalize();
+		this.angle = this.vec.toAngles();
+		this.normal = new Vector(Math.cos(this.angle + Math.PI/2), Math.sin(this.angle + Math.PI/2));
+		this.normal.normalize();
+	}
+}
+
 var circuitsPath = "./client/circuits";
 var clientCircuitsPath = "/circuits";
 var circuits={
@@ -193,10 +212,10 @@ var circuits={
     }
 }
 
-function loadCircuits(){
+async function loadCircuits(){
 	console.log("Starting server...");
-	for(var i in circuits){
-		var c = circuits[i];
+	for(var p in circuits){
+		var c = circuits[p];
 		var paths = {
 			recordsPath: circuitsPath + c.location + c.records,
 			trackPath: circuitsPath + c.location + c.track,
@@ -204,16 +223,12 @@ function loadCircuits(){
 			svgPath: circuitsPath + c.location + c.svg
 
 		};
-		c.recordData = JSON.parse(fs.readFile(paths.recordsPath));
-		console.log("["+i+"]: loaded record data.");
-		c.trackData = await new Promise(resolve => {Jimp.read(paths.trackPath, (err, image) => {
-			resolve(image);
-		})});
-		console.log("["+i+"]: loaded track data.");
-		c.sandData = await new Promise(resolve => {Jimp.read(paths.sandPath, (err, image) => {
-			resolve(image);
-		})});
-		console.log("["+i+"]: loaded sand data.");
+		c.recordData = JSON.parse(fs.readFileSync(paths.recordsPath));
+		console.log("["+p+"]: loaded record data.");
+		c.trackData = await Jimp.read(paths.trackPath);
+		console.log("["+p+"]: loaded track data.");
+		c.sandData = await Jimp.read(paths.sandPath);
+		console.log("["+p+"]: loaded sand data.");
 		var parser = new xml2js.Parser();
 		var data = fs.readFileSync(paths.svgPath);
 		parser.parseString(data, (err, result) => {
@@ -247,13 +262,17 @@ function loadCircuits(){
 					}
 				}
 			}
-			for(var w in this.toSend["walls"]){
+			for(var w in c.walls){
 				c.walls[w].setup();
 			}
 		});
-		console.log("["+i+"]: loaded vector data.");
+		console.log("["+p+"]: loaded vector data.");
 	}
 	console.log("Server ready.");
+	server.listen(1234, function (err) {
+		if (err) throw err
+		console.log('Now listening on port 1234');
+	});
 }
 
 loadCircuits();
@@ -287,20 +306,19 @@ var room=function(name, circuit){
 
 	this.loadCircuit=function(){
 		var circuit = circuits[this.circuit];
-		this.trackPath = circuitsPath + circuit.location + circuit.track;
 		this.clientTrackPath = clientCircuitsPath + circuit.location + circuit.track;
-		this.sandPath = circuitsPath + circuit.location + circuit.sand;
 		this.clientSandPath = clientCircuitsPath + circuit.location + circuit.sand;
-		this.svgPath = circuitsPath + circuit.location + circuit.svg;
 		this.recordsPath = circuitsPath + circuit.location + circuit.records;
+		this.recordData = circuit.recordData;
+		this.trackMaskData = circuit.trackData;
+		this.sandMaskData = circuit.sandData;
+		this.toSend["walls"] = circuit.walls;
+		this.waypoints = circuit.waypoints;
+		this.spawns = circuit.spawns;
 	}
 
 	this.setup=function(){
 		console.log("Created room: "+this.name);
-		this.loadCircuit();
-		fs.readFile(this.recordsPath, (err, data) =>{
-			this.recordData = JSON.parse(data);
-		});
 		this.toSend["players"] = {};
 		this.toSend["walls"] = [];
 		this.toSend["gameData"] = {
@@ -308,51 +326,7 @@ var room=function(name, circuit){
 				leaderboard:[],
 			}
 		};
-		Jimp.read(this.trackPath).then(image => {
-			this.trackMaskData = image;
-		});
-		Jimp.read(this.sandPath).then(image => {
-			this.sandMaskData = image;
-		});
-		var parser = new xml2js.Parser({async: true});
-		fs.readFile(this.svgPath, (err, data) => {
-			parser.parseString(data, (err, result) => {
-				for(var i in result.svg.g){
-					if(result.svg.g[i].$.id === "Walls"){
-						if(result.svg.g[i].polygon){
-							for(var o in result.svg.g[i].polygon){
-								var points = toPoints({type: 'polygon', points: result.svg.g[i].polygon[o].$.points.replace(/(\r\n\t|\n|\r\t|\t)/gm,"").trim()});
-								for(var j = 1; j<points.length; j++){
-									var start = points[j-1];
-									var end = points[j];
-									this.toSend["walls"].push(new wall(start.x, start.y, end.x, end.y));
-								}
-							}
-						}
-					}else if(result.svg.g[i].$.id === "Spawns"){
-						if(result.svg.g[i].circle){
-							for(var o in result.svg.g[i].circle){
-								var circle = result.svg.g[i].circle[o].$;
-								this.spawns.push({x: parseFloat(circle.cx), y: parseFloat(circle.cy)});
-							}
-						}
-					}else if(result.svg.g[i].$.id === "Waypoints"){
-						if(result.svg.g[i].polyline){
-							for(var o in result.svg.g[i].polyline){
-								var points = toPoints({type: 'polyline', points: result.svg.g[i].polyline[o].$.points.replace(/(\r\n\t|\n|\r\t|\t)/gm,"").trim()});
-								for(var j = 0; j<points.length; j++){
-									this.waypoints.push(points[j]);
-								}
-							}
-						}
-					}
-				}
-				for(var w in this.toSend["walls"]){
-					this.toSend["walls"][w].setup();
-				}
-				this.reset();
-			});
-		});
+		this.loadCircuit();
 	};
 	this.update=function(){
 		this.updatePlayerPlacing();
@@ -412,6 +386,9 @@ var room=function(name, circuit){
 			console.log("Room '"+this.name+"' has been deleted.")
 			delete rooms[this.name];
 		}
+	}
+	this.dispose=function(){
+		
 	}
 	this.keyPressed=function(socket, arg){
 		if(this.players[socket.id]){
@@ -525,30 +502,6 @@ setInterval(function(){
 		rooms[i].update();
 	}
 }, 1000/60);
-
-server.listen(1234, function (err) {
-    if (err) throw err
-    console.log('Now listening on port 1234');
-});
-
-var wall=function(x1, y1, x2, y2){
-	this.x1 = x1;
-	this.y1 = y1;
-	this.x2 = x2;
-	this.y2 = y2;
-	this.vec = new Vector();
-	this.normal = new Vector();
-	this.length = 0;
-	this.angle = 0;
-	this.setup=function(){
-		this.vec = new Vector(this.x2 - this.x1, this.y2 - this.y1);
-		this.length = this.vec.length();
-		this.vec.normalize();
-		this.angle = this.vec.toAngles();
-		this.normal = new Vector(Math.cos(this.angle + Math.PI/2), Math.sin(this.angle + Math.PI/2));
-		this.normal.normalize();
-	}
-}
 
 /*createPolygon(new Vector(-400, -360), 4, 50, Math.PI/4, 0);
 createPolygon(new Vector(-320, -320), 4, 30, -Math.PI/3, 0);
