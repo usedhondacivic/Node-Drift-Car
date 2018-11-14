@@ -186,22 +186,77 @@ var circuits={
         track:"/image/mask_MainBoard.png",
         sand:"/image/sand_Mainboard.png",
 		svg:"/SVG/vectors_Mainboard.svg",
-		records:"/data/records.json"
+		records:"/data/records.json",
+		walls:[],
+		spawns:[],
+		waypoints:[],
     }
 }
 
-var loadCircuits=function(){
+function loadCircuits(){
+	console.log("Starting server...");
 	for(var i in circuits){
 		var c = circuits[i];
-		c.recordData = JSON.parse(fs.readFile(this.recordsPath));
-		/*c.trackData = Jimp.read(this.trackPath, (err, image) => {
-			this.trackMaskData = image;
+		var paths = {
+			recordsPath: circuitsPath + c.location + c.records,
+			trackPath: circuitsPath + c.location + c.track,
+			sandPath: circuitsPath + c.location + c.sand,
+			svgPath: circuitsPath + c.location + c.svg
+
+		};
+		c.recordData = JSON.parse(fs.readFile(paths.recordsPath));
+		console.log("["+i+"]: loaded record data.");
+		c.trackData = await new Promise(resolve => {Jimp.read(paths.trackPath, (err, image) => {
+			resolve(image);
+		})});
+		console.log("["+i+"]: loaded track data.");
+		c.sandData = await new Promise(resolve => {Jimp.read(paths.sandPath, (err, image) => {
+			resolve(image);
+		})});
+		console.log("["+i+"]: loaded sand data.");
+		var parser = new xml2js.Parser();
+		var data = fs.readFileSync(paths.svgPath);
+		parser.parseString(data, (err, result) => {
+			for(var i in result.svg.g){
+				if(result.svg.g[i].$.id === "Walls"){
+					if(result.svg.g[i].polygon){
+						for(var o in result.svg.g[i].polygon){
+							var points = toPoints({type: 'polygon', points: result.svg.g[i].polygon[o].$.points.replace(/(\r\n\t|\n|\r\t|\t)/gm,"").trim()});
+							for(var j = 1; j<points.length; j++){
+								var start = points[j-1];
+								var end = points[j];
+								c.walls.push(new wall(start.x, start.y, end.x, end.y));
+							}
+						}
+					}
+				}else if(result.svg.g[i].$.id === "Spawns"){
+					if(result.svg.g[i].circle){
+						for(var o in result.svg.g[i].circle){
+							var circle = result.svg.g[i].circle[o].$;
+							c.spawns.push({x: parseFloat(circle.cx), y: parseFloat(circle.cy)});
+						}
+					}
+				}else if(result.svg.g[i].$.id === "Waypoints"){
+					if(result.svg.g[i].polyline){
+						for(var o in result.svg.g[i].polyline){
+							var points = toPoints({type: 'polyline', points: result.svg.g[i].polyline[o].$.points.replace(/(\r\n\t|\n|\r\t|\t)/gm,"").trim()});
+							for(var j = 0; j<points.length; j++){
+								c.waypoints.push(points[j]);
+							}
+						}
+					}
+				}
+			}
+			for(var w in this.toSend["walls"]){
+				c.walls[w].setup();
+			}
 		});
-		Jimp.read(this.sandPath, (err, image) => {
-			this.sandMaskData = image;
-		});*/
+		console.log("["+i+"]: loaded vector data.");
 	}
+	console.log("Server ready.");
 }
+
+loadCircuits();
 
 var room=function(name, circuit){
 	this.name = name;
