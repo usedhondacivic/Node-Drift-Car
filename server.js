@@ -259,7 +259,7 @@ var room=function(name, circuit){
 		Jimp.read(this.sandPath).then(image => {
 			this.sandMaskData = image;
 		});
-		var parser = new xml2js.Parser({async: false});
+		var parser = new xml2js.Parser({async: true});
 		fs.readFile(this.svgPath, (err, data) => {
 			parser.parseString(data, (err, result) => {
 				for(var i in result.svg.g){
