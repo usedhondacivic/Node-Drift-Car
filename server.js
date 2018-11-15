@@ -332,6 +332,17 @@ var room=function(name, circuit){
 	this.update=function(){
 		this.updatePlayerPlacing();
 		this.updatePlayerWrappers();
+		if(Object.keys(this.players).length < this.maxPlayers){
+			for(var i in this.toSend["spectators"]){
+				var s = this.toSend["spectators"][i];
+				if(s.readyToJoin){
+					console.log("Spectator "+this.toSend["spectators"][i].args.name+" is joining the race.");
+					this.addPlayer(io.sockets.connected[i], s.args);
+					delete this.toSend["spectators"][i];
+					break;
+				}
+			}
+		}
 		for(var type in this.toSend){
 			for(var id in this.toSend[type]){
 				var obj = this.toSend[type][id];
@@ -377,7 +388,7 @@ var room=function(name, circuit){
 				spawn = {x: 2300, y:2000};
 			}
 			this.players[socket.id] = new player(spawn.x, spawn.y, arg.name, socket.id, arg.color, this.name);
-			this.players[socket.id].startRace(); 
+			this.players[socket.id].startRace();
 		}else{
 			this.toSend["spectators"][socket.id] = new spectator(arg);
 			this.toSend["spectators"][socket.id].room = this.name;
@@ -389,6 +400,9 @@ var room=function(name, circuit){
 		});
 	}
 	this.removePlayer=function(socket){
+		if(roomAssociation[socket.id]){
+			delete roomAssociation[socket.id];
+		}
 		if(this.players[socket.id]){
 			console.log("Player '"+this.players[socket.id].name+"' left room '"+this.name+"'");
 			delete this.players[socket.id];
@@ -396,16 +410,15 @@ var room=function(name, circuit){
 		if(this.toSend["spectators"][socket.id]){
 			console.log("Spectator '"+this.toSend["spectators"][socket.id].args.name+"' left room '"+this.name+"'");
 			delete this.toSend["spectators"][i];
+			return;
 		}
-		if(roomAssociation[socket.id]){
-			delete roomAssociation[socket.id];
-		}
+
 		for(var i in this.toSend["spectators"]){
 			var s = this.toSend["spectators"][i];
 			if(s.readyToJoin){
 				console.log("Spectator "+this.toSend["spectators"][i].args.name+" is joining the race.");
-				delete this.toSend["spectators"][i];
 				this.addPlayer(io.sockets.connected[i], s.args);
+				delete this.toSend["spectators"][i];
 				break;
 			}
 		}
@@ -877,6 +890,15 @@ function carCollision(car1, car2){
 	carLineCollision(car1, {x1:car2.corners.topRight.x, y1:car2.corners.topRight.y, x2:car2.corners.bottomRight.x, y2:car2.corners.bottomRight.y}) ||
 	carLineCollision(car1, {x1:car2.corners.bottomLeft.x, y1:car2.corners.bottomLeft.y, x2:car2.corners.topLeft.x, y2:car2.corners.topLeft.y}) ||
 	carLineCollision(car1, {x1:car2.corners.bottomRight.x, y1:car2.corners.bottomRight.y, x2:car2.corners.bottomLeft.x, y2:car2.corners.bottomLeft.y}));
+}
+
+function clone(obj) {
+    if (null == obj || "object" != typeof obj) return obj;
+    var copy = obj.constructor();
+    for (var attr in obj) {
+        if (obj.hasOwnProperty(attr)) copy[attr] = obj[attr];
+    }
+    return copy;
 }
 
 function createPolygon(center, sides, size, angle, leaveOff){
