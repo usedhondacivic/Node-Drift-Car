@@ -281,7 +281,7 @@ var room=function(name, circuit){
 	this.name = name;
 	this.circuit = circuit;
 	this.owner = "";
-	this.maxPlayers = 12;
+	this.maxPlayers = 10;
 	//Room data
 	this.recordsPath="";
 	this.trackPath="";
@@ -321,6 +321,7 @@ var room=function(name, circuit){
 		console.log("Created room: "+this.name);
 		this.toSend["players"] = {};
 		this.toSend["walls"] = [];
+		this.toSend["spectators"] = {};
 		this.toSend["gameData"] = {
 			room:{
 				leaderboard:[],
@@ -353,7 +354,19 @@ var room=function(name, circuit){
 			this.players[i].reset();
 			this.players[i].startRace();
 		}
-	}
+	};
+	this.dispose=function(){
+		for(var i in this.players){
+			if(roomAssociation[i]){
+				delete roomAssociation[i];
+			}
+		}
+		for(var i in this.toSend["spectators"]){
+			if(roomAssociation[i]){
+				delete roomAssociation[i];
+			}
+		}
+	};
 	this.addPlayer=function(socket, arg){
 		console.log("Player '"+arg.name+"' joined room '"+this.name+"'");
 		socket.join(this.name);
@@ -365,6 +378,10 @@ var room=function(name, circuit){
 			}
 			this.players[socket.id] = new player(spawn.x, spawn.y, arg.name, socket.id, arg.color, this.name);
 			this.players[socket.id].startRace(); 
+		}else{
+			this.toSend["spectators"][socket.id] = new spectator(arg);
+			this.toSend["spectators"][socket.id].room = this.name;
+			console.log("Player "+arg.name+" was moved to spectators due to game being full.");
 		}
 		io.sockets.connected[socket.id].emit("setup complete", {
 			track: this.clientTrackPath,
@@ -374,31 +391,45 @@ var room=function(name, circuit){
 	this.removePlayer=function(socket){
 		if(this.players[socket.id]){
 			console.log("Player '"+this.players[socket.id].name+"' left room '"+this.name+"'");
+			delete this.players[socket.id];
 		}
-		delete this.players[socket.id];
-		if(this.toSend["players"][socket.id]){
-			delete this.toSend["players"][socket.id];
+		if(this.toSend["spectators"][socket.id]){
+			console.log("Spectator '"+this.toSend["spectators"][socket.id].args.name+"' left room '"+this.name+"'");
+			delete this.toSend["spectators"][i];
 		}
 		if(roomAssociation[socket.id]){
 			delete roomAssociation[socket.id];
 		}
+		for(var i in this.toSend["spectators"]){
+			var s = this.toSend["spectators"][i];
+			if(s.readyToJoin){
+				console.log("Spectator "+this.toSend["spectators"][i].args.name+" is joining the race.");
+				delete this.toSend["spectators"][i];
+				this.addPlayer(io.sockets.connected[i], s.args);
+				break;
+			}
+		}
 		if(Object.keys(this.players).length === 0){
-			console.log("Room '"+this.name+"' has been deleted.")
+			console.log("Room '"+this.name+"' has been deleted.");
+			this.dispose();
 			delete rooms[this.name];
 		}
-	}
-	this.dispose=function(){
-		
 	}
 	this.keyPressed=function(socket, arg){
 		if(this.players[socket.id]){
             this.players[socket.id].keys[arg] = true;
-        }
+		}
+		if(this.toSend["spectators"][socket.id]){
+            this.toSend["spectators"][socket.id].keys[arg] = true;
+		}
 	}
 	this.keyReleased=function(socket, arg){
 		if(this.players[socket.id]){
             this.players[socket.id].keys[arg] = false;
         }
+		if(this.toSend["spectators"][socket.id]){
+            this.toSend["spectators"][socket.id].keys[arg] = false;
+		}
 	}
 	this.updatePlayerPlacing = function(){
 		this.toSend["gameData"].room.leaderboard = [];
@@ -426,6 +457,7 @@ var room=function(name, circuit){
 	}
 	
 	this.updatePlayerWrappers = function() {
+		this.toSend["players"] = {};
 		for(var i in this.players){
 			this.players[i].update();
 			this.toSend["players"][i] = this.players[i].getWrapper();
@@ -482,6 +514,9 @@ io.on("connection", function(socket){
 		}
 	});
 });
+
+var menu = io.of("/menu");
+
 
 setInterval(function(){
 	for(var i in rooms){
@@ -771,6 +806,64 @@ var player=function(x, y, name, id, c, room){
 		}
 	}
 };
+
+var spectator = function(args){
+	this.args = args
+	this.following = true;
+	this.followID = null;
+	this.readyToJoin = true;
+	this.pos = new Vector(500, 500);
+	this.room = "";
+	this.keys = [];
+	this.released = true;
+	this.readyReleased = true;
+	this.update=function(){
+		if(this.keys[LEFT_ARROW]||this.keys[RIGHT_ARROW]||this.keys[UP_ARROW]||this.keys[DOWN_ARROW]){
+			this.following=false;
+		}
+		if(this.keys[32]){
+			this.following=true;
+		}else{
+			this.released=true;
+		}
+		if(this.keys[13]&&this.readyReleased){
+			this.readyToJoin=!this.readyToJoin;
+			this.readyReleased=false;
+		}else if(!this.keys[13]){
+			this.readyReleased=true;
+		}
+		if(!this.following){
+			if(this.keys[LEFT_ARROW]){this.pos.x-=15;}
+			if(this.keys[RIGHT_ARROW]){this.pos.x+=15;}
+			if(this.keys[UP_ARROW]){this.pos.y-=15;}
+			if(this.keys[DOWN_ARROW]){this.pos.y+=15;}
+		}else{
+			if(!rooms[this.room]){
+				return;
+			}
+			if(this.keys[32] && this.released){
+				this.released = false;
+				if(Object.keys(rooms[this.room].players).indexOf(this.followID) != -1){
+					var index = Object.keys(rooms[this.room].players).indexOf(this.followID) + 1;
+					if(index < Object.keys(rooms[this.room].players).length){
+						this.followID = Object.keys(rooms[this.room].players)[index];
+					}else{
+						this.followID = Object.keys(rooms[this.room].players)[0];
+					}
+				}else{
+					this.followID = Object.keys(rooms[this.room].players)[0];
+				}
+			}
+			if(!this.followID){
+				this.followID = Object.keys(rooms[this.room].players)[0];
+				return;
+			}
+			if(rooms[this.room].players[this.followID]){
+				this.pos = new Vector(rooms[this.room].players[this.followID].pos.x, rooms[this.room].players[this.followID].pos.y);
+			}
+		}
+	}
+}
 
 function carLineCollision(car, wall){
 	return (doLineSegmentsIntersect(car.corners.topRight, car.corners.topLeft, {x:wall.x1, y:wall.y1}, {x:wall.x2, y:wall.y2}) || 

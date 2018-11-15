@@ -113,6 +113,18 @@ socket.on("state", function(items){
             renderHUD(items["players"][id], Object.keys(items["players"]).length);
         }
     }
+    for(var id in items["spectators"]){
+        var s = items["spectators"][id];
+        if(id === socket.id){
+            followCamera.pos = s.pos;
+            if(s.following){
+                renderHUD(items["players"][s.followID], Object.keys(items["players"]).length);
+            }
+            textSize(15);
+            textAlign(CENTER, BOTTOM);
+            text("You are currently spectating. You can join the game once a spot opens up. You are currently "+(s.readyToJoin?"READY":"NOT READY")+" to join (ENTER to toggle).", width/2, height-60);
+        }
+    }
 });
 
 socket.on("countdown", function(){
