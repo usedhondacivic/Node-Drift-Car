@@ -394,10 +394,6 @@ var room=function(name, circuit){
 			this.toSend["spectators"][socket.id].room = this.name;
 			console.log("Player "+arg.name+" was moved to spectators due to game being full.");
 		}
-		socket.emit("setup complete", {
-			track: this.clientTrackPath,
-			sand: this.clientSandPath
-		});
 	}
 	this.removePlayer=function(socket){
 		if(roomAssociation[socket.id]){
@@ -525,6 +521,13 @@ io.on("connection", function(socket){
 		if(rooms[roomAssociation[socket.id]]){
 			rooms[roomAssociation[socket.id]].removePlayer(socket);
 		}
+	});
+
+	socket.on("request images", function(){
+		socket.emit("images", {
+			track: rooms[roomAssociation[socket.id]].clientTrackPath,
+			sand: rooms[roomAssociation[socket.id]].clientSandPath
+		});
 	});
 });
 
