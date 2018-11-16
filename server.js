@@ -394,7 +394,7 @@ var room=function(name, circuit){
 			this.toSend["spectators"][socket.id].room = this.name;
 			console.log("Player "+arg.name+" was moved to spectators due to game being full.");
 		}
-		io.sockets.connected[socket.id].emit("setup complete", {
+		socket.emit("setup complete", {
 			track: this.clientTrackPath,
 			sand: this.clientSandPath
 		});
@@ -727,18 +727,28 @@ var player=function(x, y, name, id, c, room){
 				}
 			}
 		}
-		var past = false;
 		for(var i in rooms[this.room].players){
 			var otherCar = rooms[this.room].players[i];
 			if(otherCar === this){
-				past = true;
 				return;
 			}
-			//if(!past){
-			//	return;
-			//}
-			//console.log("Past test: "+past)
 			if(carCollision(this, otherCar)){
+				var posDiff = Vector.subtract(this.pos, otherCar.pos);
+				posDiff.normalize();
+				while(carCollision(this, otherCar)){
+					var thisVel = posDiff.clone();
+					var otherVel = Vector.multiply(posDiff, -1);
+					thisVel.multiply(0.5);
+					otherVel.multiply(0.5);
+					this.pos.add(thisVel);
+					distance+=thisVel.length;
+					otherCar.pos.add(otherVel);
+					this.setCorners(null);
+					otherCar.setCorners(null);
+					if(distance > 100){
+						break;
+					}
+				}
 				var v1 = this.vel.clone();
 				var x1 = this.pos.clone();
 				var v2 = otherCar.vel.clone();
@@ -753,20 +763,6 @@ var player=function(x, y, name, id, c, room){
 				this.vel = Vector.subtract(v1, Vector.multiply(deltaX1, Vector.dot(deltaV1, deltaX1)/Math.pow(deltaX1.length(), 2)));
 				otherCar.vel = Vector.subtract(v2, Vector.multiply(deltaX2, Vector.dot(deltaV2, deltaX2)/Math.pow(deltaX2.length(), 2)));
 				var distance = 0;
-				while(carCollision(this, otherCar)){
-					var velCopy = this.vel.clone();
-					var otherVelCopy = otherCar.vel.clone();
-					velCopy.divide(5);
-					otherVelCopy.divide(5);
-					distance += velCopy.length();
-					this.pos.add(velCopy);
-					otherCar.pos.add(otherVelCopy);
-					this.setCorners(null);
-					otherCar.setCorners(null);
-					if(distance > 100){
-						break;
-					}
-				}
 			}
 		}
 	}

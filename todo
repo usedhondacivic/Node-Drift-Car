@@ -1,3 +1,4 @@
+Set images being called before setup (fix)
 Spectators won't join after ready toggle (fix)
 Null player bug (switch tabs)
 Room owners (start race, kick players, auto reassign when leave)
