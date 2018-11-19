@@ -91,6 +91,17 @@ rl.on('line', (input) => {
 				console.log("   ID: "+p.id);
 			}
 		break;
+		case "set owner":
+			if(rooms[broadcastRoom].players[words[1]]){
+				rooms[broadcastRoom].owner = words[1];
+				console.log("Set owner of room '"+rooms[broadcastRoom].name+"' to player '"+rooms[broadcastRoom].players[words[1]].name+"'.");
+			}else{
+				console.log("Could find a player on that socket in the current room.")
+			}
+		break;
+		case "get owner":
+			console.log("Owner of room '"+rooms[broadcastRoom].name+"' is player '"+rooms[broadcastRoom].players[rooms[broadcastRoom].owner].name+"' on socket "+rooms[broadcastRoom].owner);
+		break;
 		case "trip":
 			if(io.sockets.connected[words[1]]){
 				io.sockets.connected[words[1]].emit("toggleTrip");
@@ -381,6 +392,9 @@ var room=function(name, circuit){
 	this.addPlayer=function(socket, arg){
 		console.log("Player '"+arg.name+"' joined room '"+this.name+"'");
 		socket.join(this.name);
+		if(Object.keys(this.players).length == 0){
+			this.owner = socket.id;
+		}
 		if(Object.keys(this.players).length < this.maxPlayers){
 			var spawn = this.spawns[this.spawnNumber%this.spawns.length];
 			this.spawnNumber++;
@@ -401,6 +415,12 @@ var room=function(name, circuit){
 		}
 		if(this.players[socket.id]){
 			console.log("Player '"+this.players[socket.id].name+"' left room '"+this.name+"'");
+			if(this.owner === socket.id){
+				if(Object.keys(this.players)[0]){
+					this.owner = Object.keys(this.players)[0];
+					console.log("Owner of room "+this.name+" has left. New owner is "+this.players[this.owner].name+".");
+				}
+			}
 			delete this.players[socket.id];
 		}
 		if(this.toSend["spectators"][socket.id]){
@@ -670,6 +690,7 @@ var player=function(x, y, name, id, c, room){
 			this.speed*=this.decel*this.decelMultiplier;
 			if(this.keys[UP_ARROW]){this.speed+=this.accel*this.accelMultiplier;}
 			if(this.keys[DOWN_ARROW]){this.speed-=this.accel*this.accelMultiplier*0.5;}
+			//var invert = this.vel.angleTo
 			if(this.keys[LEFT_ARROW]){this.dir-=Math.sign(this.speed)*(this.turnSpeed*this.vel.length())/this.turnDamp;}
 			if(this.keys[RIGHT_ARROW]){this.dir+=Math.sign(this.speed)*(this.turnSpeed*this.vel.length())/this.turnDamp;}
 		}
