@@ -220,7 +220,18 @@ var circuits={
 		walls:[],
 		spawns:[],
 		waypoints:[],
-    }
+	},
+	"Nürburgring Circuit":{
+		location:"/nurburgring_circuit",
+        //location:"/mugello_circuit",
+        track:"/image/mask_MainBoard.png",
+        sand:"/image/sand_Mainboard.png",
+		svg:"/SVG/vectors_Mainboard.svg",
+		records:"/data/records.json",
+		walls:[],
+		spawns:[],
+		waypoints:[],
+	}
 }
 
 async function loadCircuits(){
@@ -292,7 +303,7 @@ var room=function(name, circuit){
 	this.name = name;
 	this.circuit = circuit;
 	this.owner = "";
-	this.maxPlayers = 10;
+	this.maxPlayers = 1;
 	//Room data
 	this.recordsPath="";
 	this.trackPath="";
