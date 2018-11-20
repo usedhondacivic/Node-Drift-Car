@@ -25,13 +25,15 @@ var carImage;
 var carMask;
 var trackImage;
 var sandImage;
+var trackPaths;
+var sandPaths;
 var trip = false;
 var countdown = -1;
 var loaded = false;
 
 function setup() {
-    var cnv = createCanvas(document.body.clientWidth, window.innerHeight);
-    cnv.position(0,0);
+    createCanvas(document.body.clientWidth, window.innerHeight);
+    //cnv.position(0,0);
     socket.emit("request images");
 }
 
@@ -65,6 +67,8 @@ socket.on("images", function(images){
     //carMask = loadImage("/images/cars/Ambulance/Ambulance_Mask.png");
     trackImage = loadImage(images.track);
     sandImage = loadImage(images.sand);
+    trackPaths = Snap.path.toCubic("M10087.9,1554.1l-269.4,379.4c0,0-273.6-360.9-74.9-550.6c0,0,261.3-390.5 715.5-264.7 s1038.9,596.3,1038.9,596.3L10087.9,1554.1");
+    //print(newPath);
     loaded = true;
 });
 

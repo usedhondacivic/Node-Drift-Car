@@ -303,7 +303,7 @@ var room=function(name, circuit){
 	this.name = name;
 	this.circuit = circuit;
 	this.owner = "";
-	this.maxPlayers = 1;
+	this.maxPlayers = 10;
 	//Room data
 	this.recordsPath="";
 	this.trackPath="";
