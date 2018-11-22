@@ -359,8 +359,15 @@ var room=function(name, circuit){
 		this.waypoints = circuit.waypoints;
 		this.spawns = circuit.spawns;
 		this.trackSize = circuit.viewBox;
-	}
-
+	};
+	this.getWrapper=function(){
+		return {
+			name: this.name,
+			maxPlayers: this.maxPlayers,
+			currentPlayers: Object.keys(this.players).length,
+			track:this.circuit
+		};
+	};
 	this.setup=function(){
 		console.log("Created room: "+this.name);
 		this.toSend["players"] = {};
@@ -587,6 +594,13 @@ io.on("connection", function(socket){
 });
 
 var menu = io.of("/menu");
+setInterval(function(){
+	var roomWrappers = {};
+	for(var i in rooms){
+		roomWrappers[i] = rooms[i].getWrapper();
+	}
+	menu.emit("rooms", roomWrappers);
+}, 1000);
 
 
 setInterval(function(){

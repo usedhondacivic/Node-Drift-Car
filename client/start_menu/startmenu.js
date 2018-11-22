@@ -1,11 +1,15 @@
+var socket = io("/menu");
+
 var currentPage="titlePage";
 var textBox;
 var roomBox;
+var serverList;
 
 window.onload = function(){
     sessionStorage.setItem('setup', "false");
     textBox = document.getElementById("nickname");
     roomBox = document.getElementById("room");
+    serverList = document.getElementById("serverList");
 
     textBox.addEventListener("keyup", function(event) {
         event.preventDefault();
@@ -21,6 +25,17 @@ window.onload = function(){
     }
 }
 
+socket.on("rooms", function(data){
+    serverList.innerHTML = "";
+    for(var i in data){
+        var d = data[i];
+        var newLine = document.createElement("LI");
+        var text = document.createTextNode(d.name+"     "+d.currentPlayers+"/"+d.maxPlayers+"      "+d.track);
+        newLine.appendChild(text);
+        serverList.appendChild(newLine);
+    }
+});
+
 function submit() {
     if(textBox){
         if(textBox.value.length > 0){
@@ -31,7 +46,6 @@ function submit() {
             }else{
                 window.location.replace("./race/default"+roomBox.value);
             }
-            //switchPage("serverPage");
         }else{
             document.getElementById("warning").style.display = "block";
         }
