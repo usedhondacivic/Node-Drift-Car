@@ -550,7 +550,9 @@ io.on("connection", function(socket){
 			if(arg.circuit){
 				rooms[arg.room] = new room(arg.room);
 			}else{
-				rooms[arg.room] = new room(arg.room, "Nürburgring Circuit");
+				//Mugello Circuit
+				//Nürburgring Circuit
+				rooms[arg.room] = new room(arg.room, "Mugello Circuit");
 			}
 			rooms[arg.room].setup();
 		}
