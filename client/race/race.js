@@ -26,13 +26,17 @@ var carMask;
 var trackImage;
 var sandImage;
 var trackPaths;
+var trackSize;
 var sandPaths;
+var ctx;
 var trip = false;
 var countdown = -1;
 var loaded = false;
 
 function setup() {
     createCanvas(document.body.clientWidth, window.innerHeight);
+    var c = document.getElementsByTagName("canvas")[0];
+    ctx = c.getContext("2d");
     //cnv.position(0,0);
     socket.emit("request images");
 }
@@ -65,11 +69,16 @@ socket.on("images", function(images){
     //carMask = loadImage("/images/cars/Truck/Truck_Mask.png");
     //carImage = loadImage("/images/cars/Ambulance/Ambulance.png");
     //carMask = loadImage("/images/cars/Ambulance/Ambulance_Mask.png");
-    trackImage = loadImage(images.track);
-    sandImage = loadImage(images.sand);
-    trackPaths = Snap.path.toCubic("M10087.9,1554.1l-269.4,379.4c0,0-273.6-360.9-74.9-550.6c0,0,261.3-390.5 715.5-264.7 s1038.9,596.3,1038.9,596.3L10087.9,1554.1");
-    //print(newPath);
-    loaded = true;
+    /*loadSVG(images.track, (img) => {
+        trackImage = img;
+        loaded = true;
+    });*/
+    trackImage = new Image();
+    trackImage.onload = function() {
+        loaded = true;
+    }
+    trackImage.src = images.track;
+    trackSize = images.trackSize;
 });
 
 var trails = [];
@@ -87,8 +96,7 @@ socket.on("state", function(items){
     push();
     followCamera.update(0.08);
     translate(-followCamera.x + width / 2, -followCamera.y + height / 2);
-    image(sandImage, 0, 0, sandImage.width, sandImage.height);
-    image(trackImage, 0, 0, trackImage.width, trackImage.height);
+    ctx.drawImage(trackImage, 0, 0, trackSize.x, trackSize.y);
     for(var i in trails){
         push();
         noStroke();
@@ -187,13 +195,13 @@ var renderPlayer = function(instance) {
         noTint();
         colorMode(RGB, 255);
     pop();
-}
+};
 
 var renderWalls = function(instance) {
     stroke(255,255,255);
     strokeWeight(3);
     line(instance.x1, instance.y1, instance.x2, instance.y2);
-}
+};
 
 var renderHUD = function(instance, carNum) {
     push();
@@ -255,4 +263,4 @@ var renderHUD = function(instance, carNum) {
         text("GO!", width/2, height/2);
     }
     pop();
-}
+};

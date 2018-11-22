@@ -214,7 +214,8 @@ var circuits={
 	"Mugello Circuit":{
         location:"/mugello_circuit",
         track:"/image/mask_MainBoard.png",
-        sand:"/image/sand_Mainboard.png",
+		sand:"/image/sand_Mainboard.png",
+		fullTrack:"/SVG/fulltrack_Mainboard.svg",
 		svg:"/SVG/vectors_Mainboard.svg",
 		records:"/data/records.json",
 		walls:[],
@@ -223,9 +224,9 @@ var circuits={
 	},
 	"Nürburgring Circuit":{
 		location:"/nurburgring_circuit",
-        //location:"/mugello_circuit",
         track:"/image/mask_MainBoard.png",
         sand:"/image/sand_Mainboard.png",
+		fullTrack:"/SVG/fulltrack_Mainboard.svg",
 		svg:"/SVG/vectors_Mainboard.svg",
 		records:"/data/records.json",
 		walls:[],
@@ -242,8 +243,8 @@ async function loadCircuits(){
 			recordsPath: circuitsPath + c.location + c.records,
 			trackPath: circuitsPath + c.location + c.track,
 			sandPath: circuitsPath + c.location + c.sand,
-			svgPath: circuitsPath + c.location + c.svg
-
+			svgPath: circuitsPath + c.location + c.svg,
+			fullTrackPath: circuitsPath + c.location + c.fullTrack
 		};
 		c.recordData = JSON.parse(fs.readFileSync(paths.recordsPath));
 		console.log("["+p+"]: loaded record data.");
@@ -259,6 +260,16 @@ async function loadCircuits(){
 					if(result.svg.g[i].polygon){
 						for(var o in result.svg.g[i].polygon){
 							var points = toPoints({type: 'polygon', points: result.svg.g[i].polygon[o].$.points.replace(/(\r\n\t|\n|\r\t|\t)/gm,"").trim()});
+							for(var j = 1; j<points.length; j++){
+								var start = points[j-1];
+								var end = points[j];
+								c.walls.push(new wall(start.x, start.y, end.x, end.y));
+							}
+						}
+					}
+					if(result.svg.g[i].polyline){
+						for(var o in result.svg.g[i].polyline){
+							var points = toPoints({type: 'polyline', points: result.svg.g[i].polyline[o].$.points.replace(/(\r\n\t|\n|\r\t|\t)/gm,"").trim()});
 							for(var j = 1; j<points.length; j++){
 								var start = points[j-1];
 								var end = points[j];
@@ -289,6 +300,16 @@ async function loadCircuits(){
 			}
 		});
 		console.log("["+p+"]: loaded vector data.");
+		parser = new xml2js.Parser();
+		var data = fs.readFileSync(paths.fullTrackPath);
+		parser.parseString(data, (err, result) => {
+			var coords = result.svg.$.viewBox.split(" ");
+			c.viewBox = {
+				x:coords[2],
+				y:coords[3]
+			};
+		});
+		console.log("["+p+"]: loaded viewbox data.");
 	}
 	console.log("Server ready.");
 	server.listen(1234, function (err) {
@@ -311,6 +332,7 @@ var room=function(name, circuit){
 	this.sandPath="";
 	this.clientSandPath="";
 	this.svgPath="";
+	this.trackSize = {};
 	//To be sent
 	this.players = {};
 	this.toSend = {};
@@ -328,8 +350,7 @@ var room=function(name, circuit){
 
 	this.loadCircuit=function(){
 		var circuit = circuits[this.circuit];
-		this.clientTrackPath = clientCircuitsPath + circuit.location + circuit.track;
-		this.clientSandPath = clientCircuitsPath + circuit.location + circuit.sand;
+		this.clientTrackPath = clientCircuitsPath + circuit.location + circuit.fullTrack;
 		this.recordsPath = circuitsPath + circuit.location + circuit.records;
 		this.recordData = circuit.recordData;
 		this.trackMaskData = circuit.trackData;
@@ -337,6 +358,7 @@ var room=function(name, circuit){
 		this.toSend["walls"] = circuit.walls;
 		this.waypoints = circuit.waypoints;
 		this.spawns = circuit.spawns;
+		this.trackSize = circuit.viewBox;
 	}
 
 	this.setup=function(){
@@ -528,7 +550,7 @@ io.on("connection", function(socket){
 			if(arg.circuit){
 				rooms[arg.room] = new room(arg.room);
 			}else{
-				rooms[arg.room] = new room(arg.room,"Mugello Circuit");
+				rooms[arg.room] = new room(arg.room, "Nürburgring Circuit");
 			}
 			rooms[arg.room].setup();
 		}
@@ -557,7 +579,7 @@ io.on("connection", function(socket){
 	socket.on("request images", function(){
 		socket.emit("images", {
 			track: rooms[roomAssociation[socket.id]].clientTrackPath,
-			sand: rooms[roomAssociation[socket.id]].clientSandPath
+			trackSize: rooms[roomAssociation[socket.id]].trackSize
 		});
 	});
 });
