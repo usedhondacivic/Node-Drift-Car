@@ -17,7 +17,7 @@ html{
     image-rendering: -moz-crisp-edges;          /* Firefox                        */
     image-rendering: -o-crisp-edges;            /* Opera                          */
     image-rendering: -webkit-optimize-contrast; /* Chrome (and eventually Safari) */
-    image-rendering: pixelated; /* Chrome */
+    image-rendering: pixelated;                 /* Chrome */
     image-rendering: optimize-contrast;         /* CSS3 Proposed                  */
     -ms-interpolation-mode: nearest-neighbor;   /* IE8+                           */
     image-rendering: pixelated;
@@ -35,6 +35,17 @@ img{
     -moz-transform:     rotate(270deg);
     -webkit-transform:  rotate(270deg);
     -o-transform:       rotate(270deg);
+}
+
+td, th {
+    /*border: 1px solid #dddddd;*/
+    text-align: left;
+    padding: 8px;
+}
+
+th {
+    text-align: left;
+    border-bottom: 2px solid black;
 }
 
 #title{
@@ -57,6 +68,25 @@ img{
     height: 100px;
 }
 
+#backButton{
+    position: relative;
+    display:none;
+    margin:50px;
+    color: black;
+    font-size: 50px;
+    z-index:10;
+    background-color: rgba(255, 255, 255, 0); 
+    text-align: center;
+    text-decoration: none;
+    border: none;
+    -webkit-transition-duration: 0.4s; /* Safari */
+    transition-duration: 0.4s;
+}
+
+#backButton:hover{
+    color:red;
+}
+
 input[type=text]{
     display: inline-block;
     margin: auto;
@@ -68,14 +98,29 @@ input[type=text]{
     font-size: 1.25em;
     outline: none;
 }
-innput[type=text]:focus {
+
+input[type=text]:focus {
     outline: none;
 }
 
-input[type=button]{
-    background-color: #4CAF50; /* Green */
-    border: none;
-    color: red;
+.smallButton{
+    background-color: rgba(255, 255, 255, 0); 
+    border: 2px solid #000000;
+    color: black; 
+    text-align: center;
+    text-decoration: none;
+    font-size: 10px;
+    margin-left: 50px;
+    float: right;
+    -webkit-transition-duration: 0.4s; /* Safari */
+    transition-duration: 0.4s;
+    cursor: pointer;
+}
+
+.largeButton{
+    background-color: rgba(255, 255, 255, 0); 
+    border: 2px solid #f44336;
+    color: black; 
     padding: 16px 32px;
     text-align: center;
     text-decoration: none;
@@ -87,18 +132,12 @@ input[type=button]{
     cursor: pointer;
 }
 
-input[type=button]{
-    background-color: rgba(255, 255, 255, 0); 
-    color: black; 
-    border: 2px solid #f44336;
-}
-
-input[type=button]:hover {
+.largeButton:hover {
     background-color: #f44336;
     color: white;
 }
 
-input[type=button]:active {
+.largeButton:active {
     background-color: #ff968f;
     color: white;
 }

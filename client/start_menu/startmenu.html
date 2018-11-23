@@ -7,26 +7,34 @@
         <link rel="stylesheet" type="text/css" href="/start_menu/startmenu.css" />
     </head>
     <body>
+        <input type="button" id="backButton" onclick="backPage()" value="⇦">
         <div class="page" id="titlePage">
             <object data="\images\UI\SVG\Spinout.svg" type="image/svg+xml" id="title"></object>
             <p style="display: inline-block; font-size: 1.25em; margin-right: 20px;">Nickname:</p>
             <input type="text" id="nickname" placeholder="Name" maxLength="50">
-            <input type="button" id="submit" onclick="submit()" value="Start">
-            <input type="button" id="server" onclick="switchPage('serverPage')" value="Servers">
+            <!--<input type="button" class="largeButton" onclick="submit('')" value="Start">-->
+            <input type="button" id="submit" class="largeButton" onclick="start()" value="Start">
             <p id="warning" style="border: 2px solid #f44336; display: none; margin: auto; width: 20%; text-align: center; padding: 10px;">Please enter a nickname.</p>
-            <div>
-                <p style="display: inline-block; font-size: 1.25em; margin-right: 20px;">Room (optional):</p>
-                <input type="text" id="room" placeholder="room name" maxLength="50">
-            </div>
         </div>
         <div class="page" id="serverPage" style="display:none">
-            <h2>Select a Server</h2>
-            <div style="margin:auto; width: 40%;">
-                <ol id="serverList">
-                    <li>test</li>
-                </ol>
+            <h2 style="margin-top:50px;">Select a Server</h2>
+            <div style="margin:auto; width: 40%; overflow-y:auto; max-height:60%;">
+                <table id="serverList" style="width: 100%;">
+                    <tr>
+                        <th>Server name</th>
+                        <th>Players</th>
+                        <th>Track</th>
+                    </tr>
+                </table>
             </div>
-            <input type="button" id="submit" onclick="submit()" value="Host">
+            <h2 style="margin-bottom:5px;">Host a Room</h2>
+            <p style="display: inline-block; font-size: 1.25em; margin-right: 20px;">Room Name:</p>
+            <input type="text" id="room" placeholder="Room Name" maxLength="50">
+            <input type="button" class="largeButton" onclick="submit(roomBox.value)" value="Host">
+            <!--<select>
+                <option value="Mugello Circuit">Mugello Circuit</option>
+                <option value="Nürburgring Circuit">Nürburgring Circuit</option>
+            </select>-->
         </div>
         <div class="page" id="carSelectPage" style="display:none;">
             <div id="carBar">
