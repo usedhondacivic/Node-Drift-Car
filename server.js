@@ -559,7 +559,7 @@ io.on("connection", function(socket){
 			}else{
 				//Mugello Circuit
 				//Nürburgring Circuit
-				rooms[arg.room] = new room(arg.room, "Mugello Circuit");
+				rooms[arg.room] = new room(arg.room, arg.track);
 			}
 			rooms[arg.room].setup();
 		}

@@ -29,6 +29,7 @@ var trackPaths;
 var trackSize;
 var sandPaths;
 var ctx;
+var trackContainer;
 var trip = false;
 var countdown = -1;
 var loaded = false;
@@ -37,16 +38,16 @@ function setup() {
     createCanvas(document.body.clientWidth, window.innerHeight);
     var c = document.getElementsByTagName("canvas")[0];
     ctx = c.getContext("2d");
-    //cnv.position(0,0);
+    c.style.zIndex = "10";
+    trackContainer = document.getElementById("track");
     socket.emit("request images");
 }
 
 function windowResized() { resizeCanvas(document.body.clientWidth, window.innerHeight); }
 
 var name = sessionStorage.getItem("nickname");
-//var name = prompt("Nickname:");
 if(name != null && name != "" && name != "null" && name.length < 100){     
-    socket.emit("new player", {name:name, color: Math.random()*100, room:room});
+    socket.emit("new player", {name:name, color: Math.random()*100, room:room, track:"Nürburgring Circuit"});
 }
 
 var followCamera = {
@@ -69,16 +70,8 @@ socket.on("images", function(images){
     //carMask = loadImage("/images/cars/Truck/Truck_Mask.png");
     //carImage = loadImage("/images/cars/Ambulance/Ambulance.png");
     //carMask = loadImage("/images/cars/Ambulance/Ambulance_Mask.png");
-    /*loadSVG(images.track, (img) => {
-        trackImage = img;
-        loaded = true;
-    });*/
-    trackImage = new Image();
-    trackImage.onload = function() {
-        loaded = true;
-    }
-    trackImage.src = images.track;
-    trackSize = images.trackSize;
+    trackContainer.setAttribute("src", images.track);
+    loaded = true;
 });
 
 var trails = [];
@@ -91,12 +84,13 @@ socket.on("state", function(items){
     if(trip){
         background(217, 255, 160, 20);
     }else{
-        background(217, 255, 160);
+        ctx.clearRect(0,0,width,height);
     }
     push();
     followCamera.update(0.08);
+    trackContainer.style.left = (-followCamera.x + width / 2)+"px";
+    trackContainer.style.top = (-followCamera.y + height / 2)+"px";
     translate(-followCamera.x + width / 2, -followCamera.y + height / 2);
-    ctx.drawImage(trackImage, 0, 0, trackSize.x, trackSize.y);
     for(var i in trails){
         push();
         noStroke();
