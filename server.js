@@ -218,6 +218,7 @@ var circuits={
 		fullTrack:"/SVG/fulltrack_Mainboard.svg",
 		svg:"/SVG/vectors_Mainboard.svg",
 		records:"/data/records.json",
+		maskScale:4,
 		walls:[],
 		spawns:[],
 		waypoints:[],
@@ -229,6 +230,7 @@ var circuits={
 		fullTrack:"/SVG/fulltrack_Mainboard.svg",
 		svg:"/SVG/vectors_Mainboard.svg",
 		records:"/data/records.json",
+		maskScale:4,
 		walls:[],
 		spawns:[],
 		waypoints:[],
@@ -591,6 +593,16 @@ io.on("connection", function(socket){
 			trackSize: rooms[roomAssociation[socket.id]].trackSize
 		});
 	});
+
+	socket.on("chat message", function(arg){
+		var player = rooms[roomAssociation[socket.id]].players[socket.id];
+		io.emit("chat message",{
+			color: player.color,
+			name: player.name,
+			message: arg
+
+		});
+	});
 });
 
 var menu = io.of("/menu");
@@ -840,12 +852,13 @@ var player=function(x, y, name, id, c, room){
 		}
 	}
 	this.setFriction=function(){
+		var circuitScale = circuits[rooms[this.room].circuit].maskScale;
 		if(rooms[this.room].trackMaskData && rooms[this.room].sandMaskData){
-			if(Jimp.intToRGBA(rooms[this.room].trackMaskData.getPixelColor(Math.round(this.pos.x), Math.round(this.pos.y))).a !== 0){
+			if(Jimp.intToRGBA(rooms[this.room].trackMaskData.getPixelColor(Math.round(this.pos.x/circuitScale), Math.round(this.pos.y/circuitScale))).a !== 0){
 				this.frictionMultiplier = 1;
 				this.accelMultiplier = 1;
 				this.decelMultiplier = 1;
-			}else if(Jimp.intToRGBA(rooms[this.room].sandMaskData.getPixelColor(Math.round(this.pos.x), Math.round(this.pos.y))).a !== 0){
+			}else if(Jimp.intToRGBA(rooms[this.room].sandMaskData.getPixelColor(Math.round(this.pos.x/circuitScale), Math.round(this.pos.y/circuitScale))).a !== 0){
 				this.frictionMultipler = 1;
 				this.accelMultiplier = 0.7;
 				this.decelMultiplier = 0.9;

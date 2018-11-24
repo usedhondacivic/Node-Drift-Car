@@ -18,3 +18,43 @@
     z-index: 99;
     background: white;
 }
+
+input[type=text]{
+    display: inline-block;
+    margin: auto;
+    border: none;
+    border-bottom: 2px solid black;
+    background-color: rgba(255, 255, 255, 0);
+    padding: 5px;
+    font-size: 16px;
+    outline: none;
+}
+
+#chatContainer{
+    display:inline-block;
+    position:absolute;
+    bottom: 10%;
+    left: 2%;
+    width:15%;
+    align-self: bottom;
+}
+
+#chatlog{
+    width:100%;
+    word-wrap: break-word;
+}
+
+#chatlog p{
+    width:100%;
+    margin: 2px;
+    word-wrap: break-word;
+}
+
+#chatEntry{
+    float:bottom;
+    width: 100%;
+}
+
+input[type=text]:focus {
+    outline: none;
+}

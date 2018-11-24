@@ -7,6 +7,21 @@ window.onbeforeunload = function(){
     sessionStorage.setItem('setup', "false");
 }
 
+var chatbox;
+var chatlog;
+
+window.onload = function(){
+    chatbox = document.getElementById("chatEntry");
+    chatlog = document.getElementById("chatlog");
+    chatbox.addEventListener("keyup", function(event) {
+        event.preventDefault();
+        if (event.keyCode === 13) {
+            socket.emit("chat message", chatbox.value);
+            chatbox.value="";
+        }
+    });
+}
+
 //IO
 var socket = io();
 var room = window.location.pathname.split("/");
@@ -19,6 +34,12 @@ keyReleased=function(){socket.emit("key release", keyCode);};
 
 socket.on("toggleTrip", function(){
     trip = !trip;
+});
+
+socket.on("chat message", function(data){
+    var newEntry = document.createElement("P");
+    newEntry.innerHTML = "<span style='color: hsl("+data.color*3.6+", 100%, 40%);'>["+data.name+"]</span>: "+data.message;
+    chatlog.appendChild(newEntry);
 });
 
 var carImage;
