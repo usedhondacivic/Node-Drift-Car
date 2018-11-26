@@ -3,6 +3,26 @@
         "location":"/mugello_circuit",
         "track":"/image/mask_MainBoard.png",
         "sand":"/image/sand_Mainboard.png",
-        "svg":"/SVG"
+        "fullTrack":"/SVG/fulltrack_Mainboard.svg",
+        "svg":"/SVG/vectors_Mainboard.svg",
+        "records":"/data/records.json",
+        "thumbnail":"/image/thumbnail.png",
+        "maskScale":4,
+        "walls":[],
+        "spawns":[],
+        "waypoints":[]
+    },
+    "Nürburgring Circuit":{
+        "location":"/nurburgring_circuit",
+        "track":"/image/mask_MainBoard.png",
+        "sand":"/image/sand_Mainboard.png",
+        "fullTrack":"/SVG/fulltrack_Mainboard.svg",
+        "svg":"/SVG/vectors_Mainboard.svg",
+        "records":"/data/records.json",
+        "thumbnail":"/image/thumbnail.png",
+        "maskScale":4,
+        "walls":[],
+        "spawns":[],
+        "waypoints":[]
     }
 }

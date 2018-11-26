@@ -7,7 +7,7 @@
         <link rel="stylesheet" type="text/css" href="/start_menu/startmenu.css" />
     </head>
     <body>
-        <input type="button" id="backButton" onclick="backPage()" value="⇦">
+        <input type="image" id="backButton" onclick="backPage()" src="/images/UI/backArrow.png">
         <div class="page" id="titlePage">
             <object data="\images\UI\SVG\Spinout.svg" type="image/svg+xml" id="title"></object>
             <p style="display: inline-block; font-size: 1.25em; margin-right: 20px;">Nickname:</p>
@@ -16,9 +16,9 @@
             <input type="button" id="submit" class="largeButton" onclick="start()" value="Start">
             <p id="warning" style="border: 2px solid #f44336; display: none; margin: auto; width: 20%; text-align: center; padding: 10px;">Please enter a nickname.</p>
         </div>
-        <div class="page" id="serverPage" style="display:none">
+        <div class="page" id="serverPage" style="display:none;">
             <h2 style="margin-top:50px;">Select a Server</h2>
-            <div style="margin:auto; width: 40%; overflow-y:auto; max-height:60%;">
+            <div style="margin:auto; width: 40%; overflow-y:auto; max-height:40%; min-height: 20%;">
                 <table id="serverList" style="width: 100%;">
                     <tr>
                         <th>Server name</th>
@@ -31,6 +31,14 @@
             <p style="display: inline-block; font-size: 1.25em; margin-right: 20px;">Room Name:</p>
             <input type="text" id="room" placeholder="Room Name" maxLength="50">
             <input type="button" class="largeButton" onclick="submit(roomBox.value)" value="Host">
+            <div id="selectHolder" style="position: static; text-align: center; margin-top: 10px;">
+                <input type="image" id="trackLeft" class="selectButtons" onclick="cycleTrack(-1)" src="/images/UI/backArrow.png">
+                <div style="display: inline-block; width: 300px;">
+                    <p id="trackName"></p>
+                </div>
+                <input type="image" id="trackRight" class="selectButtons" onclick="cycleTrack(1)" src="/images/UI/backArrow.png">
+                <img id="trackThumbnail">
+            </div>
             <!--<select>
                 <option value="Mugello Circuit">Mugello Circuit</option>
                 <option value="Nürburgring Circuit">Nürburgring Circuit</option>

@@ -4,14 +4,31 @@ var currentPage="titlePage";
 var textBox;
 var roomBox;
 var serverList;
+var trackThumbnail;
 
 var pageHistory = [];
+
+var circuitWrappers = [];
+var trackSelectIndex = 0;
 
 window.onload = function(){
     sessionStorage.setItem('setup', "false");
     textBox = document.getElementById("nickname");
     roomBox = document.getElementById("room");
     serverList = document.getElementById("serverList");
+    trackThumbnail = document.getElementById("trackThumbnail");
+    loadJSON("/circuits/data.json", (response) => {
+        var circuitData = JSON.parse(response);
+        for(var key in circuitData){
+            var c = circuitData[key];
+            circuitWrappers.push({
+                thumbnail: "/circuits"+c.location+c.thumbnail,
+                name: key
+            });
+        }
+        trackThumbnail.src = circuitWrappers[0].thumbnail;
+        document.getElementById("trackName").innerHTML = circuitWrappers[0].name;
+    });
 
     textBox.addEventListener("keyup", function(event) {
         event.preventDefault();
@@ -52,6 +69,13 @@ socket.on("rooms", function(data){
         newRow.appendChild(track);
         serverList.childNodes[0].appendChild(newRow);
     }
+    if(Object.keys(data).length == 0){
+        var newRow = document.createElement("TR");
+        var holder = document.createElement("TD");
+        holder.innerHTML = "No servers found. Host a room to play.";
+        newRow.appendChild(holder);
+        serverList.childNodes[0].appendChild(newRow);
+    }
 });
 
 function start() {
@@ -69,6 +93,7 @@ function submit(room) {
         if(textBox.value.length > 0){
             sessionStorage.setItem('nickname', textBox.value);
             sessionStorage.setItem('setup', "true");
+            sessionStorage.setItem('map', circuitWrappers[trackSelectIndex].name);
             if(room.length > 0){
                 window.location.replace("./race/"+room);
             }else{
@@ -97,4 +122,29 @@ function backPage() {
         document.getElementById("backButton").style.display = "none";
     }
     document.getElementById(currentPage).style.display = "inline-block";
-}
+};
+
+function cycleTrack(dir){
+    trackSelectIndex += dir;
+    if(trackSelectIndex < 0){
+        trackSelectIndex = circuitWrappers.length-1;
+    }
+    if(trackSelectIndex >= circuitWrappers.length){
+        trackSelectIndex = 0;
+    }
+    trackThumbnail.src = circuitWrappers[trackSelectIndex].thumbnail;
+    document.getElementById("trackName").innerHTML = circuitWrappers[trackSelectIndex].name;
+};
+
+function loadJSON(src, callback) {   
+    var xobj = new XMLHttpRequest();
+        xobj.overrideMimeType("application/json");
+    xobj.open('GET', src, true); // Replace 'my_data' with the path to your file
+    xobj.onreadystatechange = function () {
+          if (xobj.readyState == 4 && xobj.status == "200") {
+            // Required use of an anonymous callback as .open will NOT return a value but simply returns undefined in asynchronous mode
+            callback(xobj.responseText);
+          }
+    };
+    xobj.send(null);  
+ };

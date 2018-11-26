@@ -217,35 +217,12 @@ var wall=function(x1, y1, x2, y2){
 
 var circuitsPath = "./client/circuits";
 var clientCircuitsPath = "/circuits";
-var circuits={
-	"Mugello Circuit":{
-        location:"/mugello_circuit",
-        track:"/image/mask_MainBoard.png",
-		sand:"/image/sand_Mainboard.png",
-		fullTrack:"/SVG/fulltrack_Mainboard.svg",
-		svg:"/SVG/vectors_Mainboard.svg",
-		records:"/data/records.json",
-		maskScale:4,
-		walls:[],
-		spawns:[],
-		waypoints:[],
-	},
-	"Nürburgring Circuit":{
-		location:"/nurburgring_circuit",
-        track:"/image/mask_MainBoard.png",
-        sand:"/image/sand_Mainboard.png",
-		fullTrack:"/SVG/fulltrack_Mainboard.svg",
-		svg:"/SVG/vectors_Mainboard.svg",
-		records:"/data/records.json",
-		maskScale:4,
-		walls:[],
-		spawns:[],
-		waypoints:[],
-	}
-}
+var circuits;
 
 async function loadCircuits(){
 	console.log("Starting server...");
+	circuits = JSON.parse(fs.readFileSync(circuitsPath + "/data.json"));
+	console.log("Loaded circuit overview.");
 	for(var p in circuits){
 		var c = circuits[p];
 		var paths = {
@@ -345,6 +322,7 @@ var room=function(name, circuit){
 	//To be sent
 	this.players = {};
 	this.toSend = {};
+	this.walls = [];
 	//Race variables
 	this.spawnNumber = 0;
 	this.waypoints = [];
@@ -364,7 +342,7 @@ var room=function(name, circuit){
 		this.recordData = circuit.recordData;
 		this.trackMaskData = circuit.trackData;
 		this.sandMaskData = circuit.sandData;
-		this.toSend["walls"] = circuit.walls;
+		this.walls = circuit.walls;
 		this.waypoints = circuit.waypoints;
 		this.spawns = circuit.spawns;
 		this.trackSize = circuit.viewBox;
@@ -380,7 +358,6 @@ var room=function(name, circuit){
 	this.setup=function(){
 		console.log("Created room: "+this.name);
 		this.toSend["players"] = {};
-		this.toSend["walls"] = [];
 		this.toSend["spectators"] = {};
 		this.toSend["gameData"] = {
 			room:{
@@ -464,13 +441,13 @@ var room=function(name, circuit){
 		}
 		if(this.players[socket.id]){
 			console.log("Player '"+this.players[socket.id].name+"' left room '"+this.name+"'");
+			delete this.players[socket.id];
 			if(this.owner === socket.id){
 				if(Object.keys(this.players)[0]){
 					this.owner = Object.keys(this.players)[0];
 					console.log("Owner of room "+this.name+" has left. New owner is "+this.players[this.owner].name+".");
 				}
 			}
-			delete this.players[socket.id];
 		}
 		if(this.toSend["spectators"][socket.id]){
 			console.log("Spectator '"+this.toSend["spectators"][socket.id].args.name+"' left room '"+this.name+"'");
@@ -597,17 +574,36 @@ io.on("connection", function(socket){
 	socket.on("request images", function(){
 		socket.emit("images", {
 			track: rooms[roomAssociation[socket.id]].clientTrackPath,
-			trackSize: rooms[roomAssociation[socket.id]].trackSize
+			trackSize: rooms[roomAssociation[socket.id]].trackSize,
+			walls: rooms[roomAssociation[socket.id]].walls
 		});
 	});
 
 	socket.on("chat message", function(arg){
 		var player = rooms[roomAssociation[socket.id]].players[socket.id];
-		io.to(roomAssociation[socket.id]).emit("chat message",{
-			color: player.color,
-			name: player.name,
-			message: arg
-		});
+		var spectator = false;
+		if(!player){
+			player = rooms[roomAssociation[socket.id]].toSend["spectators"][socket.id].args;
+			spectator = true;
+		}
+		if(!player){
+			return;
+		}
+		if(!spectator){
+			io.to(roomAssociation[socket.id]).emit("chat message",{
+				color: player.color,
+				name: player.name,
+				message: arg,
+				spectator: false
+			});
+		}else{
+			io.to(roomAssociation[socket.id]).emit("chat message",{
+				color: player.color,
+				name: player.name,
+				message: arg,
+				spectator: true
+			});
+		}
 	});
 });
 
@@ -796,8 +792,8 @@ var player=function(x, y, name, id, c, room){
 		this.corners.topRight.y = this.pos.y - this.sideOffset*Math.cos(-this.dir) - this.frontOffset*Math.sin(-this.dir);
 	}
 	this.collision=function(){
-		for(var i in rooms[this.room].toSend["walls"]){
-			var w = rooms[this.room].toSend["walls"][i];
+		for(var i in rooms[this.room].walls){
+			var w = rooms[this.room].walls[i];
 			if(carLineCollision(this, w)){
 				var lastPos = Vector.subtract(this.pos, this.vel);
 				var reboundDirection = w.normal.clone();
@@ -909,7 +905,7 @@ var player=function(x, y, name, id, c, room){
 };
 
 var spectator = function(args){
-	this.args = args
+	this.args = args;
 	this.following = true;
 	this.followID = null;
 	this.readyToJoin = true;

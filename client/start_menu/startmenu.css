@@ -24,7 +24,7 @@ html{
     background-color: rgb(217, 255, 160);
 }
 
-img{
+/*img{
     position:absolute;
     left:0px;
     top:0px;
@@ -35,6 +35,32 @@ img{
     -moz-transform:     rotate(270deg);
     -webkit-transform:  rotate(270deg);
     -o-transform:       rotate(270deg);
+}*/
+
+.selectButtons{
+    width: 30px;
+    display: inline-block;
+    vertical-align: top;
+}
+
+#trackThumbnail{
+    width: 400px;
+    display: block;
+    margin: auto;
+}
+
+#trackName{
+    display: inline-block;
+    font-size: 20px;
+    margin-top: 2px;
+}
+
+#trackRight{
+    transform:          rotate(180deg);
+    -ms-transform:      rotate(180deg);
+    -moz-transform:     rotate(180deg);
+    -webkit-transform:  rotate(180deg);
+    -o-transform:       rotate(180deg);
 }
 
 td, th {
@@ -72,19 +98,11 @@ th {
     position: relative;
     display:none;
     margin:50px;
-    color: black;
-    font-size: 50px;
     z-index:10;
-    background-color: rgba(255, 255, 255, 0); 
-    text-align: center;
-    text-decoration: none;
+    background-color: rgba(255, 255, 255, 0);
     border: none;
-    -webkit-transition-duration: 0.4s; /* Safari */
-    transition-duration: 0.4s;
-}
-
-#backButton:hover{
-    color:red;
+    width: 50px;
+    height: 50px;
 }
 
 input[type=text]{
@@ -142,6 +160,6 @@ input[type=text]:focus {
     color: white;
 }
 
-[contenteditable="true"]:focus, input[type=button]:focus{
+[contenteditable="true"]:focus, input[type=button]:focus, input[type=image]:focus{
     outline: none !important;
 }

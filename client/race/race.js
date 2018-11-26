@@ -18,9 +18,19 @@ window.onload = function(){
     chatbox.addEventListener("keyup", function(event) {
         event.preventDefault();
         if (event.keyCode === 13) {
-            socket.emit("chat message", chatbox.value);
+            if(chatbox.value != ""){
+                socket.emit("chat message", chatbox.value);
+            }
             chatbox.value="";
         }
+    });
+    chatbox.addEventListener("focus", function(event) {
+        chatlog.style.maxHeight = "400px";
+        chatlog.scrollTop = chatlog.scrollHeight;
+    });
+    chatbox.addEventListener("focusout", function(event) {
+        chatlog.style.maxHeight = "200px";
+        chatlog.scrollTop = chatlog.scrollHeight;
     });
 }
 
@@ -44,8 +54,10 @@ socket.on("toggleTrip", function(){
 
 socket.on("chat message", function(data){
     var newEntry = document.createElement("P");
-    newEntry.innerHTML = "<span style='color: hsl("+data.color*3.6+", 100%, 50%);'>["+data.name+"]</span>: "+data.message;
+    newEntry.innerHTML = "<span style='color: hsl("+data.color*3.6+", 100%, 40%);'>"+(data.spectator?"(Spectator)":"")+"["+data.name+"]</span>: "+data.message;
     chatlog.appendChild(newEntry);
+    chatlog.scrollTop = chatlog.scrollHeight;
+    
 });
 
 var carImage;
@@ -69,8 +81,9 @@ function setup() {
 function windowResized() { resizeCanvas(document.body.clientWidth, window.innerHeight); }
 
 var name = sessionStorage.getItem("nickname");
-if(name != null && name != "" && name != "null" && name.length < 100){     
-    socket.emit("new player", {name:name, color: Math.random()*100, room:room, track:"Mugello Circuit"});
+if(name != null && name != "" && name != "null" && name.length < 100){
+    var track = sessionStorage.getItem("map")
+    socket.emit("new player", {name:name, color: Math.random()*100, room:room, track:(track?track:"Mugello Circuit")});
 }
 
 var followCamera = {
@@ -86,6 +99,9 @@ var followCamera = {
     }
 };
 
+var trails = [];
+var walls = [];
+
 socket.on("images", function(images){
     carImage = loadImage("/images/cars/Sports/Sports.png");
     carMask = loadImage("/images/cars/Sports/Sports_Mask.png");
@@ -94,10 +110,9 @@ socket.on("images", function(images){
     //carImage = loadImage("/images/cars/Ambulance/Ambulance.png");
     //carMask = loadImage("/images/cars/Ambulance/Ambulance_Mask.png");
     trackContainer.setAttribute("src", images.track);
+    walls = images.walls;
     loaded = true;
 });
-
-var trails = [];
 
 socket.on("state", function(items){
     if(!loaded){
@@ -110,7 +125,7 @@ socket.on("state", function(items){
     }
     document.getElementById("loading").style.display = "none";
     if(trip){
-        background(217, 255, 160, 20);
+        background(217, 255, 160, 2);
     }else{
         ctx.clearRect(0,0,width,height);
     }
@@ -140,8 +155,8 @@ socket.on("state", function(items){
         var player = items["players"][id];
         renderPlayer(player);
     }
-    for (var id in items["walls"]) {
-        var wall = items["walls"][id];
+    for (var id in walls) {
+        var wall = walls[id];
         renderWalls(wall);
     }
     pop();
