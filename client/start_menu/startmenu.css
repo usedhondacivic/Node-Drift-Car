@@ -24,19 +24,6 @@ html{
     background-color: rgb(217, 255, 160);
 }
 
-/*img{
-    position:absolute;
-    left:0px;
-    top:0px;
-    width:100px;
-    margin: 15px 0px;
-    transform:          rotate(270deg);
-    -ms-transform:      rotate(270deg);
-    -moz-transform:     rotate(270deg);
-    -webkit-transform:  rotate(270deg);
-    -o-transform:       rotate(270deg);
-}*/
-
 .selectButtons{
     width: 30px;
     display: inline-block;
@@ -82,17 +69,44 @@ th {
 }
 
 #carBar{
-    margin-top:15%;
+    margin-top:10%;
     position: relative;
+    height: 40%;
 }
 
 .carPannel{
     position: relative;
     display:inline-block;
-    border: 1px solid black;
-    width: 100px;
-    height: 100px;
+    vertical-align: middle;
+    border: 1px solid black;transform-origin: center;
+    width: 75px;
+    height: 75px;
+    margin: -37.5px -37.5px;
+    /*transform-origin: center*/;
+    -webkit-transition-duration: 0.4s; /* Safari */
+    transition-duration: 0.4s;
 }
+
+.carPannel:hover{
+    width: 200px;
+    height: 200px;
+    margin: -100px -100px;
+}
+
+.carPannel img{
+    position:absolute;
+    vertical-align: middle;
+    left:0px;
+    top:15%;
+    margin-left:0%;
+    width: 100%;
+    transform:          rotate(270deg);
+    -ms-transform:      rotate(270deg);
+    -moz-transform:     rotate(270deg);
+    -webkit-transform:  rotate(270deg);
+    -o-transform:       rotate(270deg);
+}
+
 
 #backButton{
     position: relative;
@@ -156,8 +170,18 @@ input[type=text]:focus {
 }
 
 .largeButton:active {
-    background-color: #ff968f;
+    background-color: #524e4e;
     color: white;
+}
+
+input[type=range]{
+  outline:0;
+  -webkit-appearance : none;
+  width : 400px;
+  height : 4px;
+  display: block;
+  margin: auto;
+  background: linear-gradient(to right, hsl(0, 100%, 51%) 0%, hsl(30, 100%, 51%) 8.3%, hsl(60, 100%, 51%) 16.6%, hsl(90, 100%, 51%) 25%, hsl(120, 100%, 51%) 33.3%, hsl(150, 100%, 51%) 41.6%, hsl(180, 100%, 51%) 50%, hsl(210, 100%, 51%) 58.3%, hsl(240, 100%, 51%) 66.6%, hsl(270, 100%, 51%) 75%, hsl(300, 100%, 51%) 83.3%, hsl(330, 100%, 51%) 91.6%, hsl(360, 100%, 51%) 100%);
 }
 
 [contenteditable="true"]:focus, input[type=button]:focus, input[type=image]:focus{

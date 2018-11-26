@@ -88,7 +88,7 @@ socket.on("rooms", function(data){
 function start() {
     if(textBox){
         if(textBox.value.length > 0){
-            switchPage('serverPage');
+            switchPage('carSelectPage');
         }else{
             document.getElementById("warning").style.display = "block";
         }

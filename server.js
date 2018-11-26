@@ -414,6 +414,11 @@ var room=function(name, circuit){
 				delete roomAssociation[i];
 			}
 		}
+		for(var i in roomAssociation){
+			if(roomAssociation[i] == this.name){
+				delete roomAssociation[i];	
+			}
+		}
 	};
 	this.addPlayer=function(socket, arg){
 		console.log("Player '"+arg.name+"' joined room '"+this.name+"'");
