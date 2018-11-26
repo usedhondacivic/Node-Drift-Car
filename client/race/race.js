@@ -32,6 +32,7 @@ window.onload = function(){
         chatlog.style.maxHeight = "200px";
         chatlog.scrollTop = chatlog.scrollHeight;
     });
+    chatlog.style.paddingRight = chatlog.offsetWidth - chatlog.clientWidth + "px";
 }
 
 //IO
@@ -179,7 +180,7 @@ socket.on("state", function(items){
             }
             textSize(15);
             textAlign(CENTER, BOTTOM);
-            text("You are currently spectating. You can join the game once a spot opens up. You are currently "+(s.readyToJoin?"READY":"NOT READY")+" to join (ENTER to toggle).", width/2, height-60);
+            text("You are currently spectating. You can join the game once a spot opens up. You are currently "+(s.readyToJoin?"READY":"NOT READY")+" to join (CTRL to toggle).", width/2, height-60);
         }
     }
 });

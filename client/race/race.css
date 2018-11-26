@@ -36,6 +36,7 @@ input[type=text]{
     bottom: 10%;
     left: 2%;
     width:15%;
+    overflow: hidden;
     align-self: bottom;
 }
 

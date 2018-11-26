@@ -76,13 +76,13 @@ rl.on('line', (input) => {
 		return;
 	}
 	switch(words[0]){
-		case "ban":
+		case "kick":
 			if(rooms[broadcastRoom].players[words[1]]){
 				rooms[broadcastRoom].removePlayer({id:words[1]});
 				if(words[2]){
 					io.sockets.connected[words[1]].emit("alert", words[2]);
 				}
-				console.log("Player banned.");	
+				console.log("Player kick.");	
 			}else{
 				console.log("Couldn't find a player on that socket.");
 			}
@@ -572,37 +572,41 @@ io.on("connection", function(socket){
 	});
 
 	socket.on("request images", function(){
-		socket.emit("images", {
-			track: rooms[roomAssociation[socket.id]].clientTrackPath,
-			trackSize: rooms[roomAssociation[socket.id]].trackSize,
-			walls: rooms[roomAssociation[socket.id]].walls
-		});
+		if(rooms[roomAssociation[socket.id]]){
+			socket.emit("images", {
+				track: rooms[roomAssociation[socket.id]].clientTrackPath,
+				trackSize: rooms[roomAssociation[socket.id]].trackSize,
+				walls: rooms[roomAssociation[socket.id]].walls
+			});
+		}
 	});
 
 	socket.on("chat message", function(arg){
-		var player = rooms[roomAssociation[socket.id]].players[socket.id];
-		var spectator = false;
-		if(!player){
-			player = rooms[roomAssociation[socket.id]].toSend["spectators"][socket.id].args;
-			spectator = true;
-		}
-		if(!player){
-			return;
-		}
-		if(!spectator){
-			io.to(roomAssociation[socket.id]).emit("chat message",{
-				color: player.color,
-				name: player.name,
-				message: arg,
-				spectator: false
-			});
-		}else{
-			io.to(roomAssociation[socket.id]).emit("chat message",{
-				color: player.color,
-				name: player.name,
-				message: arg,
-				spectator: true
-			});
+		if(rooms[roomAssociation[socket.id]]){
+			var player = rooms[roomAssociation[socket.id]].players[socket.id];
+			var spectator = false;
+			if(!player){
+				player = rooms[roomAssociation[socket.id]].toSend["spectators"][socket.id].args;
+				spectator = true;
+			}
+			if(!player){
+				return;
+			}
+			if(!spectator){
+				io.to(roomAssociation[socket.id]).emit("chat message",{
+					color: player.color,
+					name: player.name,
+					message: arg,
+					spectator: false
+				});
+			}else{
+				io.to(roomAssociation[socket.id]).emit("chat message",{
+					color: player.color,
+					name: player.name,
+					message: arg,
+					spectator: true
+				});
+			}
 		}
 	});
 });
@@ -932,10 +936,10 @@ var spectator = function(args){
 		}else{
 			this.released=true;
 		}
-		if(this.keys[13]&&this.readyReleased){
+		if(this.keys[17]&&this.readyReleased){
 			this.readyToJoin=!this.readyToJoin;
 			this.readyReleased=false;
-		}else if(!this.keys[13]){
+		}else if(!this.keys[17]){
 			this.readyReleased=true;
 		}
 		if(!this.following){

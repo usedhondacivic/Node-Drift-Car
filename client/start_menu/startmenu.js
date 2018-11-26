@@ -36,6 +36,13 @@ window.onload = function(){
             document.getElementById("submit").click();
         }
     });
+
+    room.addEventListener("keyup", function(event) {
+        event.preventDefault();
+        if (event.keyCode === 13) {
+            document.getElementById("host").click();
+        }
+    });
     
     var cars = document.getElementsByClassName("carMaskImage");
     for(var i in cars){
