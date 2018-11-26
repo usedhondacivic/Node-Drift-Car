@@ -9,10 +9,12 @@ window.onbeforeunload = function(){
 
 var chatbox;
 var chatlog;
+var chatContainer;
 
 window.onload = function(){
     chatbox = document.getElementById("chatEntry");
     chatlog = document.getElementById("chatlog");
+    chatContainer = document.getElementById("chatContainer");
     chatbox.addEventListener("keyup", function(event) {
         event.preventDefault();
         if (event.keyCode === 13) {
@@ -25,7 +27,11 @@ window.onload = function(){
 //IO
 var socket = io();
 var room = window.location.pathname.split("/");
-room = room[room.length-1];
+try{
+   room = decodeURI(room[room.length-1]);
+}catch(e){
+    console.log(e);
+}
 
 //Key events
 var keys=[];
@@ -38,19 +44,15 @@ socket.on("toggleTrip", function(){
 
 socket.on("chat message", function(data){
     var newEntry = document.createElement("P");
-    newEntry.innerHTML = "<span style='color: hsl("+data.color*3.6+", 100%, 40%);'>["+data.name+"]</span>: "+data.message;
+    newEntry.innerHTML = "<span style='color: hsl("+data.color*3.6+", 100%, 50%);'>["+data.name+"]</span>: "+data.message;
     chatlog.appendChild(newEntry);
 });
 
 var carImage;
 var carMask;
-var trackImage;
-var sandImage;
-var trackPaths;
-var trackSize;
-var sandPaths;
 var ctx;
 var trackContainer;
+var showHUD = false;
 var trip = false;
 var countdown = -1;
 var loaded = false;
@@ -68,7 +70,7 @@ function windowResized() { resizeCanvas(document.body.clientWidth, window.innerH
 
 var name = sessionStorage.getItem("nickname");
 if(name != null && name != "" && name != "null" && name.length < 100){     
-    socket.emit("new player", {name:name, color: Math.random()*100, room:room, track:"Nürburgring Circuit"});
+    socket.emit("new player", {name:name, color: Math.random()*100, room:room, track:"Mugello Circuit"});
 }
 
 var followCamera = {
@@ -100,6 +102,11 @@ var trails = [];
 socket.on("state", function(items){
     if(!loaded){
         return;
+    }
+    if(!showHUD){
+        chatContainer.style.visibility = "hidden";
+    }else{
+        chatContainer.style.visibility = "";
     }
     document.getElementById("loading").style.display = "none";
     if(trip){
@@ -141,16 +148,18 @@ socket.on("state", function(items){
     for (var id in items["players"]) {
         textSize(20);
         textAlign(LEFT, TOP);
-        text(items["players"][id].place+". "+items["players"][id].name, 40, 100+(items["players"][id].place-1)*22);
-        if(id === socket.id){
-            renderHUD(items["players"][id], Object.keys(items["players"]).length);
+        if(showHUD){
+            text(items["players"][id].place+". "+items["players"][id].name, 40, 100+(items["players"][id].place-1)*22);
+            if(id === socket.id){
+                renderHUD(items["players"][id], Object.keys(items["players"]).length);
+            }
         }
     }
     for(var id in items["spectators"]){
         var s = items["spectators"][id];
         if(id === socket.id){
             followCamera.pos = s.pos;
-            if(s.following){
+            if(s.following && showHUD){
                 renderHUD(items["players"][s.followID], Object.keys(items["players"]).length);
             }
             textSize(15);
@@ -199,7 +208,9 @@ var renderPlayer = function(instance) {
         textAlign(CENTER, BOTTOM);
         textSize(9);
         textFont("Sans Serif");
-        text(instance.name, 0, -20);
+        if(showHUD){
+            text(instance.name, 0, -20);
+        }
         rotate(instance.dir);
         imageMode(CENTER);
         noStroke();

@@ -61,7 +61,11 @@ rl.on('line', (input) => {
 			console.log("Didn't find that room.");
 		}
 	}
-	if(!rooms[broadcastRoom]){
+	
+	if(words[0] === "global message") {
+		globalMessage(words[1]);
+		return;
+	}else if(!rooms[broadcastRoom]){
 		console.log("Please select a room to send to:");
 		for(var r in rooms){
 			console.log("     '"+rooms[r].name+"'");
@@ -182,6 +186,9 @@ rl.on('line', (input) => {
 				rooms[broadcastRoom].raceStart = rooms[broadcastRoom].seconds;
 			}, 3000);
 			console.log("Race started.");
+		break;
+		case "room message":
+			serverMessage(words[1], broadcastRoom);
 		break;
 		default:
 			console.log("Command not recognized.");
@@ -596,11 +603,10 @@ io.on("connection", function(socket){
 
 	socket.on("chat message", function(arg){
 		var player = rooms[roomAssociation[socket.id]].players[socket.id];
-		io.emit("chat message",{
+		io.to(roomAssociation[socket.id]).emit("chat message",{
 			color: player.color,
 			name: player.name,
 			message: arg
-
 		});
 	});
 });
@@ -972,6 +978,22 @@ function carCollision(car1, car2){
 	carLineCollision(car1, {x1:car2.corners.topRight.x, y1:car2.corners.topRight.y, x2:car2.corners.bottomRight.x, y2:car2.corners.bottomRight.y}) ||
 	carLineCollision(car1, {x1:car2.corners.bottomLeft.x, y1:car2.corners.bottomLeft.y, x2:car2.corners.topLeft.x, y2:car2.corners.topLeft.y}) ||
 	carLineCollision(car1, {x1:car2.corners.bottomRight.x, y1:car2.corners.bottomRight.y, x2:car2.corners.bottomLeft.x, y2:car2.corners.bottomLeft.y}));
+}
+
+function serverMessage(msg, room){
+	io.to(room).emit("chat message",{
+		color: 0,
+		name: "SERVER",
+		message: msg
+	});
+}
+
+function globalMessage(msg){
+	io.emit("chat message",{
+		color: 0,
+		name: "GLOBAL",
+		message: msg
+	});
 }
 
 function clone(obj) {
