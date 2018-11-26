@@ -69,28 +69,44 @@ th {
 }
 
 #carBar{
-    margin-top:10%;
     position: relative;
     height: 40%;
+    margin-top: -5%;
 }
 
 .carPannel{
     position: relative;
     display:inline-block;
     vertical-align: middle;
-    border: 1px solid black;transform-origin: center;
-    width: 75px;
-    height: 75px;
-    margin: -37.5px -37.5px;
-    /*transform-origin: center*/;
+    border: 1px solid black;
+    width: 4%;
+    padding-top: 4%;
+    /*padding: -37.5px -37.5px;*/
+    /*transform-origin: center;*/
     -webkit-transition-duration: 0.4s; /* Safari */
     transition-duration: 0.4s;
 }
 
-.carPannel:hover{
-    width: 200px;
-    height: 200px;
-    margin: -100px -100px;
+.carPannel:focus{
+    width: 10%;
+    padding-top: 10%;
+    height: 20px;
+}
+
+#colorPicker::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 23px;
+    height: 24px;
+    border: 0;
+    cursor: pointer;
+}
+
+#colorPicker::-moz-range-thumb {
+    width: 23px;
+    height: 25px;
+    border: 0;
+    cursor: pointer;
 }
 
 .carPannel img{
@@ -106,7 +122,6 @@ th {
     -webkit-transform:  rotate(270deg);
     -o-transform:       rotate(270deg);
 }
-
 
 #backButton{
     position: relative;

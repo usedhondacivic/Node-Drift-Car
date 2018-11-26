@@ -45,7 +45,7 @@
             </select>-->
         </div>
         <div class="page" id="carSelectPage" style="display:none;">
-            <h2 style="margin-top:50px;">Customize Your Car</h2>
+            <h2 style="margin-top:10%;">Choose Your Car</h2>
             <div id="carBar">
                 <div class="carPannel">
                     <img src="/images/cars/Sports/Sports.png">
@@ -71,8 +71,9 @@
                     <img src="/images/cars/Truck/Truck.png">
                     <img class="carMaskImage" src="/images/cars/Truck/Truck_Mask.png">
                 </div>
+                <div style="height: 200px; vertical-align:center; display: inline-block;"></div>
             </div>
-            <input id="lol" type="range" min="0" max="100" step="1" onchange="" />
+            <input id="colorPicker" type="range" min="0" max="100" step="1" onchange="updateCars()" />
         </div>
     </body>
 </html>
