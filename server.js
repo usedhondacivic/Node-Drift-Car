@@ -888,6 +888,15 @@ var player=function(x, y, name, id, c, room){
 					if(this.lapTime<rooms[this.room].recordData.lapTime[i][0]){
 						rooms[this.room].recordData.lapTime.splice(i, 0, [this.lapTime, this.name]);
 						rooms[this.room].recordData.lapTime.splice(-1);
+						var suffix = "th";
+						if(i == 0){
+							suffix = "st";
+						}else if(i == 1){
+							suffix = "nd";
+						}else if(i == 2){
+							suffix = "rd";
+						}
+						serverMessage("["+this.name+"] just set the "+(parseInt(i)+1)+suffix+" fastest lap of all time with a time of "+this.lapTime.toFixed(2)+"s.", this.room);
 						fs.writeFileSync(rooms[this.room].recordsPath, JSON.stringify(rooms[this.room].recordData, null, 2));
 						break;
 					}
