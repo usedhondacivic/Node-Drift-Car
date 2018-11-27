@@ -5,8 +5,11 @@ var textBox;
 var roomBox;
 var serverList;
 var trackThumbnail;
+var carBar;
 
 var pageHistory = [];
+var carNames = [];
+var selectedCar = "";
 
 var circuitWrappers = [];
 var trackSelectIndex = 0;
@@ -17,6 +20,8 @@ window.onload = function(){
     roomBox = document.getElementById("room");
     serverList = document.getElementById("serverList");
     trackThumbnail = document.getElementById("trackThumbnail");
+    carBar = document.getElementById("carBar");
+
     loadJSON("/circuits/data.json", (response) => {
         var circuitData = JSON.parse(response);
         for(var key in circuitData){
@@ -28,6 +33,21 @@ window.onload = function(){
         }
         trackThumbnail.src = circuitWrappers[0].thumbnail;
         document.getElementById("trackName").innerHTML = circuitWrappers[0].name;
+    });
+
+    loadJSON("/images/cars/data.json", (response) => {
+        var carData = JSON.parse(response);
+        for(var key in carData){
+            carNames.push(key);
+            var c = carData[key];
+            var newPannel = document.createElement("DIV");
+            newPannel.setAttribute("class", "carPannel");
+            newPannel.setAttribute("id", key);
+            newPannel.setAttribute("tabindex", "0");
+            newPannel.setAttribute("onclick", "carClick('"+key+"')");
+            newPannel.innerHTML = "<img src='"+c.location+c.base+"'><img class='carMaskImage' src='"+c.location+c.mask+"'>";
+            carBar.appendChild(newPannel);
+        }
     });
 
     textBox.addEventListener("keyup", function(event) {
@@ -44,7 +64,7 @@ window.onload = function(){
         }
     });
     
-    updateCars();
+    document.getElementById("colorPicker").value = 0;
 }
 
 socket.on("rooms", function(data){
@@ -85,6 +105,7 @@ function start() {
     if(textBox){
         if(textBox.value.length > 0){
             switchPage('carSelectPage');
+            updateCars();
         }else{
             document.getElementById("warning").style.display = "block";
         }
@@ -108,6 +129,14 @@ function submit(room) {
     }
 };
 
+function carSelectNext() {
+    if(selectedCar != ""){
+        switchPage("serverPage");
+    }else{
+        document.getElementById("carWarning").style.display="block";
+    }
+}
+
 function switchPage(newPage) {
     document.getElementById(currentPage).style.display = "none";
     pageHistory.push(currentPage);
@@ -125,6 +154,8 @@ function backPage() {
         document.getElementById("backButton").style.display = "none";
     }
     document.getElementById(currentPage).style.display = "inline-block";
+    document.getElementById("carWarning").style.display="none";
+    document.getElementById("warning").style.display="none";
 };
 
 function cycleTrack(dir){
@@ -144,9 +175,16 @@ function updateCars(){
     var slider = document.getElementById("colorPicker");
     for(var i in cars){
         var tinto = new Tinto(cars[i]);
-        console.log(hslToHex(slider.value, 40, 100));
         cars[i].src = tinto.imageDataWithTintColor(hslToHex(slider.value, 100, 80));
     }
+}
+
+function carClick(name){
+    for(var i in carNames){
+        document.getElementById(carNames[i]).className = "carPannel";
+    }
+    document.getElementById(name).className = "carPannel pannelSelected";
+    selectedCar = name;
 }
 
 function loadJSON(src, callback) {   

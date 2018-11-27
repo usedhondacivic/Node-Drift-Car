@@ -1,0 +1,17 @@
+{
+    "sports":{
+        "location":"/images/cars/Sports",
+        "base":"/Sports.png",
+        "mask":"/Sports_Mask.png"
+    },
+    "ambulance":{
+        "location":"/images/cars/Truck",
+        "base":"/Truck.png",
+        "mask":"/Truck_Mask.png"
+    },
+    "truck":{
+        "location":"/images/cars/Ambulance",
+        "base":"/Ambulance.png",
+        "mask":"/Ambulance_Mask.png"
+    }
+}

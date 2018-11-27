@@ -4,7 +4,7 @@
 }
 
 html{
-    background-color: rgb(217, 255, 160);
+    background-color: rgb(217, 255, 151);
 }
 .page{
     position: fixed;
@@ -21,7 +21,7 @@ html{
     image-rendering: optimize-contrast;         /* CSS3 Proposed                  */
     -ms-interpolation-mode: nearest-neighbor;   /* IE8+                           */
     image-rendering: pixelated;
-    background-color: rgb(217, 255, 160);
+    background-color: rgb(217, 255, 151);
 }
 
 .selectButtons{
@@ -70,7 +70,7 @@ th {
 
 #carBar{
     position: relative;
-    height: 40%;
+    height: 150px;
     margin-top: -5%;
 }
 
@@ -78,35 +78,58 @@ th {
     position: relative;
     display:inline-block;
     vertical-align: middle;
-    border: 1px solid black;
-    width: 4%;
-    padding-top: 4%;
-    /*padding: -37.5px -37.5px;*/
-    /*transform-origin: center;*/
-    -webkit-transition-duration: 0.4s; /* Safari */
-    transition-duration: 0.4s;
+    /*border: 1px solid black;*/
+    width: 8vh;
+    height: 8vh;
+    -webkit-transition: height 0.4s, width 0.4s;
+    -moz-transition: height 0.4s, width 0.4s;
+    -ms-transition: height 0.4s, width 0.4s;
+    transition: height 0.4s, width 0.4s;
+    margin: 0px 5px;
 }
 
-.carPannel:focus{
-    width: 10%;
-    padding-top: 10%;
-    height: 20px;
+.carPannel:hover{
+    height: 16vh;
+    width: 16vh;
 }
+
+.pannelSelected{
+    height: 16vh;
+    width: 16vh;
+    /*border: 3px solid black;*/
+}
+
+#colorPicker{
+    position: relative;
+    top: 100px;
+    outline:0;
+    -webkit-appearance : none;
+    width : 400px;
+    height : 10px;
+    border-radius: 5px;
+    display: block;
+    margin: auto;
+    background: linear-gradient(to right, hsl(0, 100%, 51%) 0%, hsl(30, 100%, 50%) 8.3%, hsl(60, 100%, 51%) 16.6%, hsl(90, 100%, 51%) 25%, hsl(120, 100%, 51%) 33.3%, hsl(150, 100%, 51%) 41.6%, hsl(151, 100%, 51%) 50%, hsl(210, 100%, 51%) 58.3%, hsl(240, 100%, 51%) 66.6%, hsl(270, 100%, 51%) 75%, hsl(300, 100%, 51%) 83.3%, hsl(330, 100%, 51%) 91.6%, hsl(351, 100%, 51%) 100%);
+  }
 
 #colorPicker::-webkit-slider-thumb {
     -webkit-appearance: none;
     appearance: none;
-    width: 23px;
-    height: 24px;
-    border: 0;
+    width: 20px;
+    height: 20px;
+    /*background: #4CAF50;*/
+    border: 5px solid white;
     cursor: pointer;
+    border-radius: 100%;
 }
 
 #colorPicker::-moz-range-thumb {
-    width: 23px;
-    height: 25px;
-    border: 0;
+    width: 20px;
+    height: 20px;
+    /*background: #4CAF50;*/
+    border: 5px solid white;
     cursor: pointer;
+    border-radius: 100%;
 }
 
 .carPannel img{
@@ -143,10 +166,6 @@ input[type=text]{
     width: 15%;
     padding: 5px;
     font-size: 1.25em;
-    outline: none;
-}
-
-input[type=text]:focus {
     outline: none;
 }
 
@@ -189,16 +208,6 @@ input[type=text]:focus {
     color: white;
 }
 
-input[type=range]{
-  outline:0;
-  -webkit-appearance : none;
-  width : 400px;
-  height : 4px;
-  display: block;
-  margin: auto;
-  background: linear-gradient(to right, hsl(0, 100%, 51%) 0%, hsl(30, 100%, 51%) 8.3%, hsl(60, 100%, 51%) 16.6%, hsl(90, 100%, 51%) 25%, hsl(120, 100%, 51%) 33.3%, hsl(150, 100%, 51%) 41.6%, hsl(180, 100%, 51%) 50%, hsl(210, 100%, 51%) 58.3%, hsl(240, 100%, 51%) 66.6%, hsl(270, 100%, 51%) 75%, hsl(300, 100%, 51%) 83.3%, hsl(330, 100%, 51%) 91.6%, hsl(360, 100%, 51%) 100%);
-}
-
-[contenteditable="true"]:focus, input[type=button]:focus, input[type=image]:focus{
+[contenteditable="true"]:focus, input[type=button]:focus, input[type=image]:focus, input[type=range]:focus, .carPannel:focus{
     outline: none !important;
 }

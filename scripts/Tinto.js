@@ -10,7 +10,7 @@
     this.sourceImage = sourceImage;
     
     if (!this.isImageLoaded()) {
-        console.warn("Tinto: The source image is not loaded yet, so it may not be displayed.");
+        //console.warn("Tinto: The source image is not loaded yet, so it may not be displayed.");
     }
   }
   
@@ -63,7 +63,7 @@
   // Creates image data with the specified options.
   Tinto.prototype.imageDataWithOptions = function(options){
     if (!this.isImageLoaded()){
-      console.warn("Tinto: Cannot create result image. Source image is not available.");
+      //console.warn("Tinto: Cannot create result image. Source image is not available.");
       return null;
     }
     

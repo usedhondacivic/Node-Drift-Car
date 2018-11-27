@@ -47,33 +47,17 @@
         <div class="page" id="carSelectPage" style="display:none;">
             <h2 style="margin-top:10%;">Choose Your Car</h2>
             <div id="carBar">
-                <div class="carPannel">
+                <!--<div class="carPannel">
                     <img src="/images/cars/Sports/Sports.png">
                     <img class="carMaskImage" src="/images/cars/Sports/Sports_Mask.png">
-                </div>
-                <div class="carPannel">
-                    <img src="/images/cars/Sports/Sports.png">
-                    <img class="carMaskImage" src="/images/cars/Sports/Sports_Mask.png">
-                </div>
-                <div class="carPannel">
-                    <img src="/images/cars/Sports/Sports.png">
-                    <img class="carMaskImage" src="/images/cars/Sports/Sports_Mask.png">
-                </div>
-                <div class="carPannel">
-                    <img src="/images/cars/Sports/Sports.png">
-                    <img class="carMaskImage" src="/images/cars/Sports/Sports_Mask.png">
-                </div>
-                <div class="carPannel">
-                    <img src="/images/cars/Sports/Sports.png">
-                    <img class="carMaskImage" src="/images/cars/Sports/Sports_Mask.png">
-                </div>
-                <div class="carPannel">
-                    <img src="/images/cars/Truck/Truck.png">
-                    <img class="carMaskImage" src="/images/cars/Truck/Truck_Mask.png">
-                </div>
-                <div style="height: 200px; vertical-align:center; display: inline-block;"></div>
+                </div>-->
+                <div style="height: 150px; vertical-align:center; display: inline-block;"></div>
             </div>
-            <input id="colorPicker" type="range" min="0" max="100" step="1" onchange="updateCars()" />
+            <input id="colorPicker" type="range" min="0" max="100" step="1" oninput="updateCars()" />
+            <div style="margin-top: 130px;">
+                <input type="button" id="submit" class="largeButton" onclick="carSelectNext()" value="Next">
+                <p id="carWarning" style="border: 2px solid #f44336; display: none; margin: auto; width: 20%; text-align: center; padding: 10px;">Please select a car.</p>
+            </div>
         </div>
     </body>
 </html>
