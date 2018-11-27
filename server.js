@@ -218,9 +218,14 @@ var wall=function(x1, y1, x2, y2){
 var circuitsPath = "./client/circuits";
 var clientCircuitsPath = "/circuits";
 var circuits;
+var validCars = [];
 
 async function loadCircuits(){
 	console.log("Starting server...");
+	var carsTemp = JSON.parse(fs.readFileSync("./client/images/cars/data.json"));
+	for(var key in carsTemp){
+		validCars.push(key);
+	}
 	circuits = JSON.parse(fs.readFileSync(circuitsPath + "/data.json"));
 	console.log("Loaded circuit overview.");
 	for(var p in circuits){
@@ -432,7 +437,7 @@ var room=function(name, circuit){
 			if(!spawn){
 				spawn = {x: 2300, y:2000};
 			}
-			this.players[socket.id] = new player(spawn.x, spawn.y, arg.name, socket.id, arg.color, this.name);
+			this.players[socket.id] = new player(spawn.x, spawn.y, arg.name, socket.id, arg.color, this.name, arg.car);
 			this.players[socket.id].startRace();
 		}else{
 			this.toSend["spectators"][socket.id] = new spectator(arg);
@@ -637,9 +642,10 @@ var RIGHT_ARROW = 39;
 var UP_ARROW = 38;
 var DOWN_ARROW = 40;
 
-var player=function(x, y, name, id, c, room){
+var player=function(x, y, name, id, c, room, car){
 	this.name = name;
 	this.room = room;
+	this.car = car;
 	this.id = id;
 	this.pos=new Vector(x, y);
 	this.posBuffer=new Vector(0,0);
@@ -729,6 +735,7 @@ var player=function(x, y, name, id, c, room){
 			lapTime:this.lapTime,
 			time:this.time,
 			rightVel:this.rightVel,
+			car:this.car
 		};
 	}
 	this.startRace=function(){
@@ -736,6 +743,9 @@ var player=function(x, y, name, id, c, room){
 		this.waypointLocation = rooms[this.room].waypoints[this.currentWaypoint];
 		this.positionIndex = this.lap * rooms[this.room].waypoints.length + parseInt(this.currentWaypoint);
 		this.frozen=false;
+		if(validCars.indexOf(this.car) == -1){
+			this.car = "sports";
+		}
 	};
 	this.reset=function(){
 		this.lap = -1;

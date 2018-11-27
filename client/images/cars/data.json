@@ -4,12 +4,12 @@
         "base":"/Sports.png",
         "mask":"/Sports_Mask.png"
     },
-    "ambulance":{
+    "truck":{
         "location":"/images/cars/Truck",
         "base":"/Truck.png",
         "mask":"/Truck_Mask.png"
     },
-    "truck":{
+    "ambulance":{
         "location":"/images/cars/Ambulance",
         "base":"/Ambulance.png",
         "mask":"/Ambulance_Mask.png"

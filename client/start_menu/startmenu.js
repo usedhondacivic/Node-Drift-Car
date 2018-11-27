@@ -116,8 +116,10 @@ function submit(room) {
     if(textBox){
         if(textBox.value.length > 0){
             sessionStorage.setItem('nickname', textBox.value);
-            sessionStorage.setItem('setup', "true");
             sessionStorage.setItem('map', circuitWrappers[trackSelectIndex].name);
+            sessionStorage.setItem('car', selectedCar);
+            sessionStorage.setItem('color', document.getElementById("colorPicker").value);
+            sessionStorage.setItem('setup', "true");
             if(room.length > 0){
                 window.location.replace("./race/"+room);
             }else{

@@ -82,9 +82,12 @@ function setup() {
 function windowResized() { resizeCanvas(document.body.clientWidth, window.innerHeight); }
 
 var name = sessionStorage.getItem("nickname");
-if(name != null && name != "" && name != "null" && name.length < 100){
+var car = sessionStorage.getItem("car");
+var color = sessionStorage.getItem("color");
+console.log(car);
+if(name != null && name != "" && name != "null" && name.length < 100 && car && color){
     var track = sessionStorage.getItem("map")
-    socket.emit("new player", {name:name, color: Math.random()*100, room:room, track:(track?track:"Mugello Circuit")});
+    socket.emit("new player", {name:name, color: color, room:room, track:(track?track:"Mugello Circuit"), car:car});
 }
 
 var followCamera = {
@@ -102,17 +105,22 @@ var followCamera = {
 
 var trails = [];
 var walls = [];
+var carImages = {};
 
 socket.on("images", function(images){
-    carImage = loadImage("/images/cars/Sports/Sports.png");
-    carMask = loadImage("/images/cars/Sports/Sports_Mask.png");
-    //carImage = loadImage("/images/cars/Truck/Truck.png");
-    //carMask = loadImage("/images/cars/Truck/Truck_Mask.png");
-    //carImage = loadImage("/images/cars/Ambulance/Ambulance.png");
-    //carMask = loadImage("/images/cars/Ambulance/Ambulance_Mask.png");
     trackContainer.setAttribute("src", images.track);
     walls = images.walls;
-    loaded = true;
+    loadJSON("/images/cars/data.json", (response) => {
+        var carData = response;
+        for(var key in carData){
+            var c = carData[key];
+            carImages[key] = {
+                base: loadImage((c.location + c.base).toString()),
+                mask: loadImage((c.location + c.mask).toString())
+            };
+        }
+        loaded = true;
+    });
 });
 
 socket.on("state", function(items){
@@ -230,10 +238,11 @@ var renderPlayer = function(instance) {
         rotate(instance.dir);
         imageMode(CENTER);
         noStroke();
-        image(carImage, -(instance.backOffset - (instance.backOffset + instance.frontOffset)/2), 0);
+        console.log(carImages+", "+instance.car);
+        image(carImages[instance.car].base, -(instance.backOffset - (instance.backOffset + instance.frontOffset)/2), 0);
         colorMode(HSB, 100);
         tint(instance.color%100, 40, 100, 100);
-        image(carMask, -(instance.backOffset - (instance.backOffset + instance.frontOffset)/2), 0);
+        image(carImages[instance.car].mask, -(instance.backOffset - (instance.backOffset + instance.frontOffset)/2), 0);
         noTint();
         colorMode(RGB, 255);
     pop();
@@ -306,3 +315,16 @@ var renderHUD = function(instance, carNum) {
     }
     pop();
 };
+
+function loadJSON(src, callback) {   
+    var xobj = new XMLHttpRequest();
+        xobj.overrideMimeType("application/json");
+    xobj.open('GET', src, true); // Replace 'my_data' with the path to your file
+    xobj.onreadystatechange = function () {
+          if (xobj.readyState == 4 && xobj.status == "200") {
+            // Required use of an anonymous callback as .open will NOT return a value but simply returns undefined in asynchronous mode
+            callback(xobj.responseText);
+          }
+    };
+    xobj.send(null);  
+ };
