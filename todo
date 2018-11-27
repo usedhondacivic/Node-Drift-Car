@@ -1,4 +1,4 @@
-Put car select data in session data and send to server
+Put a button on the race page to go back to the server page.
 Null player bug (switch tabs)
 Room owners (start race, kick players)
 Have races end

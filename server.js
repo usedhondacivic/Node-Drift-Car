@@ -29,6 +29,13 @@ app.get(
 );
 
 app.get(
+    "/servers",
+    function(req, res){
+        res.sendFile(__dirname + "/client/start_menu/startmenu.html");
+    }
+);
+
+app.get(
     "/race",
     function(req, res){
         res.sendFile(__dirname + "/client/race/race.html");
@@ -189,6 +196,7 @@ rl.on('line', (input) => {
 		break;
 		case "room message":
 			serverMessage(words[1], broadcastRoom);
+			console.log("Sent message.");
 		break;
 		default:
 			console.log("Command not recognized.");
@@ -772,11 +780,9 @@ var player=function(x, y, name, id, c, room, car){
 			this.speed*=this.decel*this.decelMultiplier;
 			if(this.keys[UP_ARROW]){this.speed+=this.accel*this.accelMultiplier;}
 			if(this.keys[DOWN_ARROW]){this.speed-=this.accel*this.accelMultiplier*0.5;}
-			//var invert = this.vel.angleTo
 			if(this.keys[LEFT_ARROW]){this.dir-=Math.sign(this.speed)*(this.turnSpeed*this.vel.length())/this.turnDamp;}
 			if(this.keys[RIGHT_ARROW]){this.dir+=Math.sign(this.speed)*(this.turnSpeed*this.vel.length())/this.turnDamp;}
 		}
-		//this.color++;
     };
     this.sideFriction=function(sideFriction, forwardFriction){
 		this.setFriction();

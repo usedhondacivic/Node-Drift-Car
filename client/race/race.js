@@ -3,13 +3,15 @@ if(sessionStorage.getItem("setup") == "false"){
 }
 
 window.onbeforeunload = function(){
-    sessionStorage.setItem('nickname', "");
-    sessionStorage.setItem('setup', "false");
+    if(!backToServer){
+        sessionStorage.setItem('setup', "false");
+    }
 }
 
 var chatbox;
 var chatlog;
 var chatContainer;
+var backToServer = false;
 
 window.onload = function(){
     chatbox = document.getElementById("chatEntry");
@@ -84,9 +86,9 @@ function windowResized() { resizeCanvas(document.body.clientWidth, window.innerH
 var name = sessionStorage.getItem("nickname");
 var car = sessionStorage.getItem("car");
 var color = sessionStorage.getItem("color");
+var track = sessionStorage.getItem("map");
 console.log(car);
 if(name != null && name != "" && name != "null" && name.length < 100 && car && color){
-    var track = sessionStorage.getItem("map")
     socket.emit("new player", {name:name, color: color, room:room, track:(track?track:"Mugello Circuit"), car:car});
 }
 
@@ -319,10 +321,9 @@ var renderHUD = function(instance, carNum) {
 function loadJSON(src, callback) {   
     var xobj = new XMLHttpRequest();
         xobj.overrideMimeType("application/json");
-    xobj.open('GET', src, true); // Replace 'my_data' with the path to your file
+    xobj.open('GET', src, true);
     xobj.onreadystatechange = function () {
           if (xobj.readyState == 4 && xobj.status == "200") {
-            // Required use of an anonymous callback as .open will NOT return a value but simply returns undefined in asynchronous mode
             callback(xobj.responseText);
           }
     };

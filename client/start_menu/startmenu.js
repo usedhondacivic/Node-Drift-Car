@@ -65,6 +65,19 @@ window.onload = function(){
     });
     
     document.getElementById("colorPicker").value = 0;
+    
+    var server = window.location.pathname.split("/");
+    server = server[server.length -1];
+    if(server && sessionStorage.getItem('nickname') && sessionStorage.gettItem('map') && sessionStorage.getItem('car') && sessionStorage.getItem('color')){
+        switchPage("serverPage");
+        textBox.value = sessionStorage.getItem('nickname');
+        trackSelectIndex = circuitWrappers.filter(obj => {
+            return obj.name === sessionStorage.gettItem('map');
+        });
+        selectedCar = sessionStorage.getItem('car');
+        document.getElementById("colorPicker").value = sessionStorage.getItem('color');
+        sessionStorage.setItem('setup', "false");
+    }
 }
 
 socket.on("rooms", function(data){
