@@ -407,7 +407,7 @@ var room=function(name, circuit){
 	};
 
 	this.dispose=function(){
-		for(var i in this.players){
+		/*for(var i in this.players){
 			if(roomAssociation[i]){
 				delete roomAssociation[i];
 			}
@@ -419,9 +419,9 @@ var room=function(name, circuit){
 		}
 		for(var i in roomAssociation){
 			if(roomAssociation[i] == this.name){
-				delete roomAssociation[i];	
+				delete roomAssociation[i];
 			}
-		}
+		}*/
 	};
 
 	this.addPlayer=function(socket, arg){
@@ -461,6 +461,7 @@ var room=function(name, circuit){
 				}
 			}
 		}
+
 		if(this.toSend["spectators"][socket.id]){
 			console.log("Spectator '"+this.toSend["spectators"][socket.id].args.name+"' left room '"+this.name+"'");
 			delete this.toSend["spectators"][i];
@@ -540,10 +541,19 @@ var room=function(name, circuit){
 				name: p.name,
 				lap: p.lap,
 				index: p.positionIndex,
+				position: p.pos,
+				waypoint: this.waypoints[p.currentWaypoint+1]
 			});
 		}
 		this.toSend["gameData"].room.leaderboard.sort(function(a,b){
-			return b.index - a.index;
+			if(a.index != b.index){
+				return b.index - a.index;
+			}else{
+				console.log(a.waypoint);
+				var aVec = new Vector(a.position.x - a.waypoint.x, a.position.y - a.waypoint.y);
+				var bVec = new Vector(b.position.x - b.waypoint.x, b.position.y - b.waypoint.y);
+				return aVec.length() - bVec.length();
+			}
 		});
 		for(var i in this.players){
 			var p = this.players[i];
