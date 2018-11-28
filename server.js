@@ -770,7 +770,8 @@ var player=function(x, y, name, id, c, room, car){
 			lapTime:this.lapTime,
 			time:this.time,
 			rightVel:this.rightVel,
-			car:this.car
+			car:this.car,
+			waypointLocation:this.waypointLocation
 		};
 	}
 	this.startRace=function(){
