@@ -104,7 +104,9 @@ rl.on('line', (input) => {
 		break;
 		case "set owner":
 			if(rooms[broadcastRoom].players[words[1]]){
+				io.sockets.connected[rooms[broadcastRoom].owner].emit("set owner", false);
 				rooms[broadcastRoom].owner = words[1];
+				io.sockets.connected[words[1]].emit("set owner", true);
 				console.log("Set owner of room '"+rooms[broadcastRoom].name+"' to player '"+rooms[broadcastRoom].players[words[1]].name+"'.");
 			}else{
 				console.log("Could find a player on that socket in the current room.")
@@ -174,24 +176,7 @@ rl.on('line', (input) => {
 			console.log("Players reset.");
 		break;
 		case "start race":
-			rooms[broadcastRoom].spawnNumber = 0;
-			for(var i in rooms[broadcastRoom].players){
-				var spawn = rooms[broadcastRoom].spawns[rooms[broadcastRoom].spawnNumber%rooms[broadcastRoom].spawns.length];
-				rooms[broadcastRoom].spawnNumber++;
-				if(!spawn){
-					spawn = {x: 2300, y:2000};
-				}
-				rooms[broadcastRoom].raceStart = rooms[broadcastRoom].seconds;
-				rooms[broadcastRoom].players[i].pos = new Vector(spawn.x, spawn.y);
-				rooms[broadcastRoom].players[i].reset();
-			}
-			io.to(broadcastRoom).emit("countdown");
-			setTimeout(function(){
-				for(var i in rooms[broadcastRoom].players){
-					rooms[broadcastRoom].players[i].startRace();
-				}
-				rooms[broadcastRoom].raceStart = rooms[broadcastRoom].seconds;
-			}, 3000);
+			rooms[broadcastRoom].startRace();
 			console.log("Race started.");
 		break;
 		case "room message":
@@ -360,6 +345,7 @@ var room=function(name, circuit){
 		this.spawns = circuit.spawns;
 		this.trackSize = circuit.viewBox;
 	};
+
 	this.getWrapper=function(){
 		return {
 			name: this.name,
@@ -368,6 +354,7 @@ var room=function(name, circuit){
 			track:this.circuit
 		};
 	};
+
 	this.setup=function(){
 		console.log("Created room: "+this.name);
 		this.toSend["players"] = {};
@@ -379,6 +366,7 @@ var room=function(name, circuit){
 		};
 		this.loadCircuit();
 	};
+
 	this.update=function(){
 		this.updatePlayerPlacing();
 		this.updatePlayerWrappers();
@@ -403,6 +391,7 @@ var room=function(name, circuit){
 		io.to(this.name).emit("state", this.toSend);
 		this.seconds+=1/60;
 	};
+
 	this.reset=function(){
 		this.spawnNumber = 0;
 		for(var i in this.players){
@@ -416,6 +405,7 @@ var room=function(name, circuit){
 			this.players[i].startRace();
 		}
 	};
+
 	this.dispose=function(){
 		for(var i in this.players){
 			if(roomAssociation[i]){
@@ -433,11 +423,13 @@ var room=function(name, circuit){
 			}
 		}
 	};
+
 	this.addPlayer=function(socket, arg){
 		console.log("Player '"+arg.name+"' joined room '"+this.name+"'");
 		socket.join(this.name);
 		if(Object.keys(this.players).length == 0){
 			this.owner = socket.id;
+			io.sockets.connected[this.owner].emit("set owner", true);
 		}
 		if(Object.keys(this.players).length < this.maxPlayers){
 			var spawn = this.spawns[this.spawnNumber%this.spawns.length];
@@ -453,6 +445,7 @@ var room=function(name, circuit){
 			console.log("Player "+arg.name+" was moved to spectators due to game being full.");
 		}
 	}
+
 	this.removePlayer=function(socket){
 		if(roomAssociation[socket.id]){
 			delete roomAssociation[socket.id];
@@ -463,6 +456,7 @@ var room=function(name, circuit){
 			if(this.owner === socket.id){
 				if(Object.keys(this.players)[0]){
 					this.owner = Object.keys(this.players)[0];
+					io.sockets.connected[this.owner].emit("set owner", true);
 					console.log("Owner of room "+this.name+" has left. New owner is "+this.players[this.owner].name+".");
 				}
 			}
@@ -488,7 +482,11 @@ var room=function(name, circuit){
 			delete rooms[this.name];
 		}
 	}
+
 	this.keyPressed=function(socket, arg){
+		if(socket.id == this.owner){
+			this.ownerControls(arg);
+		}
 		if(this.players[socket.id]){
             this.players[socket.id].keys[arg] = true;
 		}
@@ -496,6 +494,7 @@ var room=function(name, circuit){
             this.toSend["spectators"][socket.id].keys[arg] = true;
 		}
 	}
+
 	this.keyReleased=function(socket, arg){
 		if(this.players[socket.id]){
             this.players[socket.id].keys[arg] = false;
@@ -504,6 +503,34 @@ var room=function(name, circuit){
             this.toSend["spectators"][socket.id].keys[arg] = false;
 		}
 	}
+
+	this.ownerControls=function(keycode){
+		if(keycode == 49){
+			this.startRace();
+		}
+	}
+
+	this.startRace = function(){
+		this.spawnNumber = 0;
+		for(var i in this.players){
+			var spawn = this.spawns[this.spawnNumber%this.spawns.length];
+			this.spawnNumber++;
+			if(!spawn){
+				spawn = {x: 2300, y:2000};
+			}
+			this.raceStart = this.seconds;
+			this.players[i].pos = new Vector(spawn.x, spawn.y);
+			this.players[i].reset();
+		}
+		io.to(this.name).emit("countdown");
+		setTimeout(() => {
+			for(var i in this.players){
+				this.players[i].startRace();
+			}
+			this.raceStart = this.seconds;
+		}, 3000);
+	}
+
 	this.updatePlayerPlacing = function(){
 		this.toSend["gameData"].room.leaderboard = [];
 		for(var i in this.players){

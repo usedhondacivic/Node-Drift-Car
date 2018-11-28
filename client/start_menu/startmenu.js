@@ -76,7 +76,6 @@ window.onload = function(){
         });
         selectedCar = sessionStorage.getItem('car');
         document.getElementById("colorPicker").value = sessionStorage.getItem('color');
-        sessionStorage.setItem('setup', "false");
     }
 }
 

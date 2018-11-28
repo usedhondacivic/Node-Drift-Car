@@ -60,7 +60,10 @@ socket.on("chat message", function(data){
     newEntry.innerHTML = "<span style='color: hsl("+data.color*3.6+", 100%, 40%);'>"+(data.spectator?"(Spectator)":"")+"["+data.name+"]</span>: "+data.message;
     chatlog.appendChild(newEntry);
     chatlog.scrollTop = chatlog.scrollHeight;
-    
+});
+
+socket.on("set owner", function(arg){
+    isOwner = arg;
 });
 
 var carImage;
@@ -71,6 +74,7 @@ var showHUD = true;
 var trip = false;
 var countdown = -1;
 var loaded = false;
+var isOwner = false;
 
 function setup() {
     createCanvas(document.body.clientWidth, window.innerHeight);
@@ -240,7 +244,6 @@ var renderPlayer = function(instance) {
         rotate(instance.dir);
         imageMode(CENTER);
         noStroke();
-        console.log(carImages+", "+instance.car);
         image(carImages[instance.car].base, -(instance.backOffset - (instance.backOffset + instance.frontOffset)/2), 0);
         colorMode(HSB, 100);
         tint(instance.color%100, 40, 100, 100);
@@ -314,6 +317,12 @@ var renderHUD = function(instance, carNum) {
         text(countdown, width/2, height/2);
     }else if(countdown == 0){
         text("GO!", width/2, height/2);
+    }
+    //Room Owner
+    textSize(15);
+    textAlign(RIGHT, BOTTOM);
+    if(isOwner){
+        text("You are the room owner.\nPress [1] to start a race.", width - 60, height - 30);
     }
     pop();
 };
