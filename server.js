@@ -509,6 +509,9 @@ var room=function(name, circuit){
 		if(keycode == 49){
 			this.startRace();
 		}
+		if(keycode == 50){
+			this.addPlayer({id: Object.keys(this.players).length}, {name:"AI", color: 25, room:"", car:"truck"});
+		}
 	}
 
 	this.startRace = function(){
@@ -696,6 +699,10 @@ var player=function(x, y, name, id, c, room, car){
 	this.car = car;
 	this.id = id;
 	this.ai = false;
+	this.aiPreset = {
+		pointsAhead : 2,
+		turnFrame : 0.1
+	};
 	this.pos=new Vector(x, y);
 	this.posBuffer=new Vector(0,0);
     this.vel=new Vector(0, 0);
@@ -710,6 +717,7 @@ var player=function(x, y, name, id, c, room, car){
 	this.currentWaypoint=0;
 	this.positionIndex=0;
 	this.waypointLocation={};
+	this.targetpointLocation={};
 	this.lap=-1;
 	this.place=0;
     this.sideFriction=0.96;
@@ -785,7 +793,8 @@ var player=function(x, y, name, id, c, room, car){
 			time:this.time,
 			rightVel:this.rightVel,
 			car:this.car,
-			waypointLocation:this.waypointLocation
+			//waypointLocation:this.waypointLocation,
+			waypointLocation:this.targetpointLocation,
 		};
 	}
 	this.startRace=function(){
@@ -820,34 +829,39 @@ var player=function(x, y, name, id, c, room, car){
 			this.collision();
 			this.updateWaypoint();
 			this.speed*=this.decel*this.decelMultiplier;
-			if(!this.ai){
-				if(this.keys[UP_ARROW]){this.speed+=this.accel*this.accelMultiplier;}
-				if(this.keys[DOWN_ARROW]){this.speed-=this.accel*this.accelMultiplier*0.5;}
-				if(this.keys[LEFT_ARROW]){this.dir-=/*Math.sign(this.speed)*/50*(this.turnSpeed/**this.vel.length()*/)/this.turnDamp;}
-				if(this.keys[RIGHT_ARROW]){this.dir+=/*Math.sign(this.speed)*/50*(this.turnSpeed/*this.vel.length()*/)/this.turnDamp;}
-				this.aiSteer();
-			}else{
+			if(this.keys[UP_ARROW]){this.speed+=this.accel*this.accelMultiplier;}
+			if(this.keys[DOWN_ARROW]){this.speed-=this.accel*this.accelMultiplier*0.5;}
+			if(this.keys[LEFT_ARROW]){this.dir-=Math.sign(this.speed)*(this.turnSpeed*this.vel.length())/this.turnDamp;}
+			if(this.keys[RIGHT_ARROW]){this.dir+=Math.sign(this.speed)*(this.turnSpeed*this.vel.length())/this.turnDamp;}
+			if(this.ai){
 				this.aiSteer();
 			}
 		}
 	};
 	this.aiSteer=function(){
-		var targetWaypoint = rooms[this.room].waypoints[this.currentWaypoint];
-		/*if(rooms[this.room].waypoints[this.currentWaypoint + 2]){
-			targetWaypoint = rooms[this.room].waypoints[this.currentWaypoint + 2];
+		var targetWaypoint;
+		if(rooms[this.room].waypoints[parseInt(this.currentWaypoint)+this.aiPreset.pointsAhead]){
+			targetWaypoint = rooms[this.room].waypoints[parseInt(this.currentWaypoint)+this.aiPreset.pointsAhead];
 		}else{
 			targetWaypoint = rooms[this.room].waypoints[0];
-		}*/
+		}
+		this.targetpointLocation = {
+			x: targetWaypoint.x,
+			y: targetWaypoint.y
+		};
 		var targetVector = new Vector(targetWaypoint.x - this.pos.x, targetWaypoint.y - this.pos.y);
-		var targetAngle = targetVector.toAngles();
-		var dirVector = new Vector(Math.cos(this.dir), Math.sin(this.dir)); 
-		var dirAngle = dirVector.toAngles();
+		var dirVector = new Vector(Math.cos(this.dir), Math.sin(this.dir));
 		var difAngle = Math.atan2(targetVector.x*dirVector.y-targetVector.y*dirVector.x,targetVector.x*dirVector.x+targetVector.y*dirVector.y);
-		console.log(difAngle);
-		/*if(targetVector.angleTo(dirAngle) > 0 ){
-
-		}*/
-
+		if(difAngle > this.aiPreset.turnFrame){
+			this.keys[LEFT_ARROW] = true;
+			this.keys[RIGHT_ARROW] = false;
+		}else if(difAngle < -this.aiPreset.turnFrame){
+			this.keys[LEFT_ARROW] = false;
+			this.keys[RIGHT_ARROW] = true;
+		}else{
+			this.keys[LEFT_ARROW] = false;
+			this.keys[RIGHT_ARROW] = false;
+		}
 	}
     this.sideFriction=function(sideFriction, forwardFriction){
 		this.setFriction();

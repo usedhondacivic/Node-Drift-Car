@@ -3,9 +3,9 @@ if(sessionStorage.getItem("setup") == "false"){
 }
 
 window.onbeforeunload = function(){
-    if(!backToServer){
+    //if(!backToServer){
         sessionStorage.setItem('setup', "false");
-    }
+    //}
 }
 
 var chatbox;
@@ -91,7 +91,6 @@ var name = sessionStorage.getItem("nickname");
 var car = sessionStorage.getItem("car");
 var color = sessionStorage.getItem("color");
 var track = sessionStorage.getItem("map");
-console.log(car);
 if(name != null && name != "" && name != "null" && name.length < 100 && car && color){
     socket.emit("new player", {name:name, color: color, room:room, track:(track?track:"Mugello Circuit"), car:car});
 }
