@@ -308,7 +308,7 @@ var room=function(name, circuit){
 	this.name = name;
 	this.circuit = circuit;
 	this.owner = "";
-	this.maxPlayers = 10;
+	this.maxPlayers = 100;
 	//Room data
 	this.recordsPath="";
 	this.trackPath="";
@@ -510,7 +510,8 @@ var room=function(name, circuit){
 			this.startRace();
 		}
 		if(keycode == 50){
-			this.addPlayer({id: Object.keys(this.players).length}, {name:"AI", color: 25, room:"", car:"truck"});
+			this.addPlayer({id: Object.keys(this.players).length, join: function(){}}, {name:"AI", color: 25, room:"", car:"truck"});
+			this.players[Object.keys(this.players).length-1].ai = true;
 		}
 	}
 
@@ -700,8 +701,8 @@ var player=function(x, y, name, id, c, room, car){
 	this.id = id;
 	this.ai = false;
 	this.aiPreset = {
-		pointsAhead : 2,
-		turnFrame : 0.1
+		pointsAhead : 1 + Math.floor(Math.random()*2.5),
+		turnFrame : Math.random()*0.15 + 0.05
 	};
 	this.pos=new Vector(x, y);
 	this.posBuffer=new Vector(0,0);
@@ -862,6 +863,7 @@ var player=function(x, y, name, id, c, room, car){
 			this.keys[LEFT_ARROW] = false;
 			this.keys[RIGHT_ARROW] = false;
 		}
+		this.keys[UP_ARROW] = true;
 	}
     this.sideFriction=function(sideFriction, forwardFriction){
 		this.setFriction();

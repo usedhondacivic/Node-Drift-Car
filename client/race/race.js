@@ -1,10 +1,11 @@
 if(sessionStorage.getItem("setup") == "false"){
     window.location.replace("../");
+    redirect = true;
 }
 
 window.onbeforeunload = function(){
     //if(!backToServer){
-        sessionStorage.setItem('setup', "false");
+    sessionStorage.setItem('setup', "false");
     //}
 }
 
@@ -12,6 +13,7 @@ var chatbox;
 var chatlog;
 var chatContainer;
 var backToServer = false;
+var redirect = false;
 
 window.onload = function(){
     chatbox = document.getElementById("chatEntry");
@@ -91,7 +93,7 @@ var name = sessionStorage.getItem("nickname");
 var car = sessionStorage.getItem("car");
 var color = sessionStorage.getItem("color");
 var track = sessionStorage.getItem("map");
-if(name != null && name != "" && name != "null" && name.length < 100 && car && color){
+if(name != null && name != "" && name != "null" && name.length < 100 && car && color && !redirect){
     socket.emit("new player", {name:name, color: color, room:room, track:(track?track:"Mugello Circuit"), car:car});
 }
 
