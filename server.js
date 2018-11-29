@@ -407,7 +407,7 @@ var room=function(name, circuit){
 	};
 
 	this.dispose=function(){
-		/*for(var i in this.players){
+		for(var i in this.players){
 			if(roomAssociation[i]){
 				delete roomAssociation[i];
 			}
@@ -421,7 +421,7 @@ var room=function(name, circuit){
 			if(roomAssociation[i] == this.name){
 				delete roomAssociation[i];
 			}
-		}*/
+		}
 	};
 
 	this.addPlayer=function(socket, arg){
@@ -447,9 +447,6 @@ var room=function(name, circuit){
 	}
 
 	this.removePlayer=function(socket){
-		if(roomAssociation[socket.id]){
-			delete roomAssociation[socket.id];
-		}
 		if(this.players[socket.id]){
 			console.log("Player '"+this.players[socket.id].name+"' left room '"+this.name+"'");
 			delete this.players[socket.id];
@@ -476,6 +473,9 @@ var room=function(name, circuit){
 				delete this.toSend["spectators"][i];
 				break;
 			}
+		}
+		if(roomAssociation[socket.id]){
+			delete roomAssociation[socket.id];
 		}
 		if(Object.keys(this.players).length === 0){
 			console.log("Room '"+this.name+"' has been deleted.");
@@ -545,11 +545,14 @@ var room=function(name, circuit){
 				waypoint: this.waypoints[p.currentWaypoint+1]
 			});
 		}
-		this.toSend["gameData"].room.leaderboard.sort(function(a,b){
+		this.toSend["gameData"].room.leaderboard.sort((a,b) => {
 			if(a.index != b.index){
 				return b.index - a.index;
 			}else{
-				console.log(a.waypoint);
+				if(!a.waypoint || !b.waypoint){
+					a.waypoint = this.waypoints[0];
+					b.waypoint = this.waypoints[0];
+				}
 				var aVec = new Vector(a.position.x - a.waypoint.x, a.position.y - a.waypoint.y);
 				var bVec = new Vector(b.position.x - b.waypoint.x, b.position.y - b.waypoint.y);
 				return aVec.length() - bVec.length();
@@ -692,6 +695,7 @@ var player=function(x, y, name, id, c, room, car){
 	this.room = room;
 	this.car = car;
 	this.id = id;
+	this.ai = false;
 	this.pos=new Vector(x, y);
 	this.posBuffer=new Vector(0,0);
     this.vel=new Vector(0, 0);
@@ -816,12 +820,35 @@ var player=function(x, y, name, id, c, room, car){
 			this.collision();
 			this.updateWaypoint();
 			this.speed*=this.decel*this.decelMultiplier;
-			if(this.keys[UP_ARROW]){this.speed+=this.accel*this.accelMultiplier;}
-			if(this.keys[DOWN_ARROW]){this.speed-=this.accel*this.accelMultiplier*0.5;}
-			if(this.keys[LEFT_ARROW]){this.dir-=Math.sign(this.speed)*(this.turnSpeed*this.vel.length())/this.turnDamp;}
-			if(this.keys[RIGHT_ARROW]){this.dir+=Math.sign(this.speed)*(this.turnSpeed*this.vel.length())/this.turnDamp;}
+			if(!this.ai){
+				if(this.keys[UP_ARROW]){this.speed+=this.accel*this.accelMultiplier;}
+				if(this.keys[DOWN_ARROW]){this.speed-=this.accel*this.accelMultiplier*0.5;}
+				if(this.keys[LEFT_ARROW]){this.dir-=/*Math.sign(this.speed)*/50*(this.turnSpeed/**this.vel.length()*/)/this.turnDamp;}
+				if(this.keys[RIGHT_ARROW]){this.dir+=/*Math.sign(this.speed)*/50*(this.turnSpeed/*this.vel.length()*/)/this.turnDamp;}
+				this.aiSteer();
+			}else{
+				this.aiSteer();
+			}
 		}
-    };
+	};
+	this.aiSteer=function(){
+		var targetWaypoint = rooms[this.room].waypoints[this.currentWaypoint];
+		/*if(rooms[this.room].waypoints[this.currentWaypoint + 2]){
+			targetWaypoint = rooms[this.room].waypoints[this.currentWaypoint + 2];
+		}else{
+			targetWaypoint = rooms[this.room].waypoints[0];
+		}*/
+		var targetVector = new Vector(targetWaypoint.x - this.pos.x, targetWaypoint.y - this.pos.y);
+		var targetAngle = targetVector.toAngles();
+		var dirVector = new Vector(Math.cos(this.dir), Math.sin(this.dir)); 
+		var dirAngle = dirVector.toAngles();
+		var difAngle = Math.atan2(targetVector.x*dirVector.y-targetVector.y*dirVector.x,targetVector.x*dirVector.x+targetVector.y*dirVector.y);
+		console.log(difAngle);
+		/*if(targetVector.angleTo(dirAngle) > 0 ){
+
+		}*/
+
+	}
     this.sideFriction=function(sideFriction, forwardFriction){
 		this.setFriction();
         var forward = new Vector(Math.cos(this.dir), Math.sin(this.dir));
