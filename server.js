@@ -453,7 +453,9 @@ var room=function(name, circuit){
 			if(this.owner === socket.id){
 				if(Object.keys(this.players)[0]){
 					this.owner = Object.keys(this.players)[0];
-					io.sockets.connected[this.owner].emit("set owner", true);
+					if(this.players[this.owner].ai == false){
+						io.sockets.connected[this.owner].emit("set owner", true);
+					}
 					console.log("Owner of room "+this.name+" has left. New owner is "+this.players[this.owner].name+".");
 				}
 			}
@@ -510,8 +512,14 @@ var room=function(name, circuit){
 			this.startRace();
 		}
 		if(keycode == 50){
-			this.addPlayer({id: Object.keys(this.players).length, join: function(){}}, {name:"AI", color: 25, room:"", car:"truck"});
+			this.addPlayer({id: Object.keys(this.players).length, join: function(){}}, {name:"AI", color: Math.random()*100, room:"", car:"truck"});
 			this.players[Object.keys(this.players).length-1].ai = true;
+			var carNum = Math.floor(Math.random()*3);
+			if(carNum == 0){
+				this.players[Object.keys(this.players).length-1].car = "sports";
+			}else if(carNum == 1){
+				this.players[Object.keys(this.players).length-1].car = "ambulance";
+			}
 		}
 	}
 
@@ -926,22 +934,6 @@ var player=function(x, y, name, id, c, room, car){
 				return;
 			}
 			if(carCollision(this, otherCar)){
-				var posDiff = Vector.subtract(this.pos, otherCar.pos);
-				posDiff.normalize();
-				while(carCollision(this, otherCar)){
-					var thisVel = posDiff.clone();
-					var otherVel = Vector.multiply(posDiff, -1);
-					thisVel.multiply(0.5);
-					otherVel.multiply(0.5);
-					this.pos.add(thisVel);
-					distance+=thisVel.length;
-					otherCar.pos.add(otherVel);
-					this.setCorners(null);
-					otherCar.setCorners(null);
-					if(distance > 100){
-						break;
-					}
-				}
 				var v1 = this.vel.clone();
 				var x1 = this.pos.clone();
 				var v2 = otherCar.vel.clone();
@@ -950,8 +942,27 @@ var player=function(x, y, name, id, c, room, car){
 				var deltaV1 = Vector.subtract(v1, v2);
 				var deltaX2 = Vector.subtract(x2, x1);
 				var deltaV2 = Vector.subtract(v2, v1);
-				if(deltaX1.length() == 0){
+				if(deltaX1.length() == 0 || deltaX2.length() == 0){
 					return;
+				}
+				var posDiff = Vector.subtract(this.pos, otherCar.pos);
+				posDiff.normalize();
+				while(carCollision(this, otherCar)){
+					var thisVel = posDiff.clone();
+					var otherVel = Vector.multiply(posDiff, -1);
+					thisVel.multiply(0.5);
+					otherVel.multiply(0.5);
+					this.pos.add(thisVel);
+					distance+=1;
+					otherCar.pos.add(otherVel);
+					this.setCorners(null);
+					otherCar.setCorners(null);
+					if(posDiff.length() == 0){
+						break;
+					}
+					if(distance > 100){
+						break;
+					}
 				}
 				this.vel = Vector.subtract(v1, Vector.multiply(deltaX1, Vector.dot(deltaV1, deltaX1)/Math.pow(deltaX1.length(), 2)));
 				otherCar.vel = Vector.subtract(v2, Vector.multiply(deltaX2, Vector.dot(deltaV2, deltaX2)/Math.pow(deltaX2.length(), 2)));
