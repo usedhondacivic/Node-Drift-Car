@@ -221,10 +221,10 @@ socket.on("alert", function(message){
 });
 
 var renderPlayer = function(instance) {
-    var tailLength = 15;
+    var tailLength = 10;
     fill(255,0,0);
     noStroke();
-    ellipse(instance.waypointLocation.x, instance.waypointLocation.y, 10, 10);
+    //ellipse(instance.waypointLocation.x, instance.waypointLocation.y, 10, 10);
     if(instance.rightVel){
         if(Math.sqrt(Math.pow(instance.rightVel.x,2) + Math.pow(instance.rightVel.y,2)) > 5){
             trails.push([instance.corners.topRightWheel.x, instance.corners.topRightWheel.y, tailLength, instance.dir]);
