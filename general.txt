@@ -2,5 +2,6 @@ https://github.com/Microsoft/napajs/wiki/introduction
 http://p5js.org/reference/#/p5.Panner3D
 https://medium.freecodecamp.org/scaling-node-js-applications-8492bd8afadc
 https://github.com/indutny/sticky-session
+Quadtrees collision detection passes
 Mugello before wipe (11/25/18): 27.28333333330852
 Nurburgring before wipe (11/25/18): 37.550000000017974
