@@ -733,16 +733,14 @@ var player=function(x, y, name, id, c, room, car){
 	this.forwardFriction=0.98;
 	this.frictionMultiplier=1;
 	this.rightVel=new Vector(0, 0);
+	this.bounce = 0.8;
 	this.speed=0;
-	//0.05
 	this.accel=0.05;
 	this.accelMultiplier=1;
 	this.decel=0.87;
 	this.decelMultiplier=1;
 	this.dir=0;
-	//0.5
 	this.turnSpeed=0.5;
-	//80
     this.turnDamp=105;
 	this.corners={
 		topRight:{
@@ -965,7 +963,9 @@ var player=function(x, y, name, id, c, room, car){
 					}
 				}
 				this.vel = Vector.subtract(v1, Vector.multiply(deltaX1, Vector.dot(deltaV1, deltaX1)/Math.pow(deltaX1.length(), 2)));
+				this.vel.multiply(this.bounce);
 				otherCar.vel = Vector.subtract(v2, Vector.multiply(deltaX2, Vector.dot(deltaV2, deltaX2)/Math.pow(deltaX2.length(), 2)));
+				otherCar.vel.multiply(this.bounce);
 				var distance = 0;
 			}
 		}
