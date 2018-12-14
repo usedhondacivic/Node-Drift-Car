@@ -804,8 +804,8 @@ var player=function(x, y, name, id, c, room, car){
 			time:this.time,
 			rightVel:this.rightVel,
 			car:this.car,
-			//waypointLocation:this.waypointLocation,
-			waypointLocation:this.targetpointLocation,
+			waypointLocation:this.waypointLocation,
+			//waypointLocation:this.targetpointLocation,
 		};
 	}
 	this.startRace=function(){
