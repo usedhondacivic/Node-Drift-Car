@@ -740,7 +740,11 @@ var player=function(x, y, name, id, c, room, car){
 	this.decel=0.87;
 	this.decelMultiplier=1;
 	this.dir=0;
-	this.turnSpeed=0.5;
+	//0.5
+	this.turnSpeed=0;
+	this.turnAccel=0.15;
+	this.turnDecel=0.75;
+	//80
     this.turnDamp=105;
 	this.corners={
 		topRight:{
@@ -800,8 +804,8 @@ var player=function(x, y, name, id, c, room, car){
 			time:this.time,
 			rightVel:this.rightVel,
 			car:this.car,
-			//waypointLocation:this.waypointLocation,
-			waypointLocation:this.targetpointLocation,
+			waypointLocation:this.waypointLocation,
+			//waypointLocation:this.targetpointLocation,
 		};
 	}
 	this.startRace=function(){
@@ -838,8 +842,10 @@ var player=function(x, y, name, id, c, room, car){
 			this.speed*=this.decel*this.decelMultiplier;
 			if(this.keys[UP_ARROW]){this.speed+=this.accel*this.accelMultiplier;}
 			if(this.keys[DOWN_ARROW]){this.speed-=this.accel*this.accelMultiplier*0.5;}
-			if(this.keys[LEFT_ARROW]){this.dir-=Math.sign(this.speed)*(this.turnSpeed*this.vel.length())/this.turnDamp;}
-			if(this.keys[RIGHT_ARROW]){this.dir+=Math.sign(this.speed)*(this.turnSpeed*this.vel.length())/this.turnDamp;}
+			if(this.keys[LEFT_ARROW]){this.turnSpeed-=this.turnAccel;}
+			if(this.keys[RIGHT_ARROW]){this.turnSpeed+=this.turnAccel;}
+			this.turnSpeed*=this.turnDecel;
+			this.dir+=Math.sign(this.speed)*(this.turnSpeed*this.vel.length())/this.turnDamp;
 			if(this.ai){
 				this.aiSteer();
 			}
