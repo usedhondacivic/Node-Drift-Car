@@ -84,18 +84,17 @@ function setup() {
     ctx = c.getContext("2d");
     c.style.zIndex = "10";
     trackContainer = document.getElementById("track");
+    var name = sessionStorage.getItem("nickname");
+    var car = sessionStorage.getItem("car");
+    var color = sessionStorage.getItem("color");
+    var track = sessionStorage.getItem("map");
+    if(name != null && name != "" && name != "null" && name.length < 100 && car && color && !redirect){
+        socket.emit("new player", {name:name, color: color, room:room, track:(track?track:"Mugello Circuit"), car:car});
+    }
     socket.emit("request images");
 }
 
 function windowResized() { resizeCanvas(document.body.clientWidth, window.innerHeight); }
-
-var name = sessionStorage.getItem("nickname");
-var car = sessionStorage.getItem("car");
-var color = sessionStorage.getItem("color");
-var track = sessionStorage.getItem("map");
-if(name != null && name != "" && name != "null" && name.length < 100 && car && color && !redirect){
-    socket.emit("new player", {name:name, color: color, room:room, track:(track?track:"Mugello Circuit"), car:car});
-}
 
 var followCamera = {
     x:0,
@@ -323,7 +322,7 @@ var renderHUD = function(instance, carNum) {
     textSize(15);
     textAlign(RIGHT, BOTTOM);
     if(isOwner){
-        text("You are the room owner.\nPress [1] to start a race.", width - 60, height - 30);
+        text("You are the room owner.\nPress [1] to start a race.\nPress [2] to add an AI", width - 60, height - 30);
     }
     pop();
 };

@@ -451,12 +451,20 @@ var room=function(name, circuit){
 			console.log("Player '"+this.players[socket.id].name+"' left room '"+this.name+"'");
 			delete this.players[socket.id];
 			if(this.owner === socket.id){
-				if(Object.keys(this.players)[0]){
-					this.owner = Object.keys(this.players)[0];
-					if(this.players[this.owner].ai == false){
-						io.sockets.connected[this.owner].emit("set owner", true);
+				var foundNewOwner = false;
+				for(var i in Object.keys(this.players)){
+					if(Object.keys(this.players)[i]){
+						this.owner = Object.keys(this.players)[i];
+						if(this.players[this.owner].ai == false){
+							io.sockets.connected[this.owner].emit("set owner", true);
+							console.log("Owner of room "+this.name+" has left. New owner is "+this.players[this.owner].name+".");
+							foundNewOwner = true;
+							break;
+						}
 					}
-					console.log("Owner of room "+this.name+" has left. New owner is "+this.players[this.owner].name+".");
+				}
+				if(!foundNewOwner){
+					this.close();
 				}
 			}
 		}
@@ -480,10 +488,14 @@ var room=function(name, circuit){
 			delete roomAssociation[socket.id];
 		}
 		if(Object.keys(this.players).length === 0){
-			console.log("Room '"+this.name+"' has been deleted.");
-			this.dispose();
-			delete rooms[this.name];
+			this.close();
 		}
+	}
+
+	this.close=function(){
+		console.log("Room '"+this.name+"' has been deleted.");
+		this.dispose();
+		delete rooms[this.name];
 	}
 
 	this.keyPressed=function(socket, arg){
@@ -733,7 +745,7 @@ var player=function(x, y, name, id, c, room, car){
 	this.forwardFriction=0.98;
 	this.frictionMultiplier=1;
 	this.rightVel=new Vector(0, 0);
-	this.bounce = 0.8;
+	this.bounce = 1;
 	this.speed=0;
 	this.accel=0.05;
 	this.accelMultiplier=1;

@@ -31,6 +31,10 @@
             <p style="display: inline-block; font-size: 1.25em; margin-right: 20px;">Room Name:</p>
             <input type="text" id="room" placeholder="Room Name" maxLength="20">
             <input type="button" id="host" class="largeButton" onclick="submit(roomBox.value)" value="Host">
+            <div style="display: block; text-align:center;">
+                <p style="display: inline-block; font-size: 1.25em; margin-right: 20px;">Max players:</p>
+                <input type="number" name="players" min="1" max="50" placeholder="10" style="margin:auto;">
+            </div>
             <div id="selectHolder" style="position: static; text-align: center; margin-top: 10px;">
                 <input type="image" id="trackLeft" class="selectButtons" onclick="cycleTrack(-1)" src="/images/UI/backArrow.png">
                 <div style="display: inline-block; width: 300px;">
