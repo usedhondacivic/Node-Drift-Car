@@ -57,13 +57,23 @@ window.onload = function(){
         }
     });
 
-    room.addEventListener("keyup", function(event) {
+    roomBox.addEventListener("keyup", function(event) {
         event.preventDefault();
         if (event.keyCode === 13) {
             document.getElementById("host").click();
         }
     });
-    
+
+    document.getElementById("playerCount").oninput = function () {
+        console.log("hit");
+        var val = parseInt(this.value);
+        if(val>50) {
+            this.value = "50";
+        }else if(val<0 || !val){
+            this.value = "0";
+        }
+    }    
+
     document.getElementById("colorPicker").value = 0;
     
     var server = window.location.pathname.split("/");

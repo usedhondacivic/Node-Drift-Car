@@ -183,6 +183,9 @@ rl.on('line', (input) => {
 			serverMessage(words[1], broadcastRoom);
 			console.log("Sent message.");
 		break;
+		case "close":
+			rooms[broadcastRoom].close();
+		break;
 		default:
 			console.log("Command not recognized.");
 		break;
@@ -890,7 +893,9 @@ var player=function(x, y, name, id, c, room, car){
 		this.keys[UP_ARROW] = true;
 	}
     this.sideFriction=function(sideFriction, forwardFriction){
+		//Read image data from room masks and set friction accordingly
 		this.setFriction();
+		//Find the 
         var forward = new Vector(Math.cos(this.dir), Math.sin(this.dir));
         var right = new Vector(Math.cos(this.dir+Math.PI/2), Math.sin(this.dir+Math.PI/2));
         var forwardVelocity = new Vector();
@@ -944,47 +949,56 @@ var player=function(x, y, name, id, c, room, car){
 				}
 			}
 		}
+		//Loop through every other car to check collision
 		for(var i in rooms[this.room].players){
 			var otherCar = rooms[this.room].players[i];
 			if(otherCar === this){
+				//Can collide with yourself, break out
 				return;
 			}
+			//Are the cars touching?
 			if(carCollision(this, otherCar)){
+				//Vector clones so to not effect by reference
 				var v1 = this.vel.clone();
 				var x1 = this.pos.clone();
 				var v2 = otherCar.vel.clone();
 				var x2 = otherCar.pos.clone();
+				//Deltas
 				var deltaX1 = Vector.subtract(x1, x2);
 				var deltaV1 = Vector.subtract(v1, v2);
 				var deltaX2 = Vector.subtract(x2, x1);
 				var deltaV2 = Vector.subtract(v2, v1);
+				//Check if cars are on top of each other
 				if(deltaX1.length() == 0 || deltaX2.length() == 0){
+					//Will divide by zero, break out
 					return;
 				}
+				//Normal vector from the other car to this car
 				var posDiff = Vector.subtract(this.pos, otherCar.pos);
 				posDiff.normalize();
+				//Move the cars apart slowly until they are no longer touching
 				while(carCollision(this, otherCar)){
+					//Find small vectors that send the cars directly away from each other
 					var thisVel = posDiff.clone();
 					var otherVel = Vector.multiply(posDiff, -1);
 					thisVel.multiply(0.5);
 					otherVel.multiply(0.5);
+					//Add the vectors to the positions
 					this.pos.add(thisVel);
-					distance+=1;
 					otherCar.pos.add(otherVel);
+					//Update corner variables for collsion to the new position
 					this.setCorners(null);
 					otherCar.setCorners(null);
 					if(posDiff.length() == 0){
-						break;
-					}
-					if(distance > 100){
+						//Cars aren't moving, break out to avoid infinte loop
 						break;
 					}
 				}
+				//Apply elastic collision algorithm to simulate rebound
 				this.vel = Vector.subtract(v1, Vector.multiply(deltaX1, Vector.dot(deltaV1, deltaX1)/Math.pow(deltaX1.length(), 2)));
 				this.vel.multiply(this.bounce);
 				otherCar.vel = Vector.subtract(v2, Vector.multiply(deltaX2, Vector.dot(deltaV2, deltaX2)/Math.pow(deltaX2.length(), 2)));
 				otherCar.vel.multiply(this.bounce);
-				var distance = 0;
 			}
 		}
 	}
