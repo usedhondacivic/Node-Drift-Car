@@ -325,6 +325,7 @@ var room=function(name, circuit){
 	this.toSend = {};
 	this.walls = [];
 	//Race variables
+	this.racing = true;
 	this.spawnNumber = 0;
 	this.waypoints = [];
 	this.spawns = [];
@@ -523,7 +524,7 @@ var room=function(name, circuit){
 	}
 
 	this.ownerControls=function(keycode){
-		if(keycode == 49){
+		if(keycode == 49 && this.racing){
 			this.startRace();
 		}
 		if(keycode == 50){
@@ -551,11 +552,13 @@ var room=function(name, circuit){
 			this.players[i].reset();
 		}
 		io.to(this.name).emit("countdown");
+		this.racing = false;
 		setTimeout(() => {
 			for(var i in this.players){
 				this.players[i].startRace();
 			}
 			this.raceStart = this.seconds;
+			this.racing = true;
 		}, 3000);
 	}
 
