@@ -88,8 +88,9 @@ function setup() {
     var car = sessionStorage.getItem("car");
     var color = sessionStorage.getItem("color");
     var track = sessionStorage.getItem("map");
+    var players = sessionStorage.getItem("players");
     if(name != null && name != "" && name != "null" && name.length < 100 && car && color && !redirect){
-        socket.emit("new player", {name:name, color: color, room:room, track:(track?track:"Mugello Circuit"), car:car});
+        socket.emit("new player", {name:name, color: color, room:room, track:(track?track:"Mugello Circuit"), car:car, players:(players?players:10)});
     }
     socket.emit("request images");
 }
@@ -194,7 +195,7 @@ socket.on("state", function(items){
             }
             textSize(15);
             textAlign(CENTER, BOTTOM);
-            text("You are currently spectating. You can join the game once a spot opens up. You are currently "+(s.readyToJoin?"READY":"NOT READY")+" to join (CTRL to toggle).", width/2, height-60);
+            text("You are currently spectating. You can join the game once a spot opens up. You are currently "+(s.readyToJoin?"READY":"NOT READY")+" to join (CTRL to toggle).\nArrow keys to free move. Space to switch players.", width/2, height-60);
         }
     }
 });

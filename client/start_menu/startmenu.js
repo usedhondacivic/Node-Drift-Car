@@ -64,11 +64,11 @@ window.onload = function(){
         }
     });
 
-    document.getElementById("playerCount").oninput = function () {
+    document.getElementById("playerCount").onblur = function () {
         console.log("hit");
         var val = parseInt(this.value);
-        if(val>50) {
-            this.value = "50";
+        if(val>10) {
+            this.value = "10";
         }else if(val<0 || !val){
             this.value = "0";
         }
@@ -142,6 +142,7 @@ function submit(room) {
             sessionStorage.setItem('car', selectedCar);
             sessionStorage.setItem('color', document.getElementById("colorPicker").value);
             sessionStorage.setItem('setup', "true");
+            sessionStorage.setItem('players', document.getElementById("playerCount").value);
             if(room.length > 0){
                 window.location.replace("./race/"+room);
             }else{
@@ -170,7 +171,6 @@ function switchPage(newPage) {
 };
 
 function backPage() {
-    console.log("hit");
     document.getElementById(currentPage).style.display = "none";
     currentPage = pageHistory[pageHistory.length-1];
     pageHistory.pop();

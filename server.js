@@ -307,11 +307,11 @@ async function loadCircuits(){
 
 loadCircuits();
 
-var room=function(name, circuit){
+var room=function(name, circuit, maxPlayers){
 	this.name = name;
 	this.circuit = circuit;
 	this.owner = "";
-	this.maxPlayers = 100;
+	this.maxPlayers = maxPlayers;
 	//Room data
 	this.recordsPath="";
 	this.trackPath="";
@@ -444,6 +444,18 @@ var room=function(name, circuit){
 			this.players[socket.id] = new player(spawn.x, spawn.y, arg.name, socket.id, arg.color, this.name, arg.car);
 			this.players[socket.id].startRace();
 		}else{
+			var replaced = false;
+			for(var i in this.players){
+				var p = this.players[i];
+				if(p.ai){
+					this.removePlayer({id:i});
+					this.addPlayer(socket, arg);
+					replaced = true;
+				}
+			}
+			if(replaced){
+				return;
+			}
 			this.toSend["spectators"][socket.id] = new spectator(arg);
 			this.toSend["spectators"][socket.id].room = this.name;
 			console.log("Player "+arg.name+" was moved to spectators due to game being full.");
@@ -527,7 +539,7 @@ var room=function(name, circuit){
 		if(keycode == 49 && this.racing){
 			this.startRace();
 		}
-		if(keycode == 50){
+		if(keycode == 50 && Object.keys(this.players).length < this.maxPlayers){
 			this.addPlayer({id: Object.keys(this.players).length, join: function(){}}, {name:"AI", color: Math.random()*100, room:"", car:"truck"});
 			this.players[Object.keys(this.players).length-1].ai = true;
 			var carNum = Math.floor(Math.random()*3);
@@ -629,11 +641,9 @@ io.on("connection", function(socket){
 	socket.on("new player", function(arg){
 		if(!rooms[arg.room]){
 			if(arg.circuit){
-				rooms[arg.room] = new room(arg.room);
+				rooms[arg.room] = new room(arg.room, "Mugello Circuit", (arg.players > 0 && arg.players < 15) ? arg.players : 10);
 			}else{
-				//Mugello Circuit
-				//Nürburgring Circuit
-				rooms[arg.room] = new room(arg.room, arg.track);
+				rooms[arg.room] = new room(arg.room, arg.track, (arg.players > 0 && arg.players < 15) ? arg.players : 10);
 			}
 			rooms[arg.room].setup();
 		}
