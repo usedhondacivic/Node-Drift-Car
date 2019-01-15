@@ -93,24 +93,37 @@ socket.on("rooms", function(data){
     if(!serverList){
         return;
     }
-    serverList.innerHTML = "<tr><th>Server name</th><th>Players</th><th>Track</th></tr>";
+    serverList.innerHTML = "<tr><th>Server name</th><th>Players</th><th>AI</th><th>Spectators</th><th>Moderated</th><th>Track</th></tr>";
     for(var i in data){
         var d = data[i];
         var newRow = document.createElement("TR");
         var name = document.createElement("TD");
         name.innerHTML = d.name;
         var players = document.createElement("TD");
-        players.innerHTML = d.currentPlayers+"/"+d.maxPlayers;
+        players.innerHTML = (d.currentPlayers-d.aiCount)+"/"+d.maxPlayers;
+        var ai = document.createElement("TD");
+        ai.innerHTML = d.aiCount;
+        var spectators = document.createElement("TD");
+        spectators.innerHTML = d.spectatorCount;
+        var moderated = document.createElement("TD");
+        moderated.innerHTML = d.moderated?"Yes":"No";
         var track = document.createElement("TD");
         track.innerHTML = d.track;
         var join = document.createElement("input");
         join.setAttribute("type", "button");
         join.setAttribute("onclick", "submit('"+d.name+"')");
         join.setAttribute("class", "smallButton");
-        join.setAttribute("value","Join");
+        if((d.currentPlayers-d.aiCount) < d.maxPlayers){
+            join.setAttribute("value","Join");
+        }else{
+            join.setAttribute("value","Spectate");
+        }
         track.appendChild(join);
         newRow.appendChild(name);
         newRow.appendChild(players);
+        newRow.appendChild(ai);
+        newRow.appendChild(spectators);
+        newRow.appendChild(moderated);
         newRow.appendChild(track);
         serverList.childNodes[0].appendChild(newRow);
     }

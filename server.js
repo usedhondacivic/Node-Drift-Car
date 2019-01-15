@@ -307,11 +307,13 @@ async function loadCircuits(){
 
 loadCircuits();
 
-var room=function(name, circuit, maxPlayers){
+var room=function(name, circuit, maxPlayers, moderated){
 	this.name = name;
 	this.circuit = circuit;
 	this.owner = "";
 	this.maxPlayers = maxPlayers;
+	this.aiCount = 0;
+	this.moderated = moderated;
 	//Room data
 	this.recordsPath="";
 	this.trackPath="";
@@ -354,8 +356,11 @@ var room=function(name, circuit, maxPlayers){
 		return {
 			name: this.name,
 			maxPlayers: this.maxPlayers,
+			aiCount: this.aiCount,
+			spectatorCount: Object.keys(this.toSend["spectators"]).length,
 			currentPlayers: Object.keys(this.players).length,
-			track:this.circuit
+			track: this.circuit,
+			moderated: this.moderated
 		};
 	};
 
@@ -465,6 +470,9 @@ var room=function(name, circuit, maxPlayers){
 	this.removePlayer=function(socket){
 		if(this.players[socket.id]){
 			console.log("Player '"+this.players[socket.id].name+"' left room '"+this.name+"'");
+			if(this.players[socket.id].ai){
+				this.aiCount--;
+			}
 			delete this.players[socket.id];
 			if(this.owner === socket.id){
 				var foundNewOwner = false;
@@ -542,6 +550,7 @@ var room=function(name, circuit, maxPlayers){
 		if(keycode == 50 && Object.keys(this.players).length < this.maxPlayers){
 			this.addPlayer({id: Object.keys(this.players).length, join: function(){}}, {name:"AI", color: Math.random()*100, room:"", car:"truck"});
 			this.players[Object.keys(this.players).length-1].ai = true;
+			this.aiCount++;
 			var carNum = Math.floor(Math.random()*3);
 			if(carNum == 0){
 				this.players[Object.keys(this.players).length-1].car = "sports";
@@ -641,9 +650,9 @@ io.on("connection", function(socket){
 	socket.on("new player", function(arg){
 		if(!rooms[arg.room]){
 			if(arg.circuit){
-				rooms[arg.room] = new room(arg.room, "Mugello Circuit", (arg.players > 0 && arg.players < 15) ? arg.players : 10);
+				rooms[arg.room] = new room(arg.room, "Mugello Circuit", (arg.players > 0 && arg.players < 15) ? arg.players : 10, true);
 			}else{
-				rooms[arg.room] = new room(arg.room, arg.track, (arg.players > 0 && arg.players < 15) ? arg.players : 10);
+				rooms[arg.room] = new room(arg.room, arg.track, (arg.players > 0 && arg.players < 15) ? arg.players : 10, true);
 			}
 			rooms[arg.room].setup();
 		}

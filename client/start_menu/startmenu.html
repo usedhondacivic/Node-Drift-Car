@@ -23,6 +23,9 @@
                     <tr>
                         <th>Server name</th>
                         <th>Players</th>
+                        <th>AI</th>
+                        <th>Spectators</th>
+                        <th>Moderated</th>
                         <th>Track</th>
                     </tr>
                 </table>
@@ -43,18 +46,10 @@
                 <input type="image" id="trackRight" class="selectButtons" onclick="cycleTrack(1)" src="/images/UI/backArrow.png">
                 <img id="trackThumbnail">
             </div>
-            <!--<select>
-                <option value="Mugello Circuit">Mugello Circuit</option>
-                <option value="Nürburgring Circuit">Nürburgring Circuit</option>
-            </select>-->
         </div>
         <div class="page" id="carSelectPage" style="display:none;">
             <h2 style="margin-top:10%;">Choose Your Car</h2>
             <div id="carBar">
-                <!--<div class="carPannel">
-                    <img src="/images/cars/Sports/Sports.png">
-                    <img class="carMaskImage" src="/images/cars/Sports/Sports_Mask.png">
-                </div>-->
                 <div style="height: 150px; vertical-align:center; display: inline-block;"></div>
             </div>
             <input id="colorPicker" type="range" min="0" max="100" step="1" oninput="updateCars()" />
