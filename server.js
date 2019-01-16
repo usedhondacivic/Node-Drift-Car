@@ -327,7 +327,7 @@ var room=function(name, circuit, maxPlayers, moderated){
 	this.toSend = {};
 	this.walls = [];
 	//Race variables
-	this.racing = true;
+	this.gameState = "waiting";
 	this.spawnNumber = 0;
 	this.waypoints = [];
 	this.spawns = [];
@@ -371,7 +371,8 @@ var room=function(name, circuit, maxPlayers, moderated){
 		this.toSend["gameData"] = {
 			room:{
 				leaderboard:[],
-			}
+			},
+			gameState: this.gameState
 		};
 		this.loadCircuit();
 	};
@@ -379,10 +380,11 @@ var room=function(name, circuit, maxPlayers, moderated){
 	this.update=function(){
 		this.updatePlayerPlacing();
 		this.updatePlayerWrappers();
+		this.toSend["gameData"].gameState = this.gameState;
 		if(Object.keys(this.players).length < this.maxPlayers){
 			for(var i in this.toSend["spectators"]){
 				var s = this.toSend["spectators"][i];
-				if(s.readyToJoin){
+				if(s.readyToJoin && this.gameState === "waiting"){
 					console.log("Spectator "+this.toSend["spectators"][i].args.name+" is joining the race.");
 					this.addPlayer(io.sockets.connected[i], s.args);
 					delete this.toSend["spectators"][i];
@@ -439,6 +441,12 @@ var room=function(name, circuit, maxPlayers, moderated){
 		if(Object.keys(this.players).length == 0){
 			this.owner = socket.id;
 			io.sockets.connected[this.owner].emit("set owner", true);
+		}
+		if(this.gameState !== "waiting"){
+			this.toSend["spectators"][socket.id] = new spectator(arg);
+			this.toSend["spectators"][socket.id].room = this.name;
+			console.log("Player "+arg.name+" was moved to spectators because a race has already started.");
+			return;
 		}
 		if(Object.keys(this.players).length < this.maxPlayers){
 			var spawn = this.spawns[this.spawnNumber%this.spawns.length];
@@ -501,7 +509,8 @@ var room=function(name, circuit, maxPlayers, moderated){
 
 		for(var i in this.toSend["spectators"]){
 			var s = this.toSend["spectators"][i];
-			if(s.readyToJoin){
+			console.log(this.gameState);
+			if(s.readyToJoin && this.gameState === "waiting"){
 				console.log("Spectator "+this.toSend["spectators"][i].args.name+" is joining the race.");
 				this.addPlayer(io.sockets.connected[i], s.args);
 				delete this.toSend["spectators"][i];
@@ -544,10 +553,14 @@ var room=function(name, circuit, maxPlayers, moderated){
 	}
 
 	this.ownerControls=function(keycode){
-		if(keycode == 49 && this.racing){
-			this.startRace();
+		if(keycode == 49){
+			if(this.gameState == "waiting"){
+				this.startRace();
+			}else if(this.gameState != "countdown"){
+				this.gameState = "waiting";
+			}
 		}
-		if(keycode == 50 && Object.keys(this.players).length < this.maxPlayers){
+		if(keycode == 50 && Object.keys(this.players).length < this.maxPlayers && this.gameState == "waiting"){
 			this.addPlayer({id: Object.keys(this.players).length, join: function(){}}, {name:"AI", color: Math.random()*100, room:"", car:"truck"});
 			this.players[Object.keys(this.players).length-1].ai = true;
 			this.aiCount++;
@@ -573,13 +586,13 @@ var room=function(name, circuit, maxPlayers, moderated){
 			this.players[i].reset();
 		}
 		io.to(this.name).emit("countdown");
-		this.racing = false;
+		this.gameState = "countdown";
 		setTimeout(() => {
 			for(var i in this.players){
 				this.players[i].startRace();
 			}
 			this.raceStart = this.seconds;
-			this.racing = true;
+			this.gameState = "racing";
 		}, 3000);
 	}
 
@@ -857,6 +870,8 @@ var player=function(x, y, name, id, c, room, car){
 	this.reset=function(){
 		this.lap = -1;
 		this.vel = new Vector(0,0);
+		this.speed = 0;
+		this.turnSpeed = 0;
 		this.dir = 0;
 		this.frozen = true;
 		this.lapStart = 0;

@@ -182,7 +182,7 @@ socket.on("state", function(items){
         if(showHUD){
             text(items["players"][id].place+". "+items["players"][id].name, 40, 100+(items["players"][id].place-1)*22);
             if(id === socket.id){
-                renderHUD(items["players"][id], Object.keys(items["players"]).length);
+                renderHUD(items["players"][id], Object.keys(items["players"]).length, items["gameData"].gameState);
             }
         }
     }
@@ -191,11 +191,11 @@ socket.on("state", function(items){
         if(id === socket.id){
             followCamera.pos = s.pos;
             if(s.following && showHUD){
-                renderHUD(items["players"][s.followID], Object.keys(items["players"]).length);
+                renderHUD(items["players"][s.followID], Object.keys(items["players"]).length, "racing");
             }
             textSize(15);
             textAlign(CENTER, BOTTOM);
-            text("You are currently spectating. You can join the game once a spot opens up. You are currently "+(s.readyToJoin?"READY":"NOT READY")+" to join (CTRL to toggle).\nArrow keys to free move. Space to switch players.", width/2, height-60);
+            text("You are currently spectating. You can join the game once the current race ends, or a space opens up. You are currently "+(s.readyToJoin?"READY":"NOT READY")+" to join (CTRL to toggle).\nArrow keys to free move. Space to switch players.", width/2, height-60);
         }
     }
 });
@@ -260,7 +260,7 @@ var renderWalls = function(instance) {
     line(instance.x1, instance.y1, instance.x2, instance.y2);
 };
 
-var renderHUD = function(instance, carNum) {
+var renderHUD = function(instance, carNum, gameState) {
     push();
     fill(0,0,0);
     var raceMinutes = Math.floor(instance.time.toFixed(2) / 60);
@@ -323,7 +323,13 @@ var renderHUD = function(instance, carNum) {
     textSize(15);
     textAlign(RIGHT, BOTTOM);
     if(isOwner){
-        text("You are the room owner.\nPress [1] to start a race.\nPress [2] to add an AI", width - 60, height - 30);
+        text("You are the room owner.\nPress [1] to start/end a race.\nPress [2] to add an AI", width - 60, height - 30);
+    }
+    //Game State
+    if(gameState == "waiting"){
+        textSize(15);
+        textAlign(CENTER, BOTTOM);
+        text("Waiting for room owner to start a race...", width/2, height-60);
     }
     pop();
 };
