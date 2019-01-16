@@ -441,6 +441,7 @@ var room=function(name, circuit, maxPlayers, moderated){
 		if(Object.keys(this.players).length == 0){
 			this.owner = socket.id;
 			io.sockets.connected[this.owner].emit("set owner", true);
+			console.log("The new owner of room "+this.name+" is "+this.players[this.owner].name+".");
 		}
 		if(this.gameState !== "waiting"){
 			this.toSend["spectators"][socket.id] = new spectator(arg);
@@ -483,6 +484,9 @@ var room=function(name, circuit, maxPlayers, moderated){
 			}
 			delete this.players[socket.id];
 			if(this.owner === socket.id){
+				if(Object.keys(this.players).length === 0){
+					this.gameState = "waiting";
+				}
 				var foundNewOwner = false;
 				for(var i in Object.keys(this.players)){
 					if(Object.keys(this.players)[i]){
@@ -495,7 +499,7 @@ var room=function(name, circuit, maxPlayers, moderated){
 						}
 					}
 				}
-				if(!foundNewOwner){
+				if(!foundNewOwner && Object.keys(this.toSend["spectators"]).length === 0){
 					this.close();
 				}
 			}
@@ -509,7 +513,6 @@ var room=function(name, circuit, maxPlayers, moderated){
 
 		for(var i in this.toSend["spectators"]){
 			var s = this.toSend["spectators"][i];
-			console.log(this.gameState);
 			if(s.readyToJoin && this.gameState === "waiting"){
 				console.log("Spectator "+this.toSend["spectators"][i].args.name+" is joining the race.");
 				this.addPlayer(io.sockets.connected[i], s.args);
@@ -517,10 +520,13 @@ var room=function(name, circuit, maxPlayers, moderated){
 				break;
 			}
 		}
+		
 		if(roomAssociation[socket.id]){
 			delete roomAssociation[socket.id];
 		}
+
 		if(Object.keys(this.players).length === 0){
+			console.log("Closed at end of player removed.");
 			this.close();
 		}
 	}
