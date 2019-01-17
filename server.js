@@ -270,6 +270,7 @@ async function loadCircuits(){
 							var circle = result.svg.g[i].circle[o].$;
 							c.spawns.push({x: parseFloat(circle.cx), y: parseFloat(circle.cy)});
 						}
+						c.spawns.reverse();
 					}
 				}else if(result.svg.g[i].$.id === "Waypoints"){
 					if(result.svg.g[i].polyline){
@@ -438,10 +439,10 @@ var room=function(name, circuit, maxPlayers, moderated){
 	this.addPlayer=function(socket, arg){
 		console.log("Player '"+arg.name+"' joined room '"+this.name+"'");
 		socket.join(this.name);
-		if(Object.keys(this.players).length == 0){
+		if(Object.keys(this.players).length == 0 || this.aiCount === Object.keys(this.players).length){
 			this.owner = socket.id;
 			io.sockets.connected[this.owner].emit("set owner", true);
-			console.log("The new owner of room "+this.name+" is "+this.players[this.owner].name+".");
+			console.log("The new owner of room "+this.name+" is "+arg.name+".");
 		}
 		if(this.gameState !== "waiting"){
 			this.toSend["spectators"][socket.id] = new spectator(arg);
@@ -509,6 +510,10 @@ var room=function(name, circuit, maxPlayers, moderated){
 			console.log("Spectator '"+this.toSend["spectators"][socket.id].args.name+"' left room '"+this.name+"'");
 			delete this.toSend["spectators"][i];
 			return;
+		}
+
+		if(this.aiCount === Object.keys(this.players).length){
+			this.gameState = "waiting";
 		}
 
 		for(var i in this.toSend["spectators"]){
@@ -783,7 +788,7 @@ var player=function(x, y, name, id, c, room, car){
 	this.positionIndex=0;
 	this.waypointLocation={};
 	this.targetpointLocation={};
-	this.lap=-1;
+	this.lap=0;
 	this.place=0;
     this.sideFriction=0.96;
 	this.forwardFriction=0.98;
@@ -874,7 +879,7 @@ var player=function(x, y, name, id, c, room, car){
 		}
 	};
 	this.reset=function(){
-		this.lap = -1;
+		this.lap = 0;
 		this.vel = new Vector(0,0);
 		this.speed = 0;
 		this.turnSpeed = 0;
@@ -1069,7 +1074,7 @@ var player=function(x, y, name, id, c, room, car){
 		this.waypointLocation = rooms[this.room].waypoints[this.currentWaypoint];
 		this.positionIndex = this.lap * rooms[this.room].waypoints.length + parseInt(this.currentWaypoint);
 		if(this.currentWaypoint == (rooms[this.room].waypoints.length-1) && close < 5){
-			if(this.lap<0){
+			if(this.lap<1){
 				this.startedRace = true;
 			}else{
 				this.splits.push(this.lapTime);
