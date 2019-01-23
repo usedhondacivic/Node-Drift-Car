@@ -21,6 +21,7 @@ html{
     image-rendering: optimize-contrast;         /* CSS3 Proposed                  */
     -ms-interpolation-mode: nearest-neighbor;   /* IE8+                           */
     image-rendering: pixelated;
+    image-rendering: crisp-edges;
     background-color: rgb(217, 255, 151);
 }
 
