@@ -1,4 +1,6 @@
 Fix screen scroll on firefox
+Spectators not joining over AI
+Load car data on server to let AI pick any car
 Null player bug (switch tabs)
 Have races end
 Track background for start menu (gif?)

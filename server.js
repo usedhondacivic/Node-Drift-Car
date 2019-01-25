@@ -378,6 +378,7 @@ var room=function(name, circuit, maxPlayers, moderated){
 		this.loadCircuit();
 	};
 
+	/*BEGIN ABSTRACTION*/
 	this.update=function(){
 		this.updatePlayerPlacing();
 		this.updatePlayerWrappers();
@@ -403,6 +404,7 @@ var room=function(name, circuit, maxPlayers, moderated){
 		io.to(this.name).emit("state", this.toSend);
 		this.seconds+=1/60;
 	};
+	/*END ABSTRACTION*/
 
 	this.reset=function(){
 		this.spawnNumber = 0;
@@ -575,11 +577,13 @@ var room=function(name, circuit, maxPlayers, moderated){
 			this.addPlayer({id: Object.keys(this.players).length, join: function(){}}, {name:"AI", color: Math.random()*100, room:"", car:"truck"});
 			this.players[Object.keys(this.players).length-1].ai = true;
 			this.aiCount++;
-			var carNum = Math.floor(Math.random()*3);
+			var carNum = Math.floor(Math.random()*4);
 			if(carNum == 0){
 				this.players[Object.keys(this.players).length-1].car = "sports";
 			}else if(carNum == 1){
 				this.players[Object.keys(this.players).length-1].car = "ambulance";
+			}else if(carNum == 2){
+				this.players[Object.keys(this.players).length-1].car = "dragster";
 			}
 		}
 	}
@@ -997,11 +1001,12 @@ var player=function(x, y, name, id, c, room, car){
 				}
 			}
 		}
+		/*BEGIN ALGORITHM*/
 		//Loop through every other car to check collision
 		for(var i in rooms[this.room].players){
 			var otherCar = rooms[this.room].players[i];
 			if(otherCar === this){
-				//Can collide with yourself, break out
+				//Can't collide with yourself, break out
 				return;
 			}
 			//Are the cars touching?
@@ -1049,6 +1054,7 @@ var player=function(x, y, name, id, c, room, car){
 				otherCar.vel.multiply(this.bounce);
 			}
 		}
+		/*END ALGORITHM*/
 	}
 	this.setFriction=function(){
 		var circuitScale = circuits[rooms[this.room].circuit].maskScale;

@@ -13,5 +13,10 @@
         "location":"/images/cars/Ambulance",
         "base":"/Ambulance.png",
         "mask":"/Ambulance_Mask.png"
+    },
+    "dragster":{
+        "location":"/images/cars/Dragster",
+        "base":"/Dragster.png",
+        "mask":"/Dragster_Mask.png"
     }
 }
