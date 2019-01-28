@@ -87,6 +87,11 @@ window.onload = function(){
         selectedCar = sessionStorage.getItem('car');
         document.getElementById("colorPicker").value = sessionStorage.getItem('color');
     }
+
+    // Detect Chrome
+    if(!(!!window.chrome && (!!window.chrome.webstore || !!window.chrome.runtime))){
+        document.getElementById("browserWarning").innerHTML = "Spinout runs best on the <a href='https://www.google.com/chrome/'>Chrome browser</a>. If you are not using Chrome you may run into issues.";
+    }
 }
 
 socket.on("rooms", function(data){

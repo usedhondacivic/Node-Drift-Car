@@ -36,6 +36,12 @@ window.onload = function(){
         chatlog.style.maxHeight = "200px";
         chatlog.scrollTop = chatlog.scrollHeight;
     });
+    window.addEventListener("keydown", function(e) {
+        // space and arrow keys
+        if([32, 37, 38, 39, 40].indexOf(e.keyCode) > -1) {
+            e.preventDefault();
+        }
+    }, false);
     chatlog.style.paddingRight = chatlog.offsetWidth - chatlog.clientWidth + "px";
 }
 
