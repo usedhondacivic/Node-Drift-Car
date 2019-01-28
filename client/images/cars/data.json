@@ -18,5 +18,20 @@
         "location":"/images/cars/Dragster",
         "base":"/Dragster.png",
         "mask":"/Dragster_Mask.png"
+    },
+    "mcqueen":{
+        "location":"/images/cars/McQueen",
+        "base":"/McQueen.png",
+        "mask":"/McQueen_Mask.png"
+    },
+    "fish":{
+        "location":"/images/cars/Fish",
+        "base":"/Fish.png",
+        "mask":"/Fish_Mask.png"
+    },
+    "hand":{
+        "location":"/images/cars/Hand",
+        "base":"/Hand.png",
+        "mask":"/Hand_Mask.png"
     }
 }

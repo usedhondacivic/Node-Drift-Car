@@ -577,14 +577,8 @@ var room=function(name, circuit, maxPlayers, moderated){
 			this.addPlayer({id: Object.keys(this.players).length, join: function(){}}, {name:"AI", color: Math.random()*100, room:"", car:"truck"});
 			this.players[Object.keys(this.players).length-1].ai = true;
 			this.aiCount++;
-			var carNum = Math.floor(Math.random()*4);
-			if(carNum == 0){
-				this.players[Object.keys(this.players).length-1].car = "sports";
-			}else if(carNum == 1){
-				this.players[Object.keys(this.players).length-1].car = "ambulance";
-			}else if(carNum == 2){
-				this.players[Object.keys(this.players).length-1].car = "dragster";
-			}
+			var carNum = Math.floor(Math.random()*validCars.length);
+			this.players[Object.keys(this.players).length-1].car = validCars[carNum];
 		}
 	}
 
