@@ -382,18 +382,8 @@ var room=function(name, circuit, maxPlayers, moderated){
 	this.update=function(){
 		this.updatePlayerPlacing();
 		this.updatePlayerWrappers();
+		this.updateSpectatorCycle();
 		this.toSend["gameData"].gameState = this.gameState;
-		if(Object.keys(this.players).length - this.aiCount < this.maxPlayers){
-			for(var i in this.toSend["spectators"]){
-				var s = this.toSend["spectators"][i];
-				if(s.readyToJoin && this.gameState === "waiting"){
-					console.log("Spectator "+this.toSend["spectators"][i].args.name+" is joining the race.");
-					this.addPlayer(io.sockets.connected[i], s.args);
-					delete this.toSend["spectators"][i];
-					break;
-				}
-			}
-		}
 		for(var type in this.toSend){
 			for(var id in this.toSend[type]){
 				var obj = this.toSend[type][id];
@@ -468,10 +458,10 @@ var room=function(name, circuit, maxPlayers, moderated){
 					this.removePlayer({id:i});
 					this.addPlayer(socket, arg);
 					replaced = true;
+					break;
 				}
 			}
 			if(replaced){
-				console.log("Player "+arg.name+" replaced an AI.");
 				return;
 			}
 			this.toSend["spectators"][socket.id] = new spectator(arg);
@@ -650,6 +640,25 @@ var room=function(name, circuit, maxPlayers, moderated){
 			this.toSend["players"][i] = this.players[i].getWrapper();
 		}
 	}
+
+	this.updateSpectatorCycle = function() {
+		if(Object.keys(this.players).length - this.aiCount < this.maxPlayers){
+			for(var i in this.toSend["spectators"]){
+				var s = this.toSend["spectators"][i];
+				if(s.readyToJoin && this.gameState === "waiting"){
+					for(var o in this.players){
+						var p = this.players[o];
+						if(p.ai){
+							this.removePlayer({id:o});
+							break;
+						}
+					}
+					delete this.toSend["spectators"][i];
+					break;
+				}
+			}
+		}
+	}
 	
 	this.findClosestWaypoint = function(pos){
 		var lowestDistance = Infinity;
@@ -800,11 +809,9 @@ var player=function(x, y, name, id, c, room, car){
 	this.decel=0.87;
 	this.decelMultiplier=1;
 	this.dir=0;
-	//0.5
 	this.turnSpeed=0;
 	this.turnAccel=0.15;
 	this.turnDecel=0.75;
-	//80
     this.turnDamp=105;
 	this.corners={
 		topRight:{
@@ -845,7 +852,6 @@ var player=function(x, y, name, id, c, room, car){
 	this.sideOffset=10;
 	this.wheelInset=3;
 	this.keys=[];
-	this.collidedThisFrame=[];
 	this.getWrapper=function(){
 		return {
 			pos:this.pos,
