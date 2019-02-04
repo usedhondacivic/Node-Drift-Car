@@ -1,5 +1,5 @@
 Fix screen scroll on firefox
-Spectators not joining over AI
+Join during race -> replace AI (sticks in spectators)
 Load car data on server to let AI pick any car
 Null player bug (switch tabs)
 Have races end

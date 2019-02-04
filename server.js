@@ -383,7 +383,7 @@ var room=function(name, circuit, maxPlayers, moderated){
 		this.updatePlayerPlacing();
 		this.updatePlayerWrappers();
 		this.toSend["gameData"].gameState = this.gameState;
-		if(Object.keys(this.players).length < this.maxPlayers){
+		if(Object.keys(this.players).length - this.aiCount < this.maxPlayers){
 			for(var i in this.toSend["spectators"]){
 				var s = this.toSend["spectators"][i];
 				if(s.readyToJoin && this.gameState === "waiting"){
@@ -471,6 +471,7 @@ var room=function(name, circuit, maxPlayers, moderated){
 				}
 			}
 			if(replaced){
+				console.log("Player "+arg.name+" replaced an AI.");
 				return;
 			}
 			this.toSend["spectators"][socket.id] = new spectator(arg);
@@ -480,6 +481,12 @@ var room=function(name, circuit, maxPlayers, moderated){
 	}
 
 	this.removePlayer=function(socket){
+		if(this.toSend["spectators"][socket.id]){
+			console.log("Spectator '"+this.toSend["spectators"][socket.id].args.name+"' left room '"+this.name+"'");
+			delete this.toSend["spectators"][socket.id];
+			return;
+		}
+
 		if(this.players[socket.id]){
 			console.log("Player '"+this.players[socket.id].name+"' left room '"+this.name+"'");
 			if(this.players[socket.id].ai){
@@ -506,12 +513,6 @@ var room=function(name, circuit, maxPlayers, moderated){
 					this.close();
 				}
 			}
-		}
-
-		if(this.toSend["spectators"][socket.id]){
-			console.log("Spectator '"+this.toSend["spectators"][socket.id].args.name+"' left room '"+this.name+"'");
-			delete this.toSend["spectators"][i];
-			return;
 		}
 
 		if(this.aiCount === Object.keys(this.players).length){
