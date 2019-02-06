@@ -78,7 +78,7 @@ var carImage;
 var carMask;
 var ctx;
 var trackContainer;
-var showHUD = true;
+var showHUD = false;
 var trip = false;
 var countdown = -1;
 var loaded = false;
@@ -201,7 +201,9 @@ socket.on("state", function(items){
             }
             textSize(15);
             textAlign(CENTER, BOTTOM);
-            text("You are currently spectating. You can join the game once the current race ends, or a space opens up. You are currently "+(s.readyToJoin?"READY":"NOT READY")+" to join (CTRL to toggle).\nArrow keys to free move. Space to switch players.", width/2, height-60);
+            if(showHUD){
+                text("You are currently spectating. You can join the game once the current race ends, or a space opens up. You are currently "+(s.readyToJoin?"READY":"NOT READY")+" to join (CTRL to toggle).\nArrow keys to free move. Space to switch players.", width/2, height-60);
+            }
         }
     }
 });
