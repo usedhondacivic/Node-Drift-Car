@@ -431,7 +431,7 @@ var room=function(name, circuit, maxPlayers, moderated){
 	this.addPlayer=function(socket, arg){
 		console.log("Player '"+arg.name+"' joined room '"+this.name+"'");
 		socket.join(this.name);
-		if(Object.keys(this.players).length == 0 || this.aiCount === Object.keys(this.players).length){
+		if(Object.keys(this.players).length == 0){
 			this.owner = socket.id;
 			io.sockets.connected[this.owner].emit("set owner", true);
 			console.log("The new owner of room "+this.name+" is "+arg.name+".");
