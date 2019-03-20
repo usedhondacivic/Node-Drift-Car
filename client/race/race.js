@@ -78,7 +78,7 @@ var carImage;
 var carMask;
 var ctx;
 var trackContainer;
-var showHUD = false;
+var showHUD = true;
 var trip = false;
 var countdown = -1;
 var loaded = false;
