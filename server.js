@@ -851,6 +851,8 @@ var player=function(x, y, name, id, c, room, car){
 	this.backOffset=19;
 	this.sideOffset=10;
 	this.wheelInset=3;
+	this.currentSoundEffect = "none";
+	this.currentSoundLoop = "none";	
 	this.keys=[];
 	this.getWrapper=function(){
 		return {
@@ -871,6 +873,8 @@ var player=function(x, y, name, id, c, room, car){
 			rightVel:this.rightVel,
 			car:this.car,
 			waypointLocation:this.waypointLocation,
+			currentSoundEffect: this.currentSoundEffect,
+			currentSoundLoop: this.currentSoundLoop
 			//waypointLocation:this.targetpointLocation,
 		};
 	}
@@ -892,13 +896,15 @@ var player=function(x, y, name, id, c, room, car){
 		this.frozen = true;
 		this.lapStart = 0;
 		this.splits=[];
+		this.currentSoundEffect = "start";
+		this.currentSoundLoop = "idle"
 	};
     this.update=function(){
 		this.time = rooms[this.room].seconds - rooms[this.room].raceStart;
 		this.lapTime = this.time - this.lapStart;
 		if(this.frozen){
 			this.time = 0;
-			this.lapTime = 0;
+			this.lapTime = 0;n
 		}
 		if(!this.frozen){
 			this.posBuffer=this.pos.clone();
@@ -907,6 +913,7 @@ var player=function(x, y, name, id, c, room, car){
 			this.sideFriction(0.96 * this.frictionMultiplier, 0.98 * this.frictionMultiplier);
 			this.collision();
 			this.updateWaypoint();
+			this.updateSound();
 			this.speed*=this.decel*this.decelMultiplier;
 			if(this.keys[UP_ARROW]){this.speed+=this.accel*this.accelMultiplier;}
 			if(this.keys[DOWN_ARROW]){this.speed-=this.accel*this.accelMultiplier*0.5;}
@@ -917,6 +924,15 @@ var player=function(x, y, name, id, c, room, car){
 			if(this.ai){
 				this.aiSteer();
 			}
+		}
+	};
+	this.updateSound=function(){
+		if(Math.abs(this.speed) > 0.07){
+			this.currentSoundEffect = "rev up";
+			this.currentSoundLoop = "rev";
+		}else{
+			this.currentSoundEffect = "idle down";
+			this.currentSoundLoop = "idle";
 		}
 	};
 	this.aiSteer=function(){
