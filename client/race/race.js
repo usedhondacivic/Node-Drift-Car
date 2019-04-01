@@ -84,6 +84,10 @@ var countdown = -1;
 var loaded = false;
 var isOwner = false;
 
+function preload() {
+    
+}
+
 function setup() {
     createCanvas(document.body.clientWidth, window.innerHeight);
     var c = document.getElementsByTagName("canvas")[0];
