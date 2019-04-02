@@ -931,7 +931,7 @@ var player=function(x, y, name, id, c, room, car){
 			this.currentSoundEffect = "rev up";
 			this.currentSoundLoop = "rev";
 		}else{
-			this.currentSoundEffect = "idle down";
+			this.currentSoundEffect = "rev down";
 			this.currentSoundLoop = "idle";
 		}
 	};

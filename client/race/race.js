@@ -83,9 +83,51 @@ var trip = false;
 var countdown = -1;
 var loaded = false;
 var isOwner = false;
+var sounds = {
+
+    cars:{
+        "4Runner":{
+            "startups":{
+                files:["/sound/4Runner_start.mp3", "/sound/4Runner_start_2.mp3"],
+                sounds:[]
+            },
+            "idle loops":{
+                files:["/sound/4Runner_idle_loop.mp3", "/sound/4Runner_idle_loop_2.mp3"],
+                sounds:[]
+            },
+            "rev loops":{
+                files:["/sound/4Runner_rev_loop.mp3", "/sound/4Runner_rev_loop_2.mp3"],
+                sounds:[]
+            },
+            "rev up":{
+                files:["/sound/4Runner_rev_up.mp3"],
+                sounds:[]
+            },
+            "rev down":{
+                files:["/sound/4Runner_rev_down.mp3"],
+                sounds:[]
+            },
+        }
+    },
+
+    load : function(){
+        for(var car in this.cars){
+            for(var type in this.cars[car]){
+                for(var i in this.cars[car][type].files){
+                    var fileDir = this.cars[car][type].files[i];
+                    this.cars[car][type].sounds.push(loadSound(fileDir));
+                }
+            }
+        }
+    },
+
+    select : function(car, key){
+
+    }
+};
 
 function preload() {
-    
+    sounds.load();
 }
 
 function setup() {
@@ -103,6 +145,7 @@ function setup() {
         socket.emit("new player", {name:name, color: color, room:room, track:(track?track:"Mugello Circuit"), car:car, players:(players?players:10)});
     }
     socket.emit("request images");
+    sounds.cars["4Runner"]["rev loops"].sounds[1].loop();
 }
 
 function windowResized() { resizeCanvas(document.body.clientWidth, window.innerHeight); }
