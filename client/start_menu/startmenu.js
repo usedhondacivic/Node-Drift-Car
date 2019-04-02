@@ -89,7 +89,22 @@ window.onload = function(){
     }
 
     // Detect Chrome
-    if(!(!!window.chrome && (!!window.chrome.webstore || !!window.chrome.runtime))){
+    var isChromium = window.chrome;
+    var winNav = window.navigator;
+    var vendorName = winNav.vendor;
+    var isOpera = typeof window.opr !== "undefined";
+    var isIEedge = winNav.userAgent.indexOf("Edge") > -1;
+    var isIOSChrome = winNav.userAgent.match("CriOS");
+
+    if (isIOSChrome) {
+    // is Google Chrome on IOS
+    } else if(
+        !(isChromium !== null &&
+        typeof isChromium !== "undefined" &&
+        vendorName === "Google Inc." &&
+        isOpera === false &&
+        isIEedge === false)
+    ){
         document.getElementById("browserWarning").innerHTML = "Spinout runs best on the <a href='https://www.google.com/chrome/'>Chrome browser</a>. If you are not using Chrome you may run into issues.";
     }
 }
