@@ -83,8 +83,8 @@ var trip = false;
 var countdown = -1;
 var loaded = false;
 var isOwner = false;
-var sounds = {
 
+var sounds = {
     cars:{
         "4Runner":{
             "startups":{
@@ -110,6 +110,8 @@ var sounds = {
         }
     },
 
+    players:{},
+
     load : function(){
         for(var car in this.cars){
             for(var type in this.cars[car]){
@@ -121,10 +123,37 @@ var sounds = {
         }
     },
 
+    addPlayers : function(players){
+        for(var i in this.players){
+            this.players[i].active = false;
+        }
+        for(var id in players){
+            if(this.players[id]){
+                this.players[id].active = true;
+            }else{
+                this.players[id] = {
+                
+                }
+            }
+        }
+        for(var i in this.players){
+            if(!this.players[i].active){
+
+            }
+        }
+    },
+
     select : function(car, key){
 
     }
 };
+
+var playerSoundController = function(carName){
+    this.active = false;
+    this.car = carName;
+    this.sounds = sounds.cars[carName];
+    //was working here
+}
 
 function preload() {
     sounds.load();
@@ -145,7 +174,8 @@ function setup() {
         socket.emit("new player", {name:name, color: color, room:room, track:(track?track:"Mugello Circuit"), car:car, players:(players?players:10)});
     }
     socket.emit("request images");
-    sounds.cars["4Runner"]["rev loops"].sounds[1].loop();
+    //sounds.cars["4Runner"]["idle loops"].sounds[0].play();
+    //sounds.cars["4Runner"]["idle loops"].sounds[0].play(1);
 }
 
 function windowResized() { resizeCanvas(document.body.clientWidth, window.innerHeight); }
@@ -222,6 +252,7 @@ socket.on("state", function(items){
             followCamera.pos = items["players"][id].pos;
         }
         var player = items["players"][id];
+        sounds.addPlayers(items["players"]);
         renderPlayer(player);
     }
     for (var id in walls) {
@@ -276,6 +307,16 @@ socket.on("alert", function(message){
 });
 
 var renderPlayer = function(instance) {
+    if(lastLoop != instance.currentSoundLoop){
+        lastLoop = instance.currentSoundLoop;
+        if(instance.currentSoundLoop === "rev"){
+            sounds.cars["4Runner"]["rev loops"].sounds[1].loop();
+            sounds.cars["4Runner"]["idle loops"].sounds[0].stop();
+        }else if(instance.currentSoundLoop === "idle"){
+            sounds.cars["4Runner"]["idle loops"].sounds[0].loop();
+            sounds.cars["4Runner"]["rev loops"].sounds[1].stop();
+        }
+    }
     var tailLength = 10;
     fill(255,0,0);
     noStroke();
