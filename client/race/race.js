@@ -131,20 +131,18 @@ var sounds = {
             if(this.players[id]){
                 this.players[id].active = true;
             }else{
-                this.players[id] = {
-                
-                }
+                this.players[id] = new playerSoundController("4Runner");
             }
         }
         for(var i in this.players){
             if(!this.players[i].active){
-
+                delete this.players[i];
             }
         }
     },
 
-    select : function(car, key){
-
+    update : function(id){
+        this.players[id].update();
     }
 };
 
@@ -152,8 +150,46 @@ var playerSoundController = function(carName){
     this.active = false;
     this.car = carName;
     this.sounds = sounds.cars[carName];
-    //was working here
-}
+    this.currentState = "none";
+    this.currentLoop = "none";
+    this.update = function(){
+        if(this.currentState == "startups"){
+            this.sounds["startups"][0].play();
+            this.sounds["startups"][0].onended(function(){
+                this.sounds["startups"][0].stop();
+                this.sounds["idle loops"][0].loop();
+                this.currentState = "none";
+            });
+        }
+
+        if(this.currentState == "rev up"){
+            this.sounds["rev up"][0].play();
+            this.sounds["rev up"][0].onended(function(){
+                this.sounds["rev up"][0].stop();
+                this.sounds["rev loops"][0].loop();
+                this.currentState = "none";
+            });
+        }
+
+        if(this.currentState == "rev down"){
+            this.sounds["rev down"][0].play();
+            this.sounds["rev down"][0].onended(function(){
+                this.sounds["rev down"][0].stop();
+                this.sounds["idle loops"][0].loop();
+                this.currentState = "none";
+            });
+        }
+    }
+    this.setState = function(){
+        if(this.currentState != "none"){
+            this.sounds[this.currentState][0].stop();
+        }
+
+        if(this.currrentLoop != "none"){
+            this.sounds[this.currentLoop][0].stop();
+        }
+    }
+};
 
 function preload() {
     sounds.load();
@@ -253,6 +289,7 @@ socket.on("state", function(items){
         }
         var player = items["players"][id];
         sounds.addPlayers(items["players"]);
+        sounds.update(id, player.currentSoundEffect);
         renderPlayer(player);
     }
     for (var id in walls) {
