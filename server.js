@@ -904,7 +904,7 @@ var player=function(x, y, name, id, c, room, car){
 		this.lapTime = this.time - this.lapStart;
 		if(this.frozen){
 			this.time = 0;
-			this.lapTime = 0;n
+			this.lapTime = 0;
 		}
 		if(!this.frozen){
 			this.posBuffer=this.pos.clone();

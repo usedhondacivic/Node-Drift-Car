@@ -307,16 +307,6 @@ socket.on("alert", function(message){
 });
 
 var renderPlayer = function(instance) {
-    if(lastLoop != instance.currentSoundLoop){
-        lastLoop = instance.currentSoundLoop;
-        if(instance.currentSoundLoop === "rev"){
-            sounds.cars["4Runner"]["rev loops"].sounds[1].loop();
-            sounds.cars["4Runner"]["idle loops"].sounds[0].stop();
-        }else if(instance.currentSoundLoop === "idle"){
-            sounds.cars["4Runner"]["idle loops"].sounds[0].loop();
-            sounds.cars["4Runner"]["rev loops"].sounds[1].stop();
-        }
-    }
     var tailLength = 10;
     fill(255,0,0);
     noStroke();
