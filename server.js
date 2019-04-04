@@ -852,7 +852,8 @@ var player=function(x, y, name, id, c, room, car){
 	this.sideOffset=10;
 	this.wheelInset=3;
 	this.currentSoundEffect = "none";
-	this.currentSoundLoop = "none";	
+	this.lastSoundEffect = "none";
+	this.effectIsNew = false;
 	this.keys=[];
 	this.getWrapper=function(){
 		return {
@@ -874,7 +875,7 @@ var player=function(x, y, name, id, c, room, car){
 			car:this.car,
 			waypointLocation:this.waypointLocation,
 			currentSoundEffect: this.currentSoundEffect,
-			currentSoundLoop: this.currentSoundLoop
+			effectIsNew: (this.lastSoundEffect != this.currentSoundEffect)
 			//waypointLocation:this.targetpointLocation,
 		};
 	}
@@ -896,8 +897,7 @@ var player=function(x, y, name, id, c, room, car){
 		this.frozen = true;
 		this.lapStart = 0;
 		this.splits=[];
-		this.currentSoundEffect = "start";
-		this.currentSoundLoop = "idle"
+		this.currentSoundEffect = "startups";
 	};
     this.update=function(){
 		this.time = rooms[this.room].seconds - rooms[this.room].raceStart;
@@ -927,12 +927,11 @@ var player=function(x, y, name, id, c, room, car){
 		}
 	};
 	this.updateSound=function(){
+		this.lastSoundEffect = this.currentSoundEffect;
 		if(Math.abs(this.speed) > 0.07){
 			this.currentSoundEffect = "rev up";
-			this.currentSoundLoop = "rev";
 		}else{
 			this.currentSoundEffect = "rev down";
-			this.currentSoundLoop = "idle";
 		}
 	};
 	this.aiSteer=function(){

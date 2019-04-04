@@ -124,70 +124,81 @@ var sounds = {
     },
 
     addPlayers : function(players){
-        for(var i in this.players){
-            this.players[i].active = false;
-        }
         for(var id in players){
-            if(this.players[id]){
+            if(this.players[id] != null){
                 this.players[id].active = true;
             }else{
                 this.players[id] = new playerSoundController("4Runner");
+                this.players[id].setup();
             }
         }
         for(var i in this.players){
             if(!this.players[i].active){
                 delete this.players[i];
+            }else{
+                this.players[i].active = false;
             }
         }
     },
-
-    update : function(id){
-        this.players[id].update();
-    }
 };
 
 var playerSoundController = function(carName){
-    this.active = false;
+    this.active = true;
     this.car = carName;
     this.sounds = sounds.cars[carName];
     this.currentState = "none";
     this.currentLoop = "none";
+
+    this.setup = function(){
+        this.sounds["startups"].sounds[0].onended(() => {
+            //this.sounds["startups"].sounds[0].stop();
+            this.sounds["idle loops"].sounds[0].loop();
+            this.currentState = "none";
+            this.currentLoop = "idle loops";
+        });
+
+        
+        this.sounds["rev up"].sounds[0].onended(() => {
+            //this.sounds["rev up"].sounds[0].stop();
+            this.sounds["rev loops"].sounds[0].loop();
+            this.currentState = "none";
+            this.currentLoop = "rev loops";
+        });
+
+        
+        this.sounds["rev down"].sounds[0].onended(() => {
+            //this.sounds["rev down"].sounds[0].stop();
+            this.sounds["idle loops"].sounds[0].loop();
+            this.currentState = "none";
+            this.currentLoop = "idle loops";
+        });
+    }
     this.update = function(){
         if(this.currentState == "startups"){
-            this.sounds["startups"][0].play();
-            this.sounds["startups"][0].onended(function(){
-                this.sounds["startups"][0].stop();
-                this.sounds["idle loops"][0].loop();
-                this.currentState = "none";
-            });
+            this.sounds["startups"].sounds[0].play();
+            this.currentLoop = "none";
         }
 
         if(this.currentState == "rev up"){
-            this.sounds["rev up"][0].play();
-            this.sounds["rev up"][0].onended(function(){
-                this.sounds["rev up"][0].stop();
-                this.sounds["rev loops"][0].loop();
-                this.currentState = "none";
-            });
+            this.sounds["rev up"].sounds[0].play();
+            this.currentLoop = "none";
         }
 
         if(this.currentState == "rev down"){
-            this.sounds["rev down"][0].play();
-            this.sounds["rev down"][0].onended(function(){
-                this.sounds["rev down"][0].stop();
-                this.sounds["idle loops"][0].loop();
-                this.currentState = "none";
-            });
+            this.sounds["rev down"].sounds[0].play();
+            this.currentLoop = "none";
         }
     }
-    this.setState = function(){
+    this.setState = function(newState){
         if(this.currentState != "none"){
-            this.sounds[this.currentState][0].stop();
+            this.sounds[this.currentState].sounds[0].stop();
         }
 
-        if(this.currrentLoop != "none"){
-            this.sounds[this.currentLoop][0].stop();
+        if(this.currentLoop != "none"){
+            this.sounds[this.currentLoop].sounds[0].stop();
         }
+
+        this.currentState = newState;
     }
 };
 
@@ -210,8 +221,6 @@ function setup() {
         socket.emit("new player", {name:name, color: color, room:room, track:(track?track:"Mugello Circuit"), car:car, players:(players?players:10)});
     }
     socket.emit("request images");
-    //sounds.cars["4Runner"]["idle loops"].sounds[0].play();
-    //sounds.cars["4Runner"]["idle loops"].sounds[0].play(1);
 }
 
 function windowResized() { resizeCanvas(document.body.clientWidth, window.innerHeight); }
@@ -283,13 +292,16 @@ socket.on("state", function(items){
             trails.splice(i,1);
         }
     }
+    sounds.addPlayers(items["players"]);
     for (var id in items["players"]) {
         if(id === socket.id){
             followCamera.pos = items["players"][id].pos;
         }
         var player = items["players"][id];
-        sounds.addPlayers(items["players"]);
-        sounds.update(id, player.currentSoundEffect);
+        sounds.players[id].update();
+        if(player.effectIsNew){
+            sounds.players[id].setState(player.currentSoundEffect);
+        }
         renderPlayer(player);
     }
     for (var id in walls) {
