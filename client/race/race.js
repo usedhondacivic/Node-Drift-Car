@@ -107,6 +107,28 @@ var sounds = {
                 files:["/sound/4Runner_rev_down.mp3"],
                 sounds:[]
             },
+        },
+        "Wmb":{
+            "startups":{
+                files:["/sound/Wmb_start.mp3"],
+                sounds:[]
+            },
+            "idle loops":{
+                files:["/sound/Wmb_idle_loop.mp3"],
+                sounds:[]
+            },
+            "rev loops":{
+                files:["/sound/Wmb_rev_loop.mp3"],
+                sounds:[]
+            },
+            "rev up":{
+                files:["/sound/Wmb_rev_up_2.mp3"],
+                sounds:[]
+            },
+            "rev down":{
+                files:["/sound/Wmb_rev_down.mp3"],
+                sounds:[]
+            },
         }
     },
 
@@ -128,7 +150,7 @@ var sounds = {
             if(this.players[id] != null){
                 this.players[id].active = true;
             }else{
-                this.players[id] = new playerSoundController("4Runner");
+                this.players[id] = new playerSoundController("Wmb");
                 this.players[id].setup();
             }
         }
@@ -151,7 +173,6 @@ var playerSoundController = function(carName){
 
     this.setup = function(){
         this.sounds["startups"].sounds[0].onended(() => {
-            //this.sounds["startups"].sounds[0].stop();
             this.sounds["idle loops"].sounds[0].loop();
             this.currentState = "none";
             this.currentLoop = "idle loops";
@@ -159,7 +180,6 @@ var playerSoundController = function(carName){
 
         
         this.sounds["rev up"].sounds[0].onended(() => {
-            //this.sounds["rev up"].sounds[0].stop();
             this.sounds["rev loops"].sounds[0].loop();
             this.currentState = "none";
             this.currentLoop = "rev loops";
@@ -167,14 +187,10 @@ var playerSoundController = function(carName){
 
         
         this.sounds["rev down"].sounds[0].onended(() => {
-            //this.sounds["rev down"].sounds[0].stop();
             this.sounds["idle loops"].sounds[0].loop();
             this.currentState = "none";
             this.currentLoop = "idle loops";
         });
-    }
-    this.update = function(){
-        
     }
     this.setState = function(newState){
         if(this.currentState != "none"){
@@ -300,7 +316,6 @@ socket.on("state", function(items){
             followCamera.pos = items["players"][id].pos;
         }
         var player = items["players"][id];
-        sounds.players[id].update();
         if(player.effectIsNew){
             sounds.players[id].setState(player.currentSoundEffect);
         }
