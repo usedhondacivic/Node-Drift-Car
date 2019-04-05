@@ -174,6 +174,19 @@ var playerSoundController = function(carName){
         });
     }
     this.update = function(){
+        
+    }
+    this.setState = function(newState){
+        if(this.currentState != "none"){
+            this.sounds[this.currentState].sounds[0].stop();
+        }
+
+        if(this.currentLoop != "none"){
+            this.sounds[this.currentLoop].sounds[0].stop();
+        }
+
+        this.currentState = newState;
+
         if(this.currentState == "startups"){
             this.sounds["startups"].sounds[0].play();
             this.currentLoop = "none";
@@ -188,17 +201,6 @@ var playerSoundController = function(carName){
             this.sounds["rev down"].sounds[0].play();
             this.currentLoop = "none";
         }
-    }
-    this.setState = function(newState){
-        if(this.currentState != "none"){
-            this.sounds[this.currentState].sounds[0].stop();
-        }
-
-        if(this.currentLoop != "none"){
-            this.sounds[this.currentLoop].sounds[0].stop();
-        }
-
-        this.currentState = newState;
     }
 };
 
