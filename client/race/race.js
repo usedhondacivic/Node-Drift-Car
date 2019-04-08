@@ -110,23 +110,23 @@ var sounds = {
         },
         "Wmb":{
             "startups":{
-                files:["/sound/Wmb_start.mp3"],
+                files:["/sound/Wmb_start.ogg"],
                 sounds:[]
             },
             "idle loops":{
-                files:["/sound/Wmb_idle_loop.mp3"],
+                files:["/sound/Wmb_idle_better.flac"],
                 sounds:[]
             },
             "rev loops":{
-                files:["/sound/Wmb_rev_loop.mp3"],
+                files:["/sound/Wmb_rev_loop_better.flac"],
                 sounds:[]
             },
             "rev up":{
-                files:["/sound/Wmb_rev_up_2.mp3"],
+                files:["/sound/Wmb_rev_up_better.flac"],
                 sounds:[]
             },
             "rev down":{
-                files:["/sound/Wmb_rev_down.mp3"],
+                files:["/sound/Wmb_rev_down_better.flac"],
                 sounds:[]
             },
         }
@@ -167,11 +167,13 @@ var sounds = {
 var playerSoundController = function(carName){
     this.active = true;
     this.car = carName;
-    this.sounds = sounds.cars[carName];
+    this.sounds;
     this.currentState = "none";
     this.currentLoop = "none";
+    this.sounds = Object.assign({}, sounds.cars[carName]);
 
     this.setup = function(){
+
         this.sounds["startups"].sounds[0].onended(() => {
             this.sounds["idle loops"].sounds[0].loop();
             this.currentState = "none";

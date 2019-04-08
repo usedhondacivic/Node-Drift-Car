@@ -897,7 +897,7 @@ var player=function(x, y, name, id, c, room, car){
 		this.frozen = true;
 		this.lapStart = 0;
 		this.splits=[];
-		this.currentSoundEffect = "startups";
+		//this.currentSoundEffect = "startups";
 	};
     this.update=function(){
 		this.time = rooms[this.room].seconds - rooms[this.room].raceStart;
