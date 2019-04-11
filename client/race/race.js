@@ -139,9 +139,12 @@ var sounds = {
             for(var type in this.cars[car]){
                 for(var i in this.cars[car][type].files){
                     var fileDir = this.cars[car][type].files[i];
-                    this.cars[car][type].sounds.push(loadSound(fileDir));
+                    var sound = loadSound(fileDir);
+                    sound.playMode("sustain");
+                    this.cars[car][type].sounds.push(sound);
                 }
             }
+            this.cars[car].self = this.cars[car];
         }
     },
 
@@ -149,10 +152,12 @@ var sounds = {
         for(var id in players){
             if(this.players[id] != null){
                 this.players[id].active = true;
+                
             }else{
                 this.players[id] = new playerSoundController("Wmb");
-                this.players[id].setState(players[id].currentSoundEffect);
                 this.players[id].setup();
+                this.players[id].setState(players[id].currentSoundEffect);
+                console.log("added");
             }
         }
         for(var i in this.players){
@@ -165,71 +170,85 @@ var sounds = {
     },
 };
 
-var playerSoundController = function(carName, x, y){
+var playerSoundController = function(carName){
     this.active = true;
     this.car = carName;
-    this.sounds;
     this.currentState = "none";
     this.currentLoop = "none";
-    this.sounds = Object.assign({}, sounds.cars[carName]);
-    this.falloff = 200;
+    this.sounds = sounds.cars[carName];
+    this.falloff = 500;
 
     this.setup = function(){
         this.sounds["startups"].sounds[0].onended(() => {
-            this.sounds["idle loops"].sounds[0].loop();
-            this.currentState = "none";
-            this.currentLoop = "idle loops";
+            this.effectEnded("startups");
         });
-
         
         this.sounds["rev up"].sounds[0].onended(() => {
-            this.sounds["rev loops"].sounds[0].loop();
-            this.currentState = "none";
-            this.currentLoop = "rev loops";
+            this.effectEnded("rev up");
         });
-
         
         this.sounds["rev down"].sounds[0].onended(() => {
-            this.sounds["idle loops"].sounds[0].loop();
-            this.currentState = "none";
-            this.currentLoop = "idle loops";
+            this.effectEnded("rev down");
+            console.log(this.sounds["rev loops"].sounds[0].isLooping());
         });
     }
 
     this.update = function(x, y){
-        var distance = Math.sqrt(Math.pow(followCamera.x - x ,2), Math.pow(followCamera.y - y ,2));
+        var distance = Math.sqrt(Math.pow(followCamera.pos.x - x ,2), Math.pow(followCamera.pos.y - y ,2));
+        var volume;
+        if(Math.pow(distance, 1.25) == 0){
+            volume = 0.3;
+        }else{
+            volume = Math.min(this.falloff/Math.pow(distance, 1.25), 0.3);
+        }
         if(this.currentState != "none"){
-            this.sounds[this.currentState].sounds[0].setVolume(Math.min(this.falloff/distance, 1));
+            this.sounds[this.currentState].sounds[0].setVolume(volume);
         }
         if(this.currentLoop != "none"){
-            this.sounds[this.currentLoop].sounds[0].setVolume(Math.min(this.falloff/distance, 1));
+            this.sounds[this.currentLoop].sounds[0].setVolume(volume);
         }
     }
 
     this.setState = function(newState){
         if(this.currentState != "none"){
             this.sounds[this.currentState].sounds[0].stop();
+            this.currentState = "none";
         }
 
         if(this.currentLoop != "none"){
             this.sounds[this.currentLoop].sounds[0].stop();
+            this.currentLoop = "none";
         }
 
         this.currentState = newState;
 
         if(this.currentState == "startups"){
             this.sounds["startups"].sounds[0].play();
-            this.currentLoop = "none";
         }
 
         if(this.currentState == "rev up"){
             this.sounds["rev up"].sounds[0].play();
-            this.currentLoop = "none";
         }
 
         if(this.currentState == "rev down"){
             this.sounds["rev down"].sounds[0].play();
-            this.currentLoop = "none";
+        }
+    }
+
+    this.effectEnded = function(effect){
+        if(this.currentState == effect && this.currentLoop == "none"){
+            if(effect == "rev down"){
+                this.sounds["idle loops"].sounds[0].play();
+                this.sounds["idle loops"].sounds[0].setLoop(true);
+                this.currentLoop = "idle loops";
+            }else if(effect == "rev up"){
+                this.sounds["rev loops"].sounds[0].play();
+                this.sounds["rev loops"].sounds[0].setLoop(true);
+                this.currentLoop = "rev loops";
+            }else if(effect == "startups"){
+                this.sounds["idle loops"].sounds[0].loop();
+                this.currentLoop = "idle loops";
+            }
         }
     }
 };

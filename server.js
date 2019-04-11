@@ -348,7 +348,8 @@ var room=function(name, circuit, maxPlayers, moderated){
 	this.walls = [];
 	//Race variables
 	this.gameState = "waiting";
-	this.spawnNumber = 0;
+    this.spawnNumber = 0;
+    this.finishedCount = 0;
 	this.waypoints = [];
 	this.spawns = [];
 	//Data
@@ -593,7 +594,8 @@ var room=function(name, circuit, maxPlayers, moderated){
 	}
 
 	this.startRace = function(){
-		this.spawnNumber = 0;
+        this.spawnNumber = 0;
+        this.finishedCount = 0;
 		for(var i in this.players){
 			var spawn = this.spawns[this.spawnNumber%this.spawns.length];
 			this.spawnNumber++;
@@ -804,7 +806,8 @@ var player=function(x, y, name, id, c, room, car){
 	this.posBuffer=new Vector(0,0);
     this.vel=new Vector(0, 0);
 	this.color=c;
-	this.frozen = false;
+    this.frozen = false;
+    this.playerControl = true;
 	this.time=0;
 	this.lapTime=0;
 	this.timerBuffer=0;
@@ -915,7 +918,8 @@ var player=function(x, y, name, id, c, room, car){
 		this.dir = 0;
 		this.frozen = true;
 		this.lapStart = 0;
-		this.splits=[];
+        this.splits=[];
+        this.playerControl=true;
 	};
     this.update=function(){
 		this.time = rooms[this.room].seconds - rooms[this.room].raceStart;
@@ -933,11 +937,13 @@ var player=function(x, y, name, id, c, room, car){
 			this.collision();
 			this.updateWaypoint();
 			this.updateSound();
-			this.speed*=this.decel*this.decelMultiplier;
-			if(this.keys[UP_ARROW]){this.speed+=this.accel*this.accelMultiplier;}
-			if(this.keys[DOWN_ARROW]){this.speed-=this.accel*this.accelMultiplier*0.5;}
-			if(this.keys[LEFT_ARROW]){this.turnSpeed-=this.turnAccel;}
-			if(this.keys[RIGHT_ARROW]){this.turnSpeed+=this.turnAccel;}
+            this.speed*=this.decel*this.decelMultiplier;
+            if(this.playerControl){
+                if(this.keys[UP_ARROW]){this.speed+=this.accel*this.accelMultiplier;}
+                if(this.keys[DOWN_ARROW]){this.speed-=this.accel*this.accelMultiplier*0.5;}
+                if(this.keys[LEFT_ARROW]){this.turnSpeed-=this.turnAccel;}
+                if(this.keys[RIGHT_ARROW]){this.turnSpeed+=this.turnAccel;}
+            }
 			this.turnSpeed*=this.turnDecel;
 			this.dir+=Math.sign(this.speed)*(this.turnSpeed*this.vel.length())/this.turnDamp;
 			if(this.ai){
@@ -1158,6 +1164,28 @@ var player=function(x, y, name, id, c, room, car){
                         //Break out of the loop because we don't need to check any of the slower track times
                         break;
                     }
+                }
+            }
+            if(this.lap == 3 && rooms[this.room].gameState == "racing"){
+                this.playerControl = false;
+                rooms[this.room].finishedCount++;
+                var suffix = "th";
+                if(this.place == 1){
+                    suffix = "st";
+                }else if(this.place == 2){
+                    suffix = "nd";
+                }else if(this.place == 3){
+                    suffix = "rd";
+                }
+                serverMessage("Player ["+this.name+"] finished the race in "+this.place+suffix+" place!", this.room);
+                if(rooms[this.room].finishedCount == 3 || (rooms[this.room].finishedCount == Object.keys(rooms[this.room].players).length && Object.keys(rooms[this.room].players).length < 3)){
+                    serverMessage("Top three racers have finished! Next race starting in 15 seconds...", this.room);
+                    setTimeout(() => {
+                        rooms[this.room].gameState = "waiting";
+                        setTimeout(() => {
+                            rooms[this.room].startRace();
+                        }, 1000);
+                    }, 15000);
                 }
             }
             //Update lap data
