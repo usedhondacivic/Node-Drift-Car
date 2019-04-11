@@ -923,7 +923,7 @@ var player=function(x, y, name, id, c, room, car){
 		if(this.frozen){
 			this.time = 0;
             this.lapTime = 0;
-            this.currentSoundEffect = "startups";
+            //this.currentSoundEffect = "startups";
 		}
 		if(!this.frozen){
 			this.posBuffer=this.pos.clone();

@@ -151,6 +151,7 @@ var sounds = {
                 this.players[id].active = true;
             }else{
                 this.players[id] = new playerSoundController("Wmb");
+                this.players[id].setState(players[id].currentSoundEffect);
                 this.players[id].setup();
             }
         }
@@ -164,16 +165,16 @@ var sounds = {
     },
 };
 
-var playerSoundController = function(carName){
+var playerSoundController = function(carName, x, y){
     this.active = true;
     this.car = carName;
     this.sounds;
     this.currentState = "none";
     this.currentLoop = "none";
     this.sounds = Object.assign({}, sounds.cars[carName]);
+    this.falloff = 200;
 
     this.setup = function(){
-
         this.sounds["startups"].sounds[0].onended(() => {
             this.sounds["idle loops"].sounds[0].loop();
             this.currentState = "none";
@@ -194,6 +195,17 @@ var playerSoundController = function(carName){
             this.currentLoop = "idle loops";
         });
     }
+
+    this.update = function(x, y){
+        var distance = Math.sqrt(Math.pow(followCamera.x - x ,2), Math.pow(followCamera.y - y ,2));
+        if(this.currentState != "none"){
+            this.sounds[this.currentState].sounds[0].setVolume(Math.min(this.falloff/distance, 1));
+        }
+        if(this.currentLoop != "none"){
+            this.sounds[this.currentLoop].sounds[0].setVolume(Math.min(this.falloff/distance, 1));
+        }
+    }
+
     this.setState = function(newState){
         if(this.currentState != "none"){
             this.sounds[this.currentState].sounds[0].stop();
@@ -318,6 +330,7 @@ socket.on("state", function(items){
             followCamera.pos = items["players"][id].pos;
         }
         var player = items["players"][id];
+        sounds.players[id].update(player.pos.x, player.pos.y);
         if(player.effectIsNew){
             sounds.players[id].setState(player.currentSoundEffect);
         }
