@@ -8,6 +8,7 @@ var xml2js = require('xml2js');
 var server = require('http').Server(app);
 const io = require('socket.io')(server);
 var fs = require('fs');
+const path = require('path');
 
 const readline = require('readline');
 
@@ -237,6 +238,7 @@ async function loadCircuits(){
 			svgPath: circuitsPath + c.location + c.svg,
 			fullTrackPath: circuitsPath + c.location + c.fullTrack
         };
+		Object.keys(paths).forEach((key, index) => paths[key] = path.resolve(paths[key]));
         //Load records
 		c.recordData = JSON.parse(fs.readFileSync(paths.recordsPath));
         console.log("["+p+"]: loaded record data.");
