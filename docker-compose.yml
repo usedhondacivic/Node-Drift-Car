@@ -4,5 +4,5 @@ services:
   app:
     build: .
     ports:
-      - 8080:1234
+      - 80:1234
     
