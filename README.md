@@ -1,5 +1,8 @@
 # Node-Drift-Car
 Muliplayer top down arcade style racer. Very drifty, very niicce
+
+Read the write up: https://michael-crum.com/spinout/
+
 ![Screenshot](screenshots/corner.png)
 Built with socket.io and node.js
 
